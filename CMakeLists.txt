@@ -9,7 +9,7 @@ include(FetchContent)
 # Автоматически скачиваем и собираем GLAD для поддержки Modern OpenGL (VAO/VBO/Шейдеры)
 FetchContent_Declare(
     glad
-    URL https://github.com
+    URL https://github.com/Dav1dde/glad/archive/refs/tags/v0.1.36.zip
 )
 FetchContent_MakeAvailable(glad)
 
