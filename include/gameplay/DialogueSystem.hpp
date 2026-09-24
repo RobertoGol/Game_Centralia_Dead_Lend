@@ -1,47 +1,43 @@
-#pragma once
-#include "gameplay/ModificationSystem.hpp" // Импортируем структуры AdvancedDialogueNode и DialogueBranchChoice
-#include "gameplay/Player.hpp"
+#include <cstdint>
 #include <string>
-#include <vector>
-#include <unordered_map>
+#include <array>
+#include "gameplay/Math3D.hpp"
 
 namespace Centralia {
 
+#pragma pack(push, 1)
+struct NPCDialogueProfile {
+    uint32_t npcId;
+    uint16_t heartRateBPM;   // Пульс NPC
+    float    stressFactor;   // Стресс [0.0f - 1.0f]
+    uint8_t  trigger13Fired; // Поймали ли сюжетный Триггер 13
+};
+#pragma pack(pop)
+
+struct StaticDialogueNode {
+    int32_t     nodeId;
+    std::string textResponse;
+    uint32_t    requiredIntellect;
+    uint32_t    embeddedQuestTrigger;
+};
+
 class DialogueSystem {
 private:
-    std::unordered_map<uint32_t, AdvancedDialogueNode> m_dialogueNodes;
-    uint32_t m_currentNodeId = 0;
-    bool m_isDialogueActive = false;
-
-    // Ссылки на текущие биометрические показатели активного NPC
-    uint16_t m_currentNpcHeartRate = 72;
-    float m_currentNpcStress = 15.0f;
-    float m_playerAffection = 0.0f;
+    NPCDialogueProfile m_activeNPC;
+    bool m_conversationRunning;
+    
+    static constexpr uint32_t TRIGGER_DECRYPT_ID = 13; // Наш Триггер 13 для Снимка из прошлого
 
 public:
-    DialogueSystem() = default;
+    DialogueSystem();
     ~DialogueSystem() = default;
 
-    // Инициализация базы реплик и лора (Бункер Обучения и Пустошь)
-    void InitializeDialogueDatabase();
+    void OpenDialogue(uint32_t npcId);
+    void UpdateHeartBeat(float deltaTime, bool useIntimidation);
+    void EvaluateChoice(const StaticDialogueNode& selectedNode, uint32_t currentMapTriggerId);
 
-    // Запуск разговора с конкретным NPC
-    void StartDialogue(uint32_t startNodeId, const Player& player);
-
-    // Выбор варианта ответа (индекс от 0 до размера списка choices)
-    void MakeChoice(size_t choiceIndex, Player& player);
-
-    // Симуляция изменения пульса и стресса NPC в реальном времени на CPU
-    void UpdateNpcBiometrics(float deltaTime);
-
-    // Геттеры для вывода биометрии на экран Пип-боя
-    bool IsDialogueActive() const { return m_isDialogueActive; }
-    uint32_t GetCurrentNodeId() const { return m_currentNodeId; }
-    std::string GetCurrentNpcText() const;
-    std::vector<std::string> GetCurrentPlayerOptions(const Player& player) const;
-    
-    uint16_t GetNpcHeartRate() const { return m_currentNpcHeartRate; }
-    float GetNpcStress() const { return m_currentNpcStress; }
+    bool IsActive() const { return m_conversationRunning; }
+    const NPCDialogueProfile& GetNPCProfile() const { return m_activeNPC; }
 };
 
 } // namespace Centralia
