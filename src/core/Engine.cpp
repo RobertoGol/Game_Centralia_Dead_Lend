@@ -6,6 +6,7 @@
 #include "gameplay/ItemDatabase.hpp"
 #include "gameplay/CraftingManager.hpp"
 #include "gameplay/ModificationSystem.hpp"
+#include "gameplay/MapSystem.hpp"
 #include <thread>
 #include <chrono>
 #include <cmath>
@@ -18,12 +19,15 @@ Engine::~Engine() { Stop(); }
 bool Engine::Start() {
     if (!Platform::Initialize()) return false;
 
-    // Инициализация глобальных геймплейных баз данных
+    // Инициализация глобальных геймплейных баз данных лора и предметов
     ItemDatabase::GetInstance().Initialize();
     CraftingManager::GetInstance().Initialize();
 
     if (!NetworkSocket::GlobalInit()) return false;
     if (!m_memoryManager.Initialize(Platform::GetDeviceHWID())) return false;
+
+    // 1. ПОДГРУЗКА ВЫСОКОПРОИЗВОДИТЕЛЬНОЙ 22-БАЙТОВОЙ КАРТЫ
+    MapSystem::GetInstance().LoadMapFromFile("test.map");
 
     // Запуск 3D-экрана Windows 10
     m_renderer = new Renderer3D(1920, 1080);
@@ -31,31 +35,26 @@ bool Engine::Start() {
         return false;
     }
 
-    // Загружаем и компилируем Vertex и Fragment шейдеры на видеокарту из папки shaders/
+    // Компиляция шейдеров многоуровневых красок на GPU
     if (!m_activeShader.LoadFromFiles("shaders/base_3d.vert", "shaders/base_3d.frag")) {
         Platform::Log("Critical Error: GPU failed to compile core Centralia reflection shaders!");
         return false;
     }
 
-    // Инициализируем наш менеджер ввода (ищет геймпады Xbox/PS)
     m_inputController.Initialize();
 
-    // Спавним нашего базового персонажа-гуманоида
     m_localPlayer = new Player(777, "Vault_Survivor_76", 24);
     m_localPlayer->SetPosition(Vector3D(0.0f, 0.0f, 0.0f));
 
-    // По умолчанию выставляем альфа-канал видимости персонажа в реестр состояний
-    m_memoryManager.SetRegistryValue("player_alpha_pct", 100); // 100% видимости
+    m_memoryManager.SetRegistryValue("player_alpha_pct", 100); 
 
     m_isRunning = true;
-    Platform::Log("Engine: Input-to-3D Camera тригонометрия успешно интегрирована в ядро.");
+    Platform::Log("Engine: Core subsystems initialized. Map and 3D Context linked.");
     return true;
 }
 
 void Engine::HandleMouseMovement(float deltaX, float deltaY) {
     if (!m_localPlayer) return;
-
-    // Вращаем 3D-камеру вокруг гуманоида на основе дельты движения мыши
     m_camera.FollowPlayer(m_localPlayer->GetPosition(), deltaX, deltaY);
 }
 
@@ -70,10 +69,10 @@ void Engine::Update() {
         m_camera.FollowPlayer(m_localPlayer->GetPosition(), gamepadLookX, gamepadLookY);
     }
 
-    // Получаем состояние команд управления Fallout 76
+    // Считываем состояние команд управления Fallout 76 один раз
     const GameplayActions& actions = m_inputController.GetActions();
 
-    // ПРОВЕРКА СКРЫТОГО КЛАССА АДМИНИСТРАТОРА (КОНСОЛЬНЫЙ ФИКСАТОР)
+    // 2. СИСТЕМА УПРАВЛЕНИЯ КЛАССАМИ (Админ-Хост против Обычного Пилота)
     if (m_memoryManager.GetRegistryValue("active_control_mode") == static_cast<int32_t>(ActiveControlMode::Admin_Observer)) {
         // Фиксатор хоста намертво блокирует позицию в координатах 0,0,0 (Середина карты)
         Vector3D adminCenterAnchor(0.0f, 0.0f, 0.0f);
@@ -86,7 +85,7 @@ void Engine::Update() {
         }
     } 
     else {
-        // ОБЫЧНЫЙ ИГРОВОЙ РЕЖИМ (Обсчет движения WASD / Стика)
+        // ОБЫЧНЫЙ ИГРОВОЙ РЕЖИМ (Обсчет движения WASD / Стика с коллизиями 22-байтового тайла)
         Vector3D inputDir = m_inputController.GetMovementVector();
         bool isMoving = (inputDir.Length() > 0.0f);
         Vector3D finalMovement(0.0f, 0.0f, 0.0f);
@@ -100,13 +99,25 @@ void Engine::Update() {
 
             finalMovement = (cameraForward * inputDir.z) + (cameraRight * inputDir.x);
             
-            m_localPlayer->Move(finalMovement, currentSpeed, 0.016f);
+            // ВЫЧИСЛЕНИЕ ВЕКТОРНОЙ КОЛЛИЗИИ СТЕН НА CPU
+            Vector3D predictedPosition = m_localPlayer->GetPosition() + (finalMovement.Normalize() * currentSpeed * 0.016f);
+            
+            if (!MapSystem::GetInstance().CheckCollision(predictedPosition)) {
+                m_localPlayer->Move(finalMovement, currentSpeed, 0.016f);
+            } else {
+                finalMovement = Vector3D(0.0f, 0.0f, 0.0f); // Стоим перед бетонной стеной
+            }
+            
             m_localPlayer->SetRotation(-m_camera.yaw - 90.0f);
         }
 
+        // Обсчет тиков дебаффов среды (Радиация, ЭМИ) на основе данных ячейки под ногами
+        ClassSystem mockClassSystem; 
+        MapSystem::GetInstance().UpdateMapEnvironment(0.016f, *m_localPlayer, mockClassSystem);
+
         // --- МАТЕМАТИЧЕСКИЙ ОБСЧЕТ ТИТАНА И ТЕХНИКИ (CPU) ---
         static Vector3D mockTitanPos(5.0f, 0.0f, 5.0f);
-        if (isMoving) {
+        if (finalMovement.Length() > 0.0f) {
             mockTitanPos = mockTitanPos + (finalMovement.Normalize() * 3.5f * 0.016f);
         }
         ProceduralMotionManager::GetInstance().UpdateTitanMovement(mockTitanPos, finalMovement, 0.016f);
@@ -115,7 +126,7 @@ void Engine::Update() {
         float targetAlpha = 1.0f; 
         if (actions.ghostMode || m_memoryManager.GetRegistryValue("player_sneaking") == 1) {
             m_memoryManager.SetRegistryValue("player_sneaking", 1);
-            if (isMoving && m_memoryManager.GetRegistryValue("perk_silent_move") == 0) {
+            if (finalMovement.Length() > 0.0f && m_memoryManager.GetRegistryValue("perk_silent_move") == 0) {
                 targetAlpha = 0.8f; 
                 Platform::Log("Скрытность: [ВНИМАНИЕ] Движение демаскирует гуманоида!");
             } else {
@@ -125,7 +136,7 @@ void Engine::Update() {
         m_memoryManager.SetRegistryValue("player_alpha_pct", static_cast<int32_t>(targetAlpha * 100.0f));
     }
 
-    // 3. Обработка мгновенных экшенов Fallout 76 (Прыжок, Скрытность, Быстрое лечение)
+    // 3. Обработка мгновенных экшенов Fallout 76
     if (actions.jump) {
         Platform::Log("Engine Физика: Гуманоид совершил прыжок (Space / Кнопка А).");
     }
@@ -158,7 +169,7 @@ void Engine::Update() {
         Platform::Log(flashlightState ? "Pip-Boy: Фонарик включен." : "Pip-Boy: Фонарик выключен.");
     }
 
-    // 4. Обновляем тики показателей жизнедеятельности выжившего
+    // 4. Обновляем тики показателей жизнедеятельности выжившего (Голод, Жажда)
     m_localPlayer->UpdateSurvival(0.016f);
 
     // 5. Камера от третьего лица следует за игроком

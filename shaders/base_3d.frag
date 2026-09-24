@@ -5,32 +5,37 @@ out vec4 FragColor;
 in vec3 FragPos;
 in vec3 Normal;
 
-// Параметры от игрового движка
-uniform vec3 cameraPos;         // Позиция 3D-камеры для расчета угла взгляда
-uniform samplerCube environmentMap; // Легкая кубическая текстура мира ПустошиCentralia
-uniform float stealthAlpha;     // Коэффициент невидимости (1.0 - виден, 0.2 - Ghost режим приседа)
+uniform vec3 cameraPos;
+uniform samplerCube environmentMap;
+uniform float stealthAlpha;
+
+// Параметры многоуровневой краски от MaterialSystem
+uniform vec3 materialParams; // X = Roughness, Y = PaintAlpha, Z = RustIntensity
+uniform vec3 materialGlow;   // X = RadGlowIntensity
 
 void main() {
-    // Базовый цвет брони (индустриальный стальной цвет по умолчанию)
-    vec3 baseArmorColor = vec3(0.32, 0.34, 0.36); 
+    // 1. Базовые цвета уровней (красок)
+    vec3 metalPrimerColor = vec3(0.25, 0.25, 0.27);  // Голый металл подложки
+    vec3 factoryPaintColor = vec3(0.15, 0.35, 0.65); // Заводской синий цвет кузова ВАЗ/Титана
+    vec3 rustColor = vec3(0.45, 0.22, 0.12);         // Рыжая ржавчина Fallout
+    vec3 radGlowColor = vec3(0.0, 0.95, 0.1);        // Зеленое свечение изотопов
 
-    // Нормализуем входящие векторы нормалей и направления взгляда
+    // 2. Послойное смешивание многоуровневой краски на видеокарте
+    vec3 mixedPaint = mix(metalPrimerColor, factoryPaintColor, materialParams.y); // Слой краски поверх грунта
+    vec3 finalSurfaceColor = mix(mixedPaint, rustColor, materialParams.z);        // Накладываем ржавчину сверху
+
+    // 3. Магия отражений старой школы с учетом шероховатости (Roughness)
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(FragPos - cameraPos);
-    
-    // Формула зеркального отражения золотой эры: R = I - 2 * dot(N, I) * N
     vec3 reflectDir = reflect(viewDir, norm);
-    
-    // Выборка пикселя отражения из кубической карты окружения
     vec3 dynamicReflection = texture(environmentMap, reflectDir).rgb;
 
-    // Смешиваем матовый металл брони с честным отражением мира (интенсивность 25%)
-    vec3 finalColor = mix(baseArmorColor, dynamicReflection, 0.25);
+    // Чем меньше шероховатость (Roughness), тем сильнее зеркальное отражение мира
+    float reflectionStrength = 0.4 * (1.0 - materialParams.x);
+    vec3 shadedColor = mix(finalSurfaceColor, dynamicReflection, reflectionStrength);
 
-    // Добавляем базовое затеняющее освещение (Ambient), чтобы модель имела объем в 3D
-    vec3 ambientLight = vec3(0.2, 0.2, 0.2) * finalColor;
-    vec3 resultColor = finalColor + ambientLight;
+    // 4. Добавляем уровень радиационного свечения (Эффект самосвечения Элдер Тейл / Рад-выброса)
+    vec3 finalCalculatedColor = shadedColor + (radGlowColor * materialGlow.x);
 
-    // Управляем прозрачностью фрагмента в зависимости от режима скрытности (Сtrl)
-    FragColor = vec4(resultColor, stealthAlpha);
+    FragColor = vec4(finalCalculatedColor, stealthAlpha);
 }

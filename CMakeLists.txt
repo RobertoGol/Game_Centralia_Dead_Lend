@@ -35,6 +35,7 @@ set(ENGINE_SOURCES
     src/gameplay/DialogueSystem.cpp
     src/gameplay/CreatureAI.cpp
     src/gameplay/FactorySystem.cpp 
+    src/video/MaterialSystem.cpp 
     src/core/AssetParser.cpp
     src/gameplay/ClassSystem.cpp
     src/gameplay/VehiclePhysics.cpp
