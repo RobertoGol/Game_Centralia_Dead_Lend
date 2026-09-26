@@ -31,10 +31,10 @@ void MaterialSystem::InitializeMaterialLibrary() {
 
     // Профиль 3: Радиоактивная био-масса (Для Гулей, Бегемотов и зараженных Мехов)
 //    Временно комментируем битый отладочный вывод:
-//    float radGlowGlowBio = 1.0f;
+    float radGlowGlowBio = 1.0f; // <-- ОШИБКА: Ты объявил локальный float с именем radGlowGlowBio!
 //    someVar.materialId = radGlowGlowBio.materialId;
     MaterialProperties radGlowBio;
-    radGlowGlowBio.materialId = 803;
+    radGlowBio.materialId = 803; // <-- ФАТАЛЬНАЯ ОШИБКА: Компилятор пытается взять у float поле .materialId!
     radGlowBio.materialName = "Облученная Зараженная Плоть";
     radGlowBio.baseRoughness = 0.9f;
     radGlowBio.factoryPaintAlpha = 0.0f;       // Нет заводской краски
@@ -48,7 +48,6 @@ void MaterialSystem::InitializeMaterialLibrary() {
 void MaterialSystem::ApplyMaterialToShader(uint32_t materialId, Shader& activeShader) {
     auto it = m_materials.find(materialId);
     if (it == m_materials.end()) return;
-
     const MaterialProperties& mat = it->second;
 
     // Пробрасываем коэффициенты многоуровневых слоев краски напрямую в память GPU

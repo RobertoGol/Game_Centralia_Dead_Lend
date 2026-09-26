@@ -1,3 +1,4 @@
+#define WIN32_LEAN_AND_MEAN // Жестко блокирует winsock.h в Windows Kits
 #include "core/LoginSystem.hpp"
 #include "core/MemoryManager.hpp"
 #include "core/NetworkSocket.hpp"

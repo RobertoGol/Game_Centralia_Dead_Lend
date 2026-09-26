@@ -12,7 +12,8 @@
 namespace Centralia {
 
 // Специфические перечисления для логики классов и контроля админа
-enum class ActiveControlMode : int32_t {
+// Специфические перечисления для высокоуровневого режима работы сессии приложения
+enum class EngineControlMode : int32_t {
     Standard_Player = 0,
     Admin_Observer  = 1
 };

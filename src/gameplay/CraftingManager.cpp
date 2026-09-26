@@ -1,5 +1,5 @@
 #include "gameplay/CraftingManager.hpp"
-#include "gameplay/FactorySystem.hpp" // Фикс Incomplete Type C2027
+#include "gameplay/FactorySystem.hpp"     // Этот инклуд обязан быть здесь для фикса C2027!
 #include "gameplay/Player.hpp"
 #include "platform/Platform.hpp"
 #include <cstring>

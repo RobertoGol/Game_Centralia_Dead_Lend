@@ -36,8 +36,8 @@ bool ClassSystem::AuthenticateAndActivateAdmin(const std::string& currentDeviceH
     // Проверяем, совпадает ли железо с подписью создателя игры
     // Для теста временно пропускаем по логическому флагу, в релизе будет жесткий сверка хэшей
     if (currentHash == m_masterAdminHwidHash || currentDeviceHwid == "LINUX_UNKNOWN_HWID" || currentDeviceHwid == "WINDOWS_UNKNOWN_HWID") {
-        m_currentMode = ActiveControlMode::Admin_Observer;
-        
+        m_currentMode = static_cast<ActiveControlMode>(EngineControlMode::Admin_Observer);
+          
         // Наделяем скрытый класс модератора ультимативными правами
         m_currentAttributes.hasGodMode = true;
         m_currentAttributes.revealFogOfWar = true; // Отключаем туман войны на радаре
@@ -51,6 +51,8 @@ bool ClassSystem::AuthenticateAndActivateAdmin(const std::string& currentDeviceH
     return false;
 }
 
+// Было: void ClassSystem::ToggleControlMode(ToggleControlMode mode)
+// Сделай строго так (через пробел):
 void ClassSystem::ToggleControlMode(ActiveControlMode mode) {
     if (m_currentMode == ActiveControlMode::Admin_Observer && mode != ActiveControlMode::Admin_Observer) {
         // Запрещаем обычным триггерам сбрасывать режим админа без верификации

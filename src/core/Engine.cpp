@@ -1,5 +1,7 @@
 #define WIN32_LEAN_AND_MEAN // Защищает ws2def.h от конфликтов с winsock.h
 #define _USE_MATH_DEFINES
+#include <windows.h>
+#include <GL/glu.h> // Оставляем только glu.h, он подтянет матрицы, но не сломает glad
 #include "core/Engine.hpp"
 #include "platform/Platform.hpp"
 #include "gameplay/ProceduralMotion.hpp"
@@ -9,21 +11,28 @@
 #include "gameplay/CraftingManager.hpp"
 #include "gameplay/ModificationSystem.hpp"
 #include "gameplay/MapSystem.hpp"
+#include "gameplay/ClassSystem.hpp" // ЖЕСТКО ДОБАВЛЯЕМ ДЛЯ ИСПРАВЛЕНИЯ СТРОКИ 118!
 #include <thread>
 #include <chrono>
 #include <cmath>
-#include <algorithm> // Фикс для std::max на строке 129
+#include <algorithm> // Фикс для std::max 
+
+// Системные графические конвейеры Windows 10 для матриц фиксированных функций
+#include <windows.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 namespace Centralia {
 
-Engine::Engine() : m_isRunning(false) {}
+Engine::Engine() : m_isRunning(false), m_localPlayer(nullptr), m_renderer(nullptr) {}
 Engine::~Engine() { Stop(); }
 
 bool Engine::Start() {
     if (!Platform::Initialize()) return false;
 
     // Инициализация глобальных геймплейных баз данных лора и предметов
-    ItemDatabase::GetInstance().InitializeDatabase();
+    // Фикс строки 26: Изменено с InitializeDatabase() на Initialize() согласно ItemDatabase.hpp
+    ItemDatabase::GetInstance().Initialize();
     CraftingManager::GetInstance().InitializeBlueprints();
 
     if (!NetworkSocket::GlobalInit()) return false;
@@ -76,19 +85,22 @@ void Engine::Update() {
     const GameplayActions& actions = m_inputController.GetActions();
 
     // 2. СИСТЕМА УПРАВЛЕНИЯ КЛАССАМИ (Админ-Хост против Обычного Пилота)
-    if (m_memoryManager.GetRegistryValue("active_control_mode") == static_cast<int32_t>(ActiveControlMode::Admin_Observer)) {
-        // Фиксатор хоста намертво блокирует позицию в координатах 0,0,0 (Середина карты)
-        Vector3D adminCenterAnchor(0.0f, 0.0f, 0.0f);
-        m_localPlayer->SetPosition(adminCenterAnchor);
-        m_camera.target = adminCenterAnchor;
+    if (m_memoryManager.GetRegistryValue("active_control_mode") == static_cast<int32_t>(EngineControlMode::Admin_Observer)) {
+        // Наша модифицированная админ-камера: включаем режим свободного полета сквозь стены
+        m_camera.isAdminMode = true;
+        
+        Vector3D inputDir = m_inputController.GetMovementVector();
+        m_camera.MoveFreeCam(inputDir.z, inputDir.x, 0.0f, 0.016f);
         
         static uint32_t adminLogTick = 0;
         if (adminLogTick++ % 300 == 0) {
-            Platform::Log("[ADMIN HOST]: Центр карты зафиксирован. Мониторинг P2P-пакетов активен.");
+            Platform::Log("[ADMIN HOST]: Свободный полет админ-камеры активен. Мониторинг P2P-пакетов.");
         }
     } 
     else {
         // ОБЫЧНЫЙ ИГРОВОЙ РЕЖИМ (Обсчет движения WASD / Стика с коллизиями 22-байтового тайла)
+        m_camera.isAdminMode = false; // Отключаем свободный полет
+        
         Vector3D inputDir = m_inputController.GetMovementVector();
         bool isMoving = (inputDir.Length() > 0.0f);
         Vector3D finalMovement(0.0f, 0.0f, 0.0f);
@@ -163,7 +175,7 @@ void Engine::Update() {
         }
     }
 
-    // Обработка фонарика Пип-боя на Tab
+    // Обработка фонарик Пип-боя на Tab
     const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
     if (currentKeyStates[SDL_SCANCODE_TAB]) {
         static bool flashlightState = false;
@@ -195,11 +207,13 @@ void Engine::Render() {
 
     m_activeShader.Use();
 
+    // Фикс строк: Передаем координаты через структуру вектора Vector3D под сигнатуру твоего Shader.hpp
+    // Строка 211: Разворачиваем координаты позиции камеры в 3 флоата
     m_activeShader.SetVec3("cameraPos", m_camera.position.x, m_camera.position.y, m_camera.position.z);
     
     float shaderAlpha = static_cast<float>(m_memoryManager.GetRegistryValue("player_alpha_pct")) / 100.0f;
-    m_activeShader.SetVec3("stealthAlpha", shaderAlpha, 0.0f, 0.0f); 
-
+    Vector3D stealthVector(shaderAlpha, 0.0f, 0.0f);
+    m_activeShader.SetVec3("stealthAlpha", shaderAlpha, 0.0f, 0.0f);
     m_renderer->DrawTestCube(m_localPlayer->GetPosition(), m_localPlayer->GetRotation());
 
     m_activeShader.Unuse();

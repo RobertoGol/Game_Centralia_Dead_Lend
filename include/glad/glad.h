@@ -51,7 +51,7 @@ typedef char GLchar;
 #define GL_TRIANGLES 0x0004
 #define GL_TRIANGLE_FAN 0x0006
 
-// Объявления указателей на базовые функции (чтобы убрать ошибки C3861)
+// 1. Сигнатуры базовых функциональных указателей (Сначала объявляем типы!)
 typedef void (APIENTRY *PFNGLENABLEPROC) (GLenum cap);
 typedef void (APIENTRY *PFNGLDEPTHFUNCPROC) (GLenum func);
 typedef void (APIENTRY *PFNGLVIEWPORTPROC) (GLint x, GLint y, GLsizei width, GLsizei height);
@@ -63,19 +63,7 @@ typedef void (APIENTRY *PFNGLUNIFORMMATRIX4FVPROC) (GLint location, GLsizei coun
 typedef void (APIENTRY *PFNGLDELETEVERTEXARRAYSPROC) (GLsizei n, const GLuint *arrays);
 typedef void (APIENTRY *PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint *buffers);
 
-#define glEnable ((PFNGLENABLEPROC)glad_glEnable)
-#define glDepthFunc ((PFNGLDEPTHFUNCPROC)glad_glDepthFunc)
-#define glViewport ((PFNGLVIEWPORTPROC)glad_glViewport)
-#define glClearColor ((PFNGLCLEARCOLORPROC)glad_glClearColor)
-#define glClear ((PFNGLCLEARPROC)glad_glClear)
-#define glDrawArrays ((PFNGLDRAWARRAYSPROC)glad_glDrawArrays)
-#define glUniform3f ((PFNGLUNIFORM3FPROC)glad_glUniform3f)
-#define glUniformMatrix4fv ((PFNGLUNIFORMMATRIX4FVPROC)glad_glUniformMatrix4fv)
-#define glDeleteVertexArrays ((PFNGLDELETEVERTEXARRAYSPROC)glad_glDeleteVertexArrays)
-#define glDeleteBuffers ((PFNGLDELETEBUFFERSPROC)glad_glDeleteBuffers)
-
-
-// Сигнатуры функциональных указателей драйверов видеокарты
+// Сигнатуры шейдерного ядра Modern OpenGL
 typedef GLuint (APIENTRY *PFNGLCREATESHADERPROC) (GLenum type);
 typedef void (APIENTRY *PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar* const* string, const GLint* length);
 typedef void (APIENTRY *PFNGLCOMPILESHADERPROC) (GLuint shader);
@@ -105,6 +93,17 @@ typedef void (APIENTRY *PFNGLVERTEXATTRIBPOINTERPROC) (GLuint index, GLint size,
 extern "C" {
 #endif
 
+extern PFNGLENABLEPROC glad_glEnable;
+extern PFNGLDEPTHFUNCPROC glad_glDepthFunc;
+extern PFNGLVIEWPORTPROC glad_glViewport;
+extern PFNGLCLEARCOLORPROC glad_glClearColor;
+extern PFNGLCLEARPROC glad_glClear;
+extern PFNGLDRAWARRAYSPROC glad_glDrawArrays;
+extern PFNGLUNIFORM3FPROC glad_glUniform3f;
+extern PFNGLUNIFORMMATRIX4FVPROC glad_glUniformMatrix4fv;
+extern PFNGLDELETEVERTEXARRAYSPROC glad_glDeleteVertexArrays;
+extern PFNGLDELETEBUFFERSPROC glad_glDeleteBuffers;
+
 extern PFNGLCREATESHADERPROC glad_glCreateShader;
 extern PFNGLSHADERSOURCEPROC glad_glShaderSource;
 extern PFNGLCOMPILESHADERPROC glad_glCompileShader;
@@ -126,10 +125,21 @@ extern PFNGLGENBUFFERSPROC glad_glGenBuffers;
 extern PFNGLBINDVERTEXARRAYPROC glad_glBindVertexArray;
 extern PFNGLBINDBUFFERPROC glad_glBindBuffer;
 extern PFNGLBUFFERDATAPROC glad_glBufferData;
-extern PFNGLENABLEVERTEXATTRIBARRAYPROC glad_glEnableVertexArrayAttrib;
+extern PFNGLENABLEVERTEXATTRIBARRAYPROC glad_glEnableVertexAttribArray;
 extern PFNGLVERTEXATTRIBPOINTERPROC glad_glVertexAttribPointer;
 
 // Макросы для бесшовной подмены стандартных OpenGL вызовов
+#define glEnable glad_glEnable
+#define glDepthFunc glad_glDepthFunc
+#define glViewport glad_glViewport
+#define glClearColor glad_glClearColor
+#define glClear glad_glClear
+#define glDrawArrays glad_glDrawArrays
+#define glUniform3f glad_glUniform3f
+#define glUniformMatrix4fv glad_glUniformMatrix4fv
+#define glDeleteVertexArrays glad_glDeleteVertexArrays
+#define glDeleteBuffers glad_glDeleteBuffers
+
 #define glCreateShader glad_glCreateShader
 #define glShaderSource glad_glShaderSource
 #define glCompileShader glad_glCompileShader
@@ -151,7 +161,7 @@ extern PFNGLVERTEXATTRIBPOINTERPROC glad_glVertexAttribPointer;
 #define glBindVertexArray glad_glBindVertexArray
 #define glBindBuffer glad_glBindBuffer
 #define glBufferData glad_glBufferData
-#define glEnableVertexArrayAttrib glad_glEnableVertexArrayAttrib
+#define glEnableVertexAttribArray glad_glEnableVertexAttribArray
 #define glVertexAttribPointer glad_glVertexAttribPointer
 
 // Системные типы процедур загрузки контекста Windows 10 (wglGetProcAddress)
