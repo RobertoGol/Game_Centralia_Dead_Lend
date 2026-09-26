@@ -1,44 +1,51 @@
 #pragma once
-#include "gameplay/Player.hpp"
-#include <vector>
+#include <cstdint>
+#include <array>
+#include "gameplay/ItemDatabase.hpp"
+#include "gameplay/FactorySystem.hpp"
 
 namespace Centralia {
 
-// Структура необходимого ингредиента для рецепта
-struct Ingredient {
-    uint32_t item_id;
-    uint16_t quantity;
+#pragma pack(push, 1)
+// Плотная структура рецепта крафта по чертежу (State of Decay 2)
+struct BlueprintRecord {
+    uint32_t     blueprintId;
+    uint32_t     targetItemId;          // ID предмета, который скрафтим (из ItemDatabase)
+    uint32_t     requiredItemCount;      // Сколько штук получим на выходе
+    
+    // Ресурсы, необходимые для сборки (тратятся из FactorySystem)
+    float        requiredIronScrap;      // Требуемый металлолом
+    float        requiredTechMods;       // Требуемые компоненты электроники
+    uint32_t     requiredToolId;         // ID инструмента в инвентаре (0, если не нужен)
 };
-
-// Структура самого рецепта крафта
-struct CraftingRecipe {
-    uint32_t result_item_id;       // Что получим на выходе
-    uint16_t result_quantity;      // Сколько штук получим
-    std::vector<Ingredient> ingredients; // Из чего крафтим
-};
+#pragma pack(pop)
 
 class CraftingManager {
 private:
-    std::vector<CraftingRecipe> m_recipes;
-
-    CraftingManager(); // Синглтон
-
-    // Поиск индекса предмета в инвентаре для удобства проверок
-    int FindItemIndex(const Player& player, uint32_t itemId) const;
+    static constexpr size_t MAX_BLUEPRINTS = 128;
+    std::array<BlueprintRecord, MAX_BLUEPRINTS> m_blueprintRegistry;
+    uint32_t m_blueprintCount;
 
 public:
-    static CraftingManager& GetInstance() {
-        static CraftingManager instance;
-        return instance;
-    }
+    CraftingManager() noexcept;
+    ~CraftingManager() = default;
 
-    // Загрузка базовых рецептов (патроны, аптечки, ремонт)
-    void Initialize();
+    /**
+     * @brief Инициализация чертежей крафта (пушки Titanfall, пластины T-60, медицина).
+     */
+    void InitializeBlueprints() noexcept;
 
-    // Главный метод: попытка скрафтить предмет игроком
-    bool CraftItem(Player& player, uint32_t recipeResultId);
-    
-    const std::vector<CraftingRecipe>& GetRecipes() const { return m_recipes; }
+    /**
+     * @brief Проверка возможности крафта и сборка предмета по чертежу.
+     * @param blueprintId - ID выбранного чертежа
+     * @param player - Ссылка на игрока для проверки инвентаря и выдачи лута
+     * @param factoryContext - Твоя фабричная энергосистема для списания ресурсов
+     * @param itemDb - Ссылка на базу предметов для валидации ТТХ
+     */
+    bool TryExecuteCraft(uint32_t blueprintId, Player& player, FactoryEngineContext& factoryContext, const ItemDatabase& itemDb) noexcept;
+
+    // Быстрый поиск рецепта по ID
+    [[nodiscard]] const BlueprintRecord* GetBlueprint(uint32_t blueprintId) const noexcept;
 };
 
 } // namespace Centralia

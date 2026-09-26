@@ -4,14 +4,14 @@ project(Game_Centralia_Dead_Lend VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include(FetchContent)
+#include(FetchContent)
 
 # Автоматически скачиваем и собираем GLAD для поддержки Modern OpenGL (VAO/VBO/Шейдеры)
-FetchContent_Declare(
-    glad
-    URL https://github.com/Dav1dde/glad/archive/refs/tags/v0.1.36.zip
-)
-FetchContent_MakeAvailable(glad)
+#FetchContent_Declare(
+#    glad
+#    URL https://github.com/Dav1dde/glad/archive/refs/tags/v0.1.36.zip
+#)
+#FetchContent_MakeAvailable(glad)
 
 # Папки для поиска заголовочных файлов
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -19,6 +19,7 @@ include_directories(${glad_SOURCE_DIR}/include)
 
 # Полный список исходных файлов ядра игры (соответствует твоему дереву папок)
 set(ENGINE_SOURCES
+    src/glad.c
     src/core/Engine.cpp
     src/core/MemoryManager.cpp
     src/core/NetworkProtocol.cpp

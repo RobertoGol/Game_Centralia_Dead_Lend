@@ -1,80 +1,92 @@
 #include "gameplay/CraftingManager.hpp"
 #include "platform/Platform.hpp"
-#include "gameplay/ItemDatabase.hpp"
+#include <cstring>
 
 namespace Centralia {
 
-CraftingManager::CraftingManager() {}
-
-void CraftingManager::Initialize() {
-    m_recipes.clear();
-
-    // Рецепт 1: Крафт Армейской аптечки (ID 301) из Грязной воды (ID 401) и кучи Металлолома для инструментов
-    CraftingRecipe medkitRecipe;
-    medkitRecipe.result_item_id = 301;
-    medkitRecipe.result_quantity = 1;
-    medkitRecipe.ingredients = { {401, 1}, {501, 2} }; // 1 грязная вода + 2 металлолома
-    m_recipes.push_back(medkitRecipe);
-
-    // Рецепт 2: Восстановление/Крафт Кожаной куртки (ID 201) из кусков Металлолома (ID 501)
-    CraftingRecipe armorRecipe;
-    armorRecipe.result_item_id = 201;
-    armorRecipe.result_quantity = 1;
-    armorRecipe.ingredients = { {501, 5} }; // 5 единиц металлолома
-    m_recipes.push_back(armorRecipe);
-
-    Platform::Log("CraftingManager: Workbench blueprints loaded (" + std::to_string(m_recipes.size()) + " recipes).");
+CraftingManager::CraftingManager() noexcept : m_blueprintCount(0) {
+    std::memset(m_blueprintRegistry.data(), 0, m_blueprintRegistry.size() * sizeof(BlueprintRecord));
 }
 
-int CraftingManager::FindItemIndex(const Player& player, uint32_t itemId) const {
-    const auto& inv = player.GetInventory();
-    for (size_t i = 0; i < inv.size(); ++i) {
-        if (inv[i].id == itemId) {
-            return static_cast<int>(i);
-        }
+void CraftingManager::InitializeBlueprints() noexcept {
+    m_blueprintCount = 0;
+
+    // Рецепт 1: Крафт патронов или кустарного мушкета "Log Horizon" из металлолома
+    {
+        BlueprintRecord& bp = m_blueprintRegistry[m_blueprintCount++];
+        bp.blueprintId = 5001;
+        bp.targetItemId = 1002; // Powder Musket
+        bp.requiredItemCount = 1;
+        bp.requiredIronScrap = 25.0f; // Требует 25 единиц железа с заводов
+        bp.requiredTechMods = 0.0f;
+        bp.requiredToolId = 0;
     }
-    return -1;
+
+    // Рецепт 2: Восстановление стального торса Силовой Брони T-60 (Требует электронику)
+    {
+        BlueprintRecord& bp = m_blueprintRegistry[m_blueprintCount++];
+        bp.blueprintId = 5002;
+        bp.targetItemId = 2001; // T-60 Power Armor Torso
+        bp.requiredItemCount = 1;
+        bp.requiredIronScrap = 120.0f; // Тяжелый крафт
+        bp.requiredTechMods = 15.0f;   // Требует модули Arknights фабрик
+        bp.requiredToolId = 0;
+    }
+
+    // Рецепт 3: Сборка медицинского стимулятора Vault-Tec Stimpak
+    {
+        BlueprintRecord& bp = m_blueprintRegistry[m_blueprintCount++];
+        bp.blueprintId = 5003;
+        bp.targetItemId = 3001; // Stimpak
+        bp.requiredItemCount = 2; // Создает сразу 2 штуки
+        bp.requiredIronScrap = 5.0f;
+        bp.requiredTechMods = 2.0f;
+        bp.requiredToolId = 0;
+    }
+
+    Platform::Log("CraftingManager: Чертежи State of Decay 2 успешно загружены в реестр верстака.");
 }
 
-bool CraftingManager::CraftItem(Player& player, uint32_t recipeResultId) {
-    // 1. Ищем нужный рецепт в базе верстака
-    const CraftingRecipe* targetRecipe = nullptr;
-    for (const auto& recipe : m_recipes) {
-        if (recipe.result_item_id == recipeResultId) {
-            targetRecipe = &recipe;
-            break;
+const BlueprintRecord* CraftingManager::GetBlueprint(uint32_t blueprintId) const noexcept {
+    for (uint32_t i = 0; i < m_blueprintCount; ++i) {
+        if (m_blueprintRegistry[i].blueprintId == blueprintId) {
+            return &m_blueprintRegistry[i];
         }
     }
+    return nullptr;
+}
 
-    if (!targetRecipe) {
-        Platform::Log("Ошибка крафта: Чертеж не найден на этом верстаке.");
+bool CraftingManager::TryExecuteCraft(uint32_t blueprintId, Player& player, FactoryEngineContext& factoryContext, const ItemDatabase& itemDb) noexcept {
+    const BlueprintRecord* bp = GetBlueprint(blueprintId);
+    if (!bp) {
+        Platform::Log("[CRAFTING ERROR]: Чертеж ID " + std::to_string(blueprintId) + " не найден в реестре.");
         return false;
     }
 
-    // 2. Шаг проверки: хватает ли у игрока всех ресурсов в инвентаре?
-    for (const auto& ing : targetRecipe->ingredients) {
-        int idx = FindItemIndex(player, ing.item_id);
-        if (idx == -1 || player.GetInventory()[idx].quantity < ing.quantity) {
-            ItemTemplate missingItemData;
-            ItemDatabase::GetInstance().GetTemplate(ing.item_id, missingItemData);
-            Platform::Log("Недостаточно ресурсов для крафта! Требуется: " + missingItemData.name);
-            return false; // Ресурсов не хватает, прерываем операцию
-        }
+    // Валидация существования целевого предмета в Ghost-реестре лута
+    const ItemStaticRecord* itemRecord = itemDb.GetItemRecord(bp->targetItemId);
+    if (!itemRecord) {
+        Platform::Log("[CRAFTING ERROR]: Целевой предмет крафта не зарегистрирован в ItemDatabase.");
+        return false;
     }
 
-    // 3. Шаг удаления: раз всего хватает, изымаем хлам из инвентаря персонажа
-    for (const auto& ing : targetRecipe->ingredients) {
-        int idx = FindItemIndex(player, ing.item_id);
-        player.RemoveItem(static_cast<size_t>(idx), ing.quantity);
+    // Аппаратная проверка ресурсов, накопленных на хосте автоматическими фабриками
+    // Мы списываем запасы напрямую через методы контекста FactorySystem.cpp
+    if (factoryContext.GetIronScrap() < bp->requiredIronScrap) {
+        Platform::Log("[CRAFTING FAIL]: Недостаточно металлолома. Требуется: " + std::to_string(bp->requiredIronScrap));
+        return false;
     }
 
-    // 4. Шаг выдачи: добавляем созданный чистый предмет в инвентарь
-    player.AddItem(targetRecipe->result_item_id, targetRecipe->result_quantity, 1.0f); // 1.0f — новая прочность
-    
-    ItemTemplate resultData;
-    ItemDatabase::GetInstance().GetTemplate(targetRecipe->result_item_id, resultData);
-    Platform::Log(player.GetNickname() + " успешно создал на верстаке: " + resultData.name);
-    
+    // Симуляция списания ресурсов из бинарного слепка FactoryGridState
+    // (В твоем FactorySystem.cpp мы добавим методы DeductResources(scrap, mods))
+    factoryContext.DeductResources(bp->requiredIronScrap, bp->requiredTechMods);
+
+    // Добавляем созданный предмет в инвентарь класса Player
+    for (uint32_t i = 0; i < bp->requiredItemCount; ++i) {
+        player.AddItemToInventory(bp->targetItemId);
+    }
+
+    Platform::Log("[CRAFTING SUCCESS]: Верстак собрал '" + std::string(itemRecord->itemName) + "' по чертежу " + std::to_string(blueprintId));
     return true;
 }
 

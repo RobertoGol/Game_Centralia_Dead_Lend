@@ -1,6 +1,7 @@
 #pragma once
 #include "core/Math3D.hpp"
-#include <SDL2/SDL.h>
+#include <SDL.h>
+// Было: #include <SDL2/SDL.h>
 #if defined(CENTRALIA_PLATFORM_WINDOWS)
     #include <windows.h>
     #include <glad/glad.h> 
