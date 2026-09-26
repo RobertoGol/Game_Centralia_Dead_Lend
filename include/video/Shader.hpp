@@ -3,9 +3,11 @@
 #include <cstdint>
 #if defined(CENTRALIA_PLATFORM_WINDOWS)
     #include <windows.h>
-    #include <glad/glad.h>
+    #include "glad/glad.h"
+
 #else
-    #include <glad/glad.h>
+    #include "glad/glad.h"
+
 #endif
 
 namespace Centralia {

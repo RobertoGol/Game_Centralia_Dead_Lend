@@ -8,6 +8,7 @@
 #include "video/Renderer3D.hpp"
 #include "video/Shader.hpp"
 
+
 namespace Centralia {
 
 // Специфические перечисления для логики классов и контроля админа
