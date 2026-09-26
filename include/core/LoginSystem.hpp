@@ -1,38 +1,54 @@
 #pragma once
-#include "gameplay/ClassSystem.hpp"
-#include "gameplay/ModificationSystem.hpp" // Берем CharacterRace и CharacterSaveSlot из спецификации
-#include <string>
 #include <vector>
+#include <string>
+#include <cstdint>
+#include "gameplay/Player.hpp"
+#include "gameplay/ClassSystem.hpp" // Импортируем готовые HumanClass и TitanClass отсюда
 
 namespace Centralia {
 
+enum class CharacterRace : uint8_t {
+    Human,
+    Elf,
+    Dwarf,
+    HalfAlv
+};
+
+#pragma pack(push, 1)
+struct CharacterSaveSlot {
+    uint8_t       slotId;
+    uint32_t      slotIndex;          // Нужно для LoginSystem.cpp:12
+    char          characterName[32];  // Фиксированный размер строки под имя
+    CharacterRace selectedRace;      
+    uint32_t      level;
+    uint32_t      health;
+    uint8_t       isOccupied;         // Нужно для LoginSystem.cpp:65
+    uint64_t      lastSavedTimestamp; // Нужно для LoginSystem.cpp:67
+};
+#pragma pack(pop)
+
 class LoginSystem {
 private:
-    bool m_isOnlineMode = false;
-    std::string m_authToken = "";
-    std::vector<CharacterSaveSlot> m_slots;
-    uint8_t m_selectedSlotIndex = 0;
+    std::vector<CharacterSaveSlot> m_slots; 
+    uint8_t m_selectedSlotIndex;
+    bool m_isOnlineMode;
+    std::string m_authToken;
 
 public:
-    LoginSystem();
+    // Конструктор по умолчанию без тела, так как в .cpp он уже реализован на строке 9
+    LoginSystem(); 
     ~LoginSystem() = default;
 
-    // Попытка авторизации через мастер-сервер (как в Elder Tale)
-    // Если нет интернета — функция безопасно возвращает false, активируя State of Decay режим
+    // Убраны noexcept, чтобы сигнатуры функций идеально совпали со src/core/LoginSystem.cpp
+    void LoadSaveSlots();
     bool TryOnlineLogin(const std::string& username, const std::string& password);
-
-    // Запуск автономного режима: чтение ячеек сохранений локально с диска ПК
     void InitializeOfflineMode();
-
-    // Создание нового персонажа-гуманоида в выбранной ячейке (редактор Fallout 76)
-    bool CreateCharacterInSlot(uint8_t slotIndex, const std::string& name, CharacterRace race, HumanClass hClass, TitanClass tClass);
-
-    // Загрузка существующего стейта персонажа из файла
-    bool LoadCharacterFromSlot(uint8_t slotIndex, Player& outPlayer, ClassSystem& outClassSystem);
-
-    bool IsOnline() const { return m_isOnlineMode; }
-    uint8_t GetSelectedSlot() const { return m_selectedSlotIndex; }
-    const std::vector<CharacterSaveSlot>& GetAvailableSlots() const { return m_slots; }
+    
+    // Синхронизировано с типами из ClassSystem.hpp под строку 61 в .cpp
+    bool CreateCharacterInSlot(uint8_t slotId, const std::string& name, CharacterRace race, HumanClass hClass, TitanClass tClass);
+    bool LoadCharacterFromSlot(uint8_t slotId, Player& player, ClassSystem& outClassSystem);
+    
+    [[nodiscard]] const std::vector<CharacterSaveSlot>& GetSaveSlots() const noexcept { return m_slots; }
 };
 
 } // namespace Centralia

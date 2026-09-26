@@ -1,7 +1,9 @@
 #pragma once
 #include <cstdint>
 #include <array>
-#include "gameplay/Math3D.hpp" // Твой Vector3D из ядра движка
+#include "core/Math3D.hpp" // Твой Vector3D из ядра движка
+
+
 
 namespace Centralia {
 

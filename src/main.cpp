@@ -2,8 +2,12 @@
 #include <chrono>
 #include <thread>
 
+#define _USE_MATH_DEFINES // Гарантирует видимость M_PI в Math3D.hpp при сборке
+#include <cmath>
+#include "core/Engine.hpp"
+
 // Твои базовые зависимости ядра Modern OpenGL 3.3 Core
-#include "gameplay/Math3D.hpp"
+#include "core/Math3D.hpp"
 #include "gameplay/Player.hpp"
 #include "gameplay/MonsterAISystem.hpp"
 #include "gameplay/ProceduralMotionManager.hpp"

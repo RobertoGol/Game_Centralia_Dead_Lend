@@ -1,149 +1,128 @@
-#include "gameplay/DialogueSystem.hpp"
-#include "platform/Platform.hpp"
-#include <algorithm>
+#pragma once
+#include <cstdint>
+#include <string>
+#include <array>
+#include <vector>
+#include <unordered_map>
+#include "core/Math3D.hpp"
+#include "gameplay/Player.hpp"
 
 namespace Centralia {
 
-void DialogueSystem::InitializeDialogueDatabase() {
-    m_dialogueNodes.clear();
+// Категории реакций NPC на допросе (Для нелинейных квестов)
+enum class DialogueReactionType : uint8_t {
+    Neutral     = 0,
+    Aggressive  = 1,
+    Terrified   = 2,
+    Friendly    = 3,
+    Confessed   = 4
+};
 
-    // Узел 1: Стартовый диалог в Убежище Обучения (аналог Fallout 4)
-    AdvancedDialogueNode node1;
-    node1.nodeId = 1;
-    node1.npcSpeechText = "Приветствую тебя в центральном секторе, Выживший. Системы жизнеобеспечения бункера стабильны. Куда планируешь выдвигаться?";
+#pragma pack(push, 1)
+// Плотная структура профиля диалога NPC (Твой Снимок из прошлого)
+struct NPCDialogueProfile {
+    uint32_t npcId;          // ID NPC
+    uint16_t heartRateBPM;   // Пульс NPC
+    float    stressFactor;   // Стресс [0.0f - 1.0f]
+    uint8_t  trigger13Fired; // Поймали ли сюжетный Триггер 13
+};
+#pragma pack(pop)
+
+// Старый формат узла диалога, который жестко ищет метод EvaluateChoice
+struct StaticDialogueNode {
+    int32_t     nodeId;
+    std::string textResponse;
+    uint32_t    requiredIntellect;
+    uint32_t    embeddedQuestTrigger;
+};
+
+// Выбор ответа в продвинутой системе диалогов под твой DialogueSystem.cpp
+struct DialogueChoiceAdvanced {
+    int32_t     targetNodeId;         // Синхронизировано со строкой 98 в .cpp (было nextNodeId)
+    std::string choiceText;
+    uint32_t    requiredIntellect;
+    std::string conditionParam;
+};
+
+// Продвинутый узел диалога — поля строго соответствуют твоему .cpp файлу!
+struct AdvancedDialogueNode {
+    uint32_t nodeId;                                      // Сделано uint32_t под строку 62 в .cpp
+    std::string npcSpeechText;                            // Строка 29 в .cpp (было npcText)
+    std::vector<DialogueChoiceAdvanced> branchingOptions; // Строки 17-18 в .cpp (было choices)
+    uint32_t embeddedQuestTrigger;
     
-    DialogueChoiceAdvanced choice1_1 = { "Я ищу выход во Внешний Мир Centralia.", 2, 0, 5 };
-    DialogueChoiceAdvanced choice1_2 = { "Мне нужно воспользоваться верстаком для модификации колес.", 3, 0, 0 };
-    node1.branchingOptions.push_back(choice1_1);
-    node1.branchingOptions.push_back(choice1_2);
+    // Лорные ТТХ допроса, которые ищут строки 20-23 и 103-106 в .cpp
+    uint16_t npcHeartRateBpm;
+    float npcStressLevelVar;
+    int32_t playerAffectionScore;
+    bool isConfessionTriggered;
+};
+
+// Дополнительная структура для квестовых логов текстового движка Centralia
+struct DialogueHistoryRecord {
+    uint64_t  timestamp;
+    uint32_t  speakerId;
+    char      loggedText[128];
+    bool      wasIntellectCheckPassed;
+};
+
+class DialogueSystem {
+private:
+    std::unordered_map<uint32_t, AdvancedDialogueNode> m_dialogueNodes; // Изменено на uint32_t под .cpp
+    uint32_t m_currentNodeId;                                           // Изменено на uint32_t под строку 62 в .cpp
+    bool m_isDialogueActive;                                            // Изменено под строку 63 в .cpp
+    NPCDialogueProfile m_activeNPC;
+    bool m_conversationRunning;
     
-    node1.npcHeartRateBpm = 75;
-    node1.npcStressLevelVar = 10.0f;
-    node1.playerAffectionScore = 10.0f;
-    node1.isConfessionTriggered = false;
-    m_dialogueNodes[node1.nodeId] = node1;
-
-    // Узел 2: Скрытая ветка, завязанная на "Триггер 13" (Снимок из прошлого)
-    AdvancedDialogueNode node2;
-    node2.nodeId = 2;
-    node2.npcSpeechText = "Внешний Мир? Там бушуют радиационные штормы. Без силовой брони и герметичного транспорта ты там погибнешь... Погоди, что это у тебя в руках?";
+    static constexpr uint32_t TRIGGER_DECRYPT_ID = 13; // Наш Триггер 13 для Снимка из прошлого
     
-    // Сюда мы привяжем проверку наличия предмета 1002 в инвентаре
-    DialogueChoiceAdvanced choice2_1 = { "[ТРИГГЕР 13] Показать старый Снимок из прошлого.", 4, 0, 50 }; // Требует квестовый предмет
-    DialogueChoiceAdvanced choice2_2 = { "Ничего. Пожалуй, я останусь в бункере.", 1, 0, -5 };
-    node2.branchingOptions.push_back(choice2_1);
-    node2.branchingOptions.push_back(choice2_2);
+    // Внутренние биометрические показатели допроса
+    uint16_t m_currentNpcHeartRate;
+    float m_currentNpcStress;
+    int32_t m_playerAffection;
+
+    // Сетка истории текущей сессии диалога
+    std::vector<DialogueHistoryRecord> m_sessionHistory;
+    size_t m_maxHistoryLogSize = 100;
+    DialogueReactionType m_currentReaction;
+
+    // Внутренние методы валидации скрытых параметров игрока
+    bool CheckPlayerIntellectRequirements(const DialogueChoiceAdvanced& choice, const Player& player) const noexcept;
+    void LogDialogueStep(uint32_t speakerId, const std::string& text, bool checkPassed) noexcept;
+
+public:
+    // Исправленный чистый конструктор и деструктор для MSVC cl.exe
+    DialogueSystem() : m_currentNodeId(0), m_isDialogueActive(false), m_currentNpcHeartRate(75), 
+                       m_currentNpcStress(0.0f), m_playerAffection(0), m_conversationRunning(false),
+                       m_currentReaction(DialogueReactionType::Neutral) {}
+    ~DialogueSystem() = default;
     
-    node2.npcHeartRateBpm = 90; // Пульс растет при упоминании Внешнего Мира
-    node2.npcStressLevelVar = 35.0f;
-    node2.playerAffectionScore = 15.0f;
-    m_dialogueNodes[node2.nodeId] = node2;
-
-    // Узел 4: Ветка признания и глубокого доверия (Confession Recorded из Логов Akemi)
-    AdvancedDialogueNode node4;
-    node4.nodeId = 4;
-    node4.npcSpeechText = "О боже... Это же снимок центрального реактора до Изоляции! Откуда он у тебя? Значит, легенды о коде 'Ox-n init' правдивы... Тớ thật sự thích cậu. Я доверяю тебе, вот ключ от гермозатвора.";
+    // Метод, который линковщик вызывает на строке 7 в .cpp
+    void InitializeDialogueDatabase();
     
-    DialogueChoiceAdvanced choice4_1 = { "Принять ключ и открыть ворота в Пустошь.", 5, 0, 100 };
-    node4.branchingOptions.push_back(choice4_1);
+    // Методы диалогового стейта — приведены к точному бинарному соответствию с твоим DialogueSystem.cpp
+    void StartDialogue(uint32_t startNodeId, const Player& player); // Возвращен const Player& под строку 59 в .cpp
+    void MakeChoice(size_t choiceIndex, Player& player);            // Под строку 74 в .cpp
+    void OpenDialogue(uint32_t npcId);
     
-    node4.npcHeartRateBpm = 135; // Критический пульс (Волнение/Признание)
-    node4.npcStressLevelVar = 75.0f;
-    node4.playerAffectionScore = 100.0f; // Максимальное доверие
-    node4.isConfessionTriggered = true;  // Фиксация стейта в логах
-    m_dialogueNodes[node4.nodeId] = node4;
-
-    Platform::Log("DialogueSystem: База реплик и биометрии NPC успешно инициализирована.");
-}
-
-void DialogueSystem::StartDialogue(uint32_t startNodeId, const Player& player) {
-    auto it = m_dialogueNodes.find(startNodeId);
-    if (it != m_dialogueNodes.end()) {
-        m_currentNodeId = startNodeId;
-        m_isDialogueActive = true;
-        
-        // Передаем стартовую биометрию NPC в процессор движка
-        m_currentNpcHeartRate = it->second.npcHeartRateBpm;
-        m_currentNpcStress = it->second.npcStressLevelVar;
-        m_playerAffection = it->second.playerAffectionScore;
-        
-        Platform::Log("[DIALOGUE]: Диалог запущен. Собеседник: NPC_" + std::to_string(startNodeId));
-    }
-}
-
-void DialogueSystem::MakeChoice(size_t choiceIndex, Player& player) {
-    if (!m_isDialogueActive) return;
-
-    auto it = m_dialogueNodes.find(m_currentNodeId);
-    if (it == m_dialogueNodes.end() || choiceIndex >= it->second.branchingOptions.size()) return;
-
-    const auto& choice = it->second.branchingOptions[choiceIndex];
-
-    // Проверка скрытого "Триггера 13": если выбор требует Снимок из прошлого (Узел №2, Вариант 0)
-    if (m_currentNodeId == 2 && choiceIndex == 0) {
-        bool hasPhoto = false;
-        for (const auto& item : player.GetInventory()) {
-            if (item.id == 1002) { // Снимок из прошлого найден в инвентаре
-                hasPhoto = true;
-                break;
-            }
-        }
-        if (!hasPhoto) {
-            Platform::Log("[DIALOGUE]: Ошибка! Узел заблокирован. У вас нет Снимка из прошлого.");
-            return; // Сюжетный триггер не пропущен
-        }
-    }
-
-    // Переходим на следующий узел дерева диалогов
-    m_currentNodeId = choice.targetNodeId;
+    // Метод обновления биометрии под строку 115 в .cpp (принимает только 1 аргумент!)
+    void UpdateNpcBiometrics(float deltaTime);
     
-    // Обновляем базовую биометрию под новый узел
-    auto nextIt = m_dialogueNodes.find(m_currentNodeId);
-    if (nextIt != m_dialogueNodes.end()) {
-        m_currentNpcHeartRate = nextIt->second.npcHeartRateBpm;
-        m_currentNpcStress = nextIt->second.npcStressLevelVar;
-        
-        if (nextIt->second.isConfessionTriggered) {
-            Platform::Log("[DIALOGUE SYSTEMS]: Сработало глубокое признание. Данные зафиксированы в Ghost-RAM.");
-        }
-    } else {
-        m_isDialogueActive = false; // Конец ветки диалога, закрываем окно
-        Platform::Log("[DIALOGUE]: Конец разговора.");
-    }
-}
-
-void DialogueSystem::UpdateNpcBiometrics(float deltaTime) {
-    if (!m_isDialogueActive) return;
-
-    // Эффект живого сердцебиения: проц генерирует микро-колебания пульса на CPU,
-    // создавая реалистичное поведение стресса на датчиках Пип-боя
-    static float bioTimer = 0.0f;
-    bioTimer += deltaTime;
+    void EvaluateChoice(const StaticDialogueNode& selectedNode, uint32_t currentMapTriggerId);
     
-    if (bioTimer >= 0.5f) { // Каждые полсекунды вносим флуктуации
-        bioTimer = 0.0f;
-        // Пульс колеблется в районе базового значения узла (+-3 удара)
-        m_currentNpcHeartRate += (rand() % 3) - 1;
-        
-        // Стресс плавно затухает, если игрок не выбирает агрессивные реплики
-        m_currentNpcStress = std::max(0.0f, m_currentNpcStress - (0.1f * deltaTime));
-    }
-}
+    // Добавленные геттеры текста и опций ответов под строки 133 и 138 в .cpp (с const Player&)
+    std::string GetCurrentNpcText() const;
+    std::vector<std::string> GetCurrentPlayerOptions(const Player& player) const;
 
-std::string DialogueSystem::GetCurrentNpcText() const {
-    auto it = m_dialogueNodes.find(m_currentNodeId);
-    return (it != m_dialogueNodes.end()) ? it->second.npcSpeechText : "";
-}
-
-std::vector<std::string> DialogueSystem::GetCurrentPlayerOptions(const Player& player) const {
-    std::vector<std::string> options;
-    auto it = m_dialogueNodes.find(m_currentNodeId);
-    if (it != m_dialogueNodes.end()) {
-        for (const auto& choice : it->second.branchingOptions) {
-            options.push_back(choice.textOption);
-        }
-    }
-    return options;
-}
+    // Геттеры расширенной лорной аналитики
+    bool IsActive() const noexcept { return m_conversationRunning; }
+    const NPCDialogueProfile& GetNPCProfile() const noexcept { return m_activeNPC; }
+    [[nodiscard]] bool IsDialogueActive() const noexcept { return m_isDialogueActive; }
+    [[nodiscard]] uint32_t GetCurrentNodeId() const noexcept { return m_currentNodeId; }
+    [[nodiscard]] DialogueReactionType GetCurrentReaction() const noexcept { return m_currentReaction; }
+    
+    // Метод выгрузки бинарных логов диалога для сохранений OGGX
+    std::vector<uint8_t> ExportDialogueLog() const;
+};
 
 } // namespace Centralia

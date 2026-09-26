@@ -30,7 +30,7 @@ static const float cubeVertices[] = {
 Renderer3D::Renderer3D(int width, int height) 
     : m_screenWidth(width), m_screenHeight(height) {}
 
-Renderer3D::~Result() {
+Renderer3D::~Renderer3D() {
     Shutdown();
 }
 

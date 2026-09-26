@@ -1,3 +1,5 @@
+#define WIN32_LEAN_AND_MEAN // Защищает ws2def.h от конфликтов с winsock.h
+#define _USE_MATH_DEFINES
 #include "core/Engine.hpp"
 #include "platform/Platform.hpp"
 #include "gameplay/ProceduralMotion.hpp"
@@ -10,6 +12,7 @@
 #include <thread>
 #include <chrono>
 #include <cmath>
+#include <algorithm> // Фикс для std::max на строке 129
 
 namespace Centralia {
 
@@ -20,8 +23,8 @@ bool Engine::Start() {
     if (!Platform::Initialize()) return false;
 
     // Инициализация глобальных геймплейных баз данных лора и предметов
-    ItemDatabase::GetInstance().Initialize();
-    CraftingManager::GetInstance().Initialize();
+    ItemDatabase::GetInstance().InitializeDatabase();
+    CraftingManager::GetInstance().InitializeBlueprints();
 
     if (!NetworkSocket::GlobalInit()) return false;
     if (!m_memoryManager.Initialize(Platform::GetDeviceHWID())) return false;

@@ -1,5 +1,6 @@
 #include "video/Shader.hpp"
 #include "platform/Platform.hpp"
+#include <glad/glad.h>
 #include <fstream>
 #include <sstream>
 #include <vector>

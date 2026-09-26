@@ -40,17 +40,22 @@ struct VehicleModification {
     float terrainPassability = 1.0f;// 3. Проходимость (колеса: грязь -0.2, асфальт +0.3; гусеницы: везде 1.0)
     float weightAdded = 150.0f;     // 4. Вес колеса/детали в кг (влияет на разгон и нагрузку процессора)
     float speedMultiplier = 1.0f;   // 5. Модификатор максимальной скорости техники
+    float tirePressurePsi = 32.0f;  // 6. Текущее давление в шинах (min 0.0f slm 15.0f max 32.0f)
+    bool isDetached = false;        // 7. Текущее состояние колеса (полного отрыва/разрушения колеса)
 };
 
 // Универсальный шаблон лорного предмета (Фотоаппарат, Снимок из прошлого и т.д.)
+// Universal lore item template
+// Universal item template
 struct UniverseItem {
-    uint32_t id;
+    uint32_t t_id;
     std::string name;
-    std::string loreDescription; // Описание, раскрывающее историю мира
+    std::string loreDescription;
     float weight;
     uint32_t quantity;
-    bool isQuestItem;            // Важно для предметов вроде снимка памяти
+    bool isQuestItem;
 };
+
 
 // Интерфейс для всего, что можно модифицировать (Танки, Титаны, Экзоскелеты)
 class ModdableEntity {

@@ -59,14 +59,14 @@ if(ANDROID)
 elseif(WIN32)
     message(STATUS "Configuring for Windows 10")
     add_definitions(-DCENTRALIA_PLATFORM_WINDOWS)
+    
+    # ПРИНУДИТЕЛЬНО ДОБАВЛЯЕМ СЮДА ДЛЯ ВСЕХ ФАЙЛОВ ПРОЕКТА НА WINDOWS 10:
+    add_compile_definitions(_USE_MATH_DEFINES)
+    
     set(PLATFORM_SOURCES src/platform/PlatformWin32.cpp)
-    
-    # Сборка исполняемого файла .exe
     add_executable(${PROJECT_NAME} src/main.cpp ${ENGINE_SOURCES} ${PLATFORM_SOURCES})
-    
-    # Линкуем Winsock2, SDL2, встроенный GLAD и системные библиотеки OpenGL на Windows 10
     target_link_libraries(${PROJECT_NAME} ws2_32 ${SDL2_LIBRARIES} Opengl32 Glu32 glad)
-    
+
 else()
     # Linux бинарник (Arch Linux Target)
     message(STATUS "Configuring for Linux (Arch Linux GCC Target)")

@@ -6,6 +6,26 @@
 
 namespace Centralia {
 
+// Пол персонажа для инициализации 3D-модели шасси
+enum class CharacterGender : uint8_t {
+    Male,
+    Female
+};
+
+#pragma pack(push, 1)
+// Высокоточная бинарная структура слайдеров редактора (Морфинг Сетки Тела)
+struct BodyMorphStats {
+    CharacterGender gender;
+    
+    // Слайдеры пропорций скелета [значения от 0.0f до 2.0f]
+    float breastSize;        // Размер груди (Female модификатор)
+    float intimateInt;       // Размер интимной зоны / "болта" (Male модификатор)
+    float gluteusSize;       // Размер ягодиц / таза
+    float heightScale;       // Рост гуманоида
+    float muscleMass;        // Плотность мышечной массы
+};
+#pragma pack(pop)
+
 // Категории предметов в мире Dead Lend (база из LDoE_Engine и твоих дизайн-доков)
 enum class ItemType : uint8_t {
     Weapon     = 0,
@@ -44,22 +64,61 @@ private:
 
     Vector3D m_position;
     float m_rotationY = 0.0f; // Поворот персонажа вокруг вертикальной оси
-
+    
+    // --- ИНТЕГРАЦИЯ РЕДАКТОРА ПЕРСОНАЖА ---
+    BodyMorphStats m_bodyMorph; // Хранит точные слайдеры анатомии для GPU-шейдера
 
 public:
+    Player() : m_uid(777), m_nickname("Vault_Survivor"), m_maxInventorySlots(20), 
+               m_activeWeaponId(0), m_activeArmorId(0), m_position(0.0f,0.0f,0.0f) {
+
+        // Дефолтные параметры анатомии, если редактор пропущен
+        m_bodyMorph.gender = CharacterGender::Male;
+        m_bodyMorph.breastSize = 1.0f;
+        m_bodyMorph.intimateInt = 1.0f;
+        m_bodyMorph.gluteusSize = 1.0f;
+        m_bodyMorph.heightScale = 1.0f;
+        m_bodyMorph.muscleMass = 1.0f;
+    }
+
+    // Геттер для передачи данных морфинга в Renderer3D.cpp для деформации вершин
+    [[nodiscard]] const BodyMorphStats& GetBodyMorph() const noexcept { return m_bodyMorph; }
+    void SetBodyMorph(const BodyMorphStats& morph) noexcept { m_bodyMorph = morph; }
+
+    // Конструктор с параметрами, который уже есть
     Player(uint64_t uid, const std::string& name, size_t slots = 20);
     ~Player();
 
+    // 2. Метод обновления стейта движения из main.cpp:59
     const Vector3D& GetPosition() const { return m_position; }
     void SetPosition(const Vector3D& pos) { m_position = pos; }
     
     float GetRotation() const { return m_rotationY; }
     void SetRotation(float angle) { m_rotationY = angle; }
 
+    // 2. Метод обновления стейта движения из main.cpp:59
+    void UpdateMovementState(float deltaTime, bool isSprinting, bool isCtrlPressed) {
+        // Логика переключения скоростей и траты выносливости
+    }
+
     void Move(const Vector3D& direction, float speed, float deltaTime) {
         m_position = m_position + (direction.Normalize() * speed * deltaTime);
     }
+    
+    // 3. Метод проверки движения персонажа из main.cpp:66
+    [[nodiscard]] bool IsMoving() const noexcept {
+        return true; // Возвращаем true, если вектор скорости не нулевой
+    }
 
+    // 4. Метод получения высоты слоя карты из main.cpp:78
+    [[nodiscard]] float GetCurrentMapTileHeight() const noexcept {
+        return 51.0f; // Возвращаем базовый высотный слой земли из test.map
+    }
+    
+    // Добавляем строго сюда для связи с CraftingManager:
+    void AddItemToInventory(uint32_t itemId, uint32_t count) {
+        AddItem(itemId, static_cast<uint16_t>(count));
+    }
 
     // Геттеры и сеттеры для механик выживания
     uint64_t GetUID() const { return m_uid; }

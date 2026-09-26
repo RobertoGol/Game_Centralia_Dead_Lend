@@ -1,12 +1,11 @@
 #pragma once
 #include <string>
 #include <cstdint>
-
 #if defined(CENTRALIA_PLATFORM_WINDOWS)
     #include <windows.h>
-    #include <GL/gl.h>
+    #include <glad/glad.h>
 #else
-    #include <GL/gl.h>
+    #include <glad/glad.h>
 #endif
 
 namespace Centralia {

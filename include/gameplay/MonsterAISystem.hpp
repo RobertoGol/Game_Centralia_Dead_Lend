@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
-#include "gameplay/Math3D.hpp" // Твой Vector3D
+#include "core/Math3D.hpp" // Твой Vector3D
 #include "gameplay/Player.hpp"  // Твой класс игрока
 
 namespace Centralia {

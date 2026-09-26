@@ -2,21 +2,28 @@
 #include <cstdint>
 #include <array>
 #include "gameplay/ItemDatabase.hpp"
-#include "gameplay/FactorySystem.hpp"
+#include "gameplay/CraftingManager.hpp"
+#include "gameplay/FactorySystem.hpp" // Добавляем строго этот инклуд сюда!
+#include "platform/Platform.hpp"
+
 
 namespace Centralia {
+
+// Опережающее объявление для предотвращения циклических зависимостей в MSVC
+class FactoryEngineContext; 
+class Player;
 
 #pragma pack(push, 1)
 // Плотная структура рецепта крафта по чертежу (State of Decay 2)
 struct BlueprintRecord {
     uint32_t     blueprintId;
     uint32_t     targetItemId;          // ID предмета, который скрафтим (из ItemDatabase)
-    uint32_t     requiredItemCount;      // Сколько штук получим на выходе
+    uint32_t     requiredItemCount;     // Сколько штук получим на выходе
     
     // Ресурсы, необходимые для сборки (тратятся из FactorySystem)
-    float        requiredIronScrap;      // Требуемый металлолом
-    float        requiredTechMods;       // Требуемые компоненты электроники
-    uint32_t     requiredToolId;         // ID инструмента в инвентаре (0, если не нужен)
+    float        requiredIronScrap;     // Требуемый металлолом
+    float        requiredTechMods;      // Требуемые компоненты электроники
+    uint32_t     requiredToolId;        // ID инструмента в инвентаре (0, если не нужен)
 };
 #pragma pack(pop)
 
@@ -29,6 +36,11 @@ private:
 public:
     CraftingManager() noexcept;
     ~CraftingManager() = default;
+
+    static CraftingManager& GetInstance() {
+        static CraftingManager instance;
+        return instance;
+    }
 
     /**
      * @brief Инициализация чертежей крафта (пушки Titanfall, пластины T-60, медицина).

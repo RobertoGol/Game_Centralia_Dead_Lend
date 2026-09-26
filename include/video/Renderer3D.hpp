@@ -4,7 +4,7 @@
 // Было: #include <SDL2/SDL.h>
 #if defined(CENTRALIA_PLATFORM_WINDOWS)
     #include <windows.h>
-    #include <glad/glad.h> 
+    #include <glad/glad.h>
 #elif defined(CENTRALIA_PLATFORM_ANDROID)
     #include <GLES3/gl3.h>
 #else

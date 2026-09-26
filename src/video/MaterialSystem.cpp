@@ -30,6 +30,9 @@ void MaterialSystem::InitializeMaterialLibrary() {
     m_materials[wastelandWreck.materialId] = wastelandWreck;
 
     // Профиль 3: Радиоактивная био-масса (Для Гулей, Бегемотов и зараженных Мехов)
+//    Временно комментируем битый отладочный вывод:
+//    float radGlowGlowBio = 1.0f;
+//    someVar.materialId = radGlowGlowBio.materialId;
     MaterialProperties radGlowBio;
     radGlowGlowBio.materialId = 803;
     radGlowBio.materialName = "Облученная Зараженная Плоть";

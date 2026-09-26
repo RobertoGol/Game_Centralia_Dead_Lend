@@ -27,12 +27,21 @@ class ItemDatabase {
 private:
     std::unordered_map<uint32_t, ItemTemplate> m_templates;
 
-    ItemDatabase(); // Синглтон: база данных в памяти должна быть в одном экземпляре
+    ItemDatabase(); // Синглтон
 
 public:
     static ItemDatabase& GetInstance() {
         static ItemDatabase instance;
         return instance;
+    }
+
+    // Правильный метод поиска для CraftingManager, возвращающий твою структуру предметов
+    const ItemTemplate* GetItemTemplatePtr(uint32_t itemId) const noexcept {
+        auto it = m_templates.find(itemId);
+        if (it != m_templates.end()) {
+            return &it->second;
+        }
+        return nullptr;
     }
 
     // Инициализация дефолтного лута (Fallout / State of Decay сеттинг)

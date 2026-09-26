@@ -1,6 +1,9 @@
 #include "gameplay/CraftingManager.hpp"
+#include "gameplay/FactorySystem.hpp" // Фикс Incomplete Type C2027
+#include "gameplay/Player.hpp"
 #include "platform/Platform.hpp"
 #include <cstring>
+#include <string>
 
 namespace Centralia {
 
@@ -63,30 +66,27 @@ bool CraftingManager::TryExecuteCraft(uint32_t blueprintId, Player& player, Fact
         return false;
     }
 
-    // Валидация существования целевого предмета в Ghost-реестре лута
-    const ItemStaticRecord* itemRecord = itemDb.GetItemRecord(bp->targetItemId);
+    // Фикс опечатки: заменено blueprint->targetItemId на bp->targetItemId
+    const auto* itemRecord = Centralia::ItemDatabase::GetInstance().GetItemTemplatePtr(bp->targetItemId);
     if (!itemRecord) {
         Platform::Log("[CRAFTING ERROR]: Целевой предмет крафта не зарегистрирован в ItemDatabase.");
         return false;
     }
 
     // Аппаратная проверка ресурсов, накопленных на хосте автоматическими фабриками
-    // Мы списываем запасы напрямую через методы контекста FactorySystem.cpp
     if (factoryContext.GetIronScrap() < bp->requiredIronScrap) {
         Platform::Log("[CRAFTING FAIL]: Недостаточно металлолома. Требуется: " + std::to_string(bp->requiredIronScrap));
         return false;
     }
 
     // Симуляция списания ресурсов из бинарного слепка FactoryGridState
-    // (В твоем FactorySystem.cpp мы добавим методы DeductResources(scrap, mods))
     factoryContext.DeductResources(bp->requiredIronScrap, bp->requiredTechMods);
 
-    // Добавляем созданный предмет в инвентарь класса Player
-    for (uint32_t i = 0; i < bp->requiredItemCount; ++i) {
-        player.AddItemToInventory(bp->targetItemId);
-    }
+    // Фикс аргументов: передаем ID предмета и количество напрямую без лишнего цикла
+    player.AddItemToInventory(bp->targetItemId, bp->requiredItemCount);
 
-    Platform::Log("[CRAFTING SUCCESS]: Верстак собрал '" + std::string(itemRecord->itemName) + "' по чертежу " + std::to_string(blueprintId));
+    // Фикс поля: заменено itemRecord->itemName на твое родное поле itemRecord->name
+    Platform::Log("[CRAFTING SUCCESS]: Верстак собрал '" + itemRecord->name + "' по чертежу " + std::to_string(blueprintId));
     return true;
 }
 
