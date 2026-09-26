@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\core\MemoryManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\core\NetworkProtocol.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\core\NetworkSocket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\core\ConfigSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\core\LoginSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\core\InputController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\gameplay\ItemDatabase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\gameplay\CraftingManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\gameplay\ProceduralMotion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\gameplay\ServerShop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\gameplay\WeaponSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\gameplay\DialogueSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\gameplay\CreatureAI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\gameplay\FactorySystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\video\MaterialSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\core\AssetParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\gameplay\ClassSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\gameplay\VehiclePhysics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\video\Renderer3D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\video\Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="I:\Game_Centralia_Dead_Lend\src\platform\PlatformWin32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="I:\Game_Centralia_Dead_Lend\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="I:\Game_Centralia_Dead_Lend\src\glad.c">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{692DA70F-3B9B-3BD5-9DF2-DBFEF0FFFF2A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

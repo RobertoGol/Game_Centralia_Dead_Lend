@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="I:\Game_Centralia_Dead_Lend\build\CMakeFiles\70d2bd16db0584d29084a316c316ecca\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{745D5B4C-F26D-3630-92FB-759DA2FB71A3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
