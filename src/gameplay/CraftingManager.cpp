@@ -2,6 +2,8 @@
 #include "gameplay/FactorySystem.hpp"     // Этот инклуд обязан быть здесь для фикса C2027!
 #include "gameplay/Player.hpp"
 #include "platform/Platform.hpp"
+#include "gameplay/ItemDatabase.hpp"
+#include "gameplay/FactorySystem.hpp" // Добавляем строго этот инклуд сюда!
 #include <cstring>
 #include <string>
 

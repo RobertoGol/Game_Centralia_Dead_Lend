@@ -1,11 +1,11 @@
+
+
+#define _USE_MATH_DEFINES // Гарантирует видимость M_PI в Math3D.hpp при сборке
 #include <iostream>
 #include <chrono>
 #include <thread>
-
-#define _USE_MATH_DEFINES // Гарантирует видимость M_PI в Math3D.hpp при сборке
 #include <cmath>
 #include "core/Engine.hpp"
-
 // Твои базовые зависимости ядра Modern OpenGL 3.3 Core
 #include "core/Math3D.hpp"
 #include "gameplay/Player.hpp"
@@ -26,6 +26,7 @@ static ProceduralMotionManager  g_TitanMotionManager;
  * Содержит аппаратно-адаптивный цикл балансировки кадра движка.
  */
 int main(int argc, char* argv[]) {
+    Centralia::Engine engine;
     Platform::Log("[CORE INIT]: Запуск Game Centralia: Dead Lend. Modern OpenGL 3.3 Core контекст активен.");
 
     // Инициализируем стартовых тактических ИИ-агентов на сцене (Одиночки и Рой роботов)

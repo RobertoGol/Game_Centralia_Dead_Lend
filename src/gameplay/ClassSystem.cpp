@@ -2,6 +2,7 @@
 #include "platform/Platform.hpp"
 #include <functional> // Для std::hash
 
+
 namespace Centralia {
 
 void ClassSystem::SetHumanClass(HumanClass hClass) {
@@ -36,7 +37,7 @@ bool ClassSystem::AuthenticateAndActivateAdmin(const std::string& currentDeviceH
     // Проверяем, совпадает ли железо с подписью создателя игры
     // Для теста временно пропускаем по логическому флагу, в релизе будет жесткий сверка хэшей
     if (currentHash == m_masterAdminHwidHash || currentDeviceHwid == "LINUX_UNKNOWN_HWID" || currentDeviceHwid == "WINDOWS_UNKNOWN_HWID") {
-        m_currentMode = static_cast<ActiveControlMode>(EngineControlMode::Admin_Observer);
+        m_currentMode = EntityControlMode::Admin_Observer;
           
         // Наделяем скрытый класс модератора ультимативными правами
         m_currentAttributes.hasGodMode = true;
@@ -53,19 +54,26 @@ bool ClassSystem::AuthenticateAndActivateAdmin(const std::string& currentDeviceH
 
 // Было: void ClassSystem::ToggleControlMode(ToggleControlMode mode)
 // Сделай строго так (через пробел):
-void ClassSystem::ToggleControlMode(ActiveControlMode mode) {
-    if (m_currentMode == ActiveControlMode::Admin_Observer && mode != ActiveControlMode::Admin_Observer) {
+void ClassSystem::ToggleControlMode(EntityControlMode mode) {
+
+        // 1. Проверяем блокировку через m_entityControlMode и новое имя энума
+    if (m_currentMode == EntityControlMode::Admin_Observer && mode != EntityControlMode::Admin_Observer) {
         // Запрещаем обычным триггерам сбрасывать режим админа без верификации
         Platform::Log("[ADMIN]: Выход из режима модератора заблокирован. Требуется ручной сброс консоли.");
         return;
     }
 
+    // 2. Присваиваем значение в родную переменную EntityControlMode
     m_currentMode = mode;
-    if (m_currentMode == ActiveControlMode::Titan_Vehicle) {
+
+    // 3. Исправляем проверки стейтов под типы EntityControlMode
+
+    if (m_currentMode == EntityControlMode::Titan_Vehicle) {
         Platform::Log("[INTERFACE]: Смена режима. Интерфейс Elder Tale переключен на кабину управления Титана!");
-    } else if (m_currentMode == ActiveControlMode::Pilot_Humanoid) {
+    } else if (m_currentMode == EntityControlMode::Pilot_Humanoid) {
         Platform::Log("[INTERFACE]: Игрок покинул кабину. Активен режим Пилота-гуманоида.");
     }
+
 }
 
 } // namespace Centralia

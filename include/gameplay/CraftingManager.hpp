@@ -1,16 +1,17 @@
 #pragma once
 #include <cstdint>
 #include <array>
+#include <cstring>
+#include <string>
 #include "gameplay/ItemDatabase.hpp"
-#include "gameplay/CraftingManager.hpp"
-#include "gameplay/FactorySystem.hpp" // Добавляем строго этот инклуд сюда!
-#include "platform/Platform.hpp"
+#include "gameplay/Player.hpp"
+#include "gameplay/FactorySystem.hpp" // Этот инклуд обязан быть здесь в хедере!
 
 
 namespace Centralia {
 
 // Опережающее объявление для предотвращения циклических зависимостей в MSVC
-class FactoryEngineContext; 
+// class FactoryEngineContext; 
 class Player;
 
 #pragma pack(push, 1)

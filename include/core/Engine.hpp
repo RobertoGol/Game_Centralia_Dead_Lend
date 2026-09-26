@@ -7,6 +7,7 @@
 #include "gameplay/Player.hpp"
 #include "video/Renderer3D.hpp"
 #include "video/Shader.hpp"
+#include "core/Engine.hpp"
 
 
 namespace Centralia {

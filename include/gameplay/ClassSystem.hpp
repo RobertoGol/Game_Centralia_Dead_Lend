@@ -1,10 +1,26 @@
 #pragma once
 #include <string>
 #include <cstdint>
-#include "core/Engine.hpp" // Добавляем для связки модулей
-
+// #include "core/Engine.hpp" // Добавляем для связки модулей
+#include "core/Math3D.hpp" // Этот инклуд теперь раскрывает энумы на 100% без циклов!
 
 namespace Centralia {
+
+// Объявляем базовые типы энумов опережающе для разрыва циклической петли инклудов
+namespace Centralia {
+    enum class ActiveControlMode : int32_t;
+    enum class EngineControlMode : int32_t;
+}
+
+// Расширяем режимы контроля: добавляем скрытый админский хост-класс
+// Геймплейный enum пилотирования роботов (переименован для бесконфликтной сборки)
+enum class EntityControlMode : uint8_t {
+
+    Pilot_Humanoid,   
+    Titan_Vehicle,
+    Admin_Observer     // <-- СКРЫТЫЙ КЛАСС: Админ-Модератор (Консольный Фиксатор)
+
+};
 
 enum class HumanClass : uint8_t {
     Guardian_Warrior, 
@@ -20,16 +36,6 @@ enum class TitanClass : uint8_t {
     Ronin_Stryder     
 };
 
-// Расширяем режимы контроля: добавляем скрытый админский хост-класс
-// Геймплейный enum пилотирования роботов (переименован для бесконфликтной сборки)
-enum class EntityControlMode : uint8_t {
-
-    Pilot_Humanoid,   
-    Titan_Vehicle,
-    Admin_Observer     // <-- СКРЫТЫЙ КЛАСС: Админ-Модератор (Консольный Фиксатор)
-
-};
-
 struct ClassAttributes {
     float maxHealthModifier = 1.0f;
     float energyRegenRate = 1.0f;
@@ -41,31 +47,36 @@ struct ClassAttributes {
 
 class ClassSystem {
 private:
+    
+    ActiveControlMode m_sessionControlMode = ActiveControlMode::Standard_Player;       // Для Engine.hpp
+    EngineControlMode m_engineControlMode = EngineControlMode::Standard_Player; // Было m_currentMode     // Синхронизировано с Engine.hpp
+    // Строка 45: Меняем тип и значение на EntityControlMode
+    // Строка 45: Меняем тип и значение на EntityControlMode
+    EntityControlMode m_currentMode = EntityControlMode::Pilot_Humanoid; // Имя строго m_currentMode! // Берем тип EntityControlMode из Engine.hpp!
 
-    ActiveControlMode m_currentMode = ActiveControlMode::Standard_Player;  // Берем тип ActiveControlMode из Engine.hpp!
     HumanClass m_humanClass = HumanClass::Guardian_Warrior;
     TitanClass m_titanClass = TitanClass::Vanguard_Brawler;
     ClassAttributes m_currentAttributes;    
-    uint64_t m_masterAdminHwidHash = 0x8C5A3F11B29DEE77; // Хэш HWID твоего ПК для защиты от взлома
-
-    EngineControlMode m_engineControlMode = EngineControlMode::Standard_Player; // Было m_currentMode     // Синхронизировано с Engine.hpp
-    EntityControlMode m_entityControlMode = EntityControlMode::Pilot_Humanoid;  // Было m_currentMode
+    uint64_t m_masterAdminHwidHash = 0x8C5A3F11B29DEE77;    // Хэш HWID твоего ПК для защиты от взлома
 
 public:
     ClassSystem() = default;
     void SetHumanClass(HumanClass hClass);
     void SetTitanClass(TitanClass tClass);
-    
+
     // Активация режима Модератора с проверкой безопасности железа
     bool AuthenticateAndActivateAdmin(const std::string& currentDeviceHwid);
-    void ToggleControlMode(ActiveControlMode mode);
+    void ToggleControlMode(EntityControlMode mode);
+    // Строка 61: Меняем тип на EntityControlMode под твою переменную
+    // Строка 61: Меняем возвращаемый тип на EntityControlMode
+    // Строка 61: Меняем возвращаемый тип на EntityControlMode
+    EntityControlMode GetControlMode() const { return m_currentMode; }
 
-    ActiveControlMode GetControlMode() const { return m_currentMode; }
+
     HumanClass GetHumanClass() const { return m_humanClass; }
     TitanClass GetTitanClass() const { return m_titanClass; }
     const ClassAttributes& GetAttributes() const { return m_currentAttributes; }
-    
-    EntityControlMode GetEntityControlMode() const { return m_entityControlMode; } // Было GetControlMode
+    EntityControlMode m_entityControlMode = EntityControlMode::Pilot_Humanoid; // Было GetControlMode
     EngineControlMode GetEngineControlMode() const { return m_engineControlMode; } // Было GetControlMode
 };
 

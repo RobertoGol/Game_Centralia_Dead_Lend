@@ -1,8 +1,15 @@
 #define _USE_MATH_DEFINES // Ставим на самую первую строчку для cl.exe
 #pragma once
 #include <cmath> // Теперь cmath на Windows увидит M_PI
+#include <cstdint> // ЖЕСТКО ДОБАВЛЯЕМ ДЛЯ ИСПРАВЛЕНИЯ ОШИБКИ C3064!
 
 namespace Centralia {
+
+// Специфические перечисления для логики классов и контроля админа
+enum class ActiveControlMode : int32_t {
+    Standard_Player = 0,
+    Admin_Observer  = 1
+};
 
 // Структура трехмерного вектора для позиций в мире, как в Fallout
 struct Vector3D {

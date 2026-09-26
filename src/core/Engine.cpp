@@ -210,7 +210,7 @@ void Engine::Render() {
     // Фикс строк: Передаем координаты через структуру вектора Vector3D под сигнатуру твоего Shader.hpp
     // Строка 211: Разворачиваем координаты позиции камеры в 3 флоата
     m_activeShader.SetVec3("cameraPos", m_camera.position.x, m_camera.position.y, m_camera.position.z);
-    
+
     float shaderAlpha = static_cast<float>(m_memoryManager.GetRegistryValue("player_alpha_pct")) / 100.0f;
     Vector3D stealthVector(shaderAlpha, 0.0f, 0.0f);
     m_activeShader.SetVec3("stealthAlpha", shaderAlpha, 0.0f, 0.0f);
