@@ -34,6 +34,8 @@ events:
       - "C:/Program Files/CMake/share/cmake-4.3/Modules/"
     found: "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeCXXCompilerId.cpp.in"
     search_context:
+      CMAKE_PREFIX_PATH:
+        - "I:/SDL2"
       ENV{PATH}:
         - "C:\\Program Files\\PowerShell\\7"
         - "c:\\Users\\RJ\\.vscode-oss\\extensions\\vadimcn.vscode-lldb-1.12.3\\bin"
@@ -158,7 +160,6 @@ events:
         - "G:\\Windows\\RJ\\AppData\\Roaming\\Python\\Python312\\Scripts"
         - "C:\\Users\\RJ\\AppData\\Local\\spicetify"
         - "C:\\Users\\RJ\\go\\bin"
-        - "C:\\msys64\\mingw64\\bin"
   -
     kind: "message-v1"
     backtrace:
@@ -174,17 +175,17 @@ events:
       
       The output was:
       0
-      Версия MSBuild 17.14.40+3e7442088 для .NET Framework
-      Сборка начата 25.09.2026 1:50:40.
+      ╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.14.40+3e7442088 ╨┤╨╗╤П .NET Framework
+      ╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 26.09.2026 20:53:26.
       
-      Проект "I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\4.3.0\\CompilerIdCXX\\CompilerIdCXX.vcxproj" в узле 1 (целевые объекты по умолчанию).
+      ╨Я╤А╨╛╨╡╨║╤В "I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\4.3.0\\CompilerIdCXX\\CompilerIdCXX.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
       PrepareForBuild:
-        Создание каталога "Debug\\".
-        Структурированный вывод включен. Форматирование диагностики компилятора будет отражать иерархию ошибок. Подробнее см. https://aka.ms/cpp/structured-output.
-        Создание каталога "Debug\\CompilerIdCXX.tlog\\".
+        ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "Debug\\".
+        ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
+        ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "Debug\\CompilerIdCXX.tlog\\".
       InitializeBuildStatus:
-        Создание "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
-        Обращение к "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild".
+        ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
+        ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild".
       ClCompile:
         C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc143.pdb" /external:W0 /Gd /TP /FC /errorReport:queue CMakeCXXCompilerId.cpp
         CMakeCXXCompilerId.cpp
@@ -196,15 +197,15 @@ events:
         :VCEnd
         CMAKE_CXX_COMPILER=C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe
       FinalizeBuildStatus:
-        Файл "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild" удаляется.
-        Обращение к "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.lastbuildstate".
-      Сборка проекта "I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\4.3.0\\CompilerIdCXX\\CompilerIdCXX.vcxproj" завершена (целевые объекты по умолчанию).
+        ╨д╨░╨╣╨╗ "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild" ╤Г╨┤╨░╨╗╤П╨╡╤В╤Б╤П.
+        ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.lastbuildstate".
+      ╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\4.3.0\\CompilerIdCXX\\CompilerIdCXX.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
       
-      Сборка успешно завершена.
-          Предупреждений: 0
-          Ошибок: 0
+      ╨б╨▒╨╛╤А╨║╨░ ╤Г╤Б╨┐╨╡╤И╨╜╨╛ ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░.
+          ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
+          ╨Ю╤И╨╕╨▒╨╛╨║: 0
       
-      Прошло времени 00:00:02.74
+      ╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:02.82
       
       
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
@@ -295,11 +296,12 @@ events:
       - "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/"
       - "C:/Users/RJ/AppData/Local/spicetify/"
       - "C:/Users/RJ/go/bin/"
-      - "C:/msys64/mingw64/bin/"
     searched_directories:
       - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/link.com"
     found: "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/link.exe"
     search_context:
+      CMAKE_PREFIX_PATH:
+        - "I:/SDL2"
       ENV{PATH}:
         - "C:\\Program Files\\PowerShell\\7"
         - "c:\\Users\\RJ\\.vscode-oss\\extensions\\vadimcn.vscode-lldb-1.12.3\\bin"
@@ -424,7 +426,6 @@ events:
         - "G:\\Windows\\RJ\\AppData\\Roaming\\Python\\Python312\\Scripts"
         - "C:\\Users\\RJ\\AppData\\Local\\spicetify"
         - "C:\\Users\\RJ\\go\\bin"
-        - "C:\\msys64\\mingw64\\bin"
   -
     kind: "find-v1"
     backtrace:
@@ -506,7 +507,6 @@ events:
       - "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/"
       - "C:/Users/RJ/AppData/Local/spicetify/"
       - "C:/Users/RJ/go/bin/"
-      - "C:/msys64/mingw64/bin/"
     searched_directories:
       - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lld-link.com"
       - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lld-link.exe"
@@ -685,11 +685,10 @@ events:
       - "C:/Users/RJ/go/bin/lld-link.com"
       - "C:/Users/RJ/go/bin/lld-link.exe"
       - "C:/Users/RJ/go/bin/lld-link"
-      - "C:/msys64/mingw64/bin/lld-link.com"
-      - "C:/msys64/mingw64/bin/lld-link.exe"
-      - "C:/msys64/mingw64/bin/lld-link"
     found: false
     search_context:
+      CMAKE_PREFIX_PATH:
+        - "I:/SDL2"
       ENV{PATH}:
         - "C:\\Program Files\\PowerShell\\7"
         - "c:\\Users\\RJ\\.vscode-oss\\extensions\\vadimcn.vscode-lldb-1.12.3\\bin"
@@ -814,7 +813,6 @@ events:
         - "G:\\Windows\\RJ\\AppData\\Roaming\\Python\\Python312\\Scripts"
         - "C:\\Users\\RJ\\AppData\\Local\\spicetify"
         - "C:\\Users\\RJ\\go\\bin"
-        - "C:\\msys64\\mingw64\\bin"
   -
     kind: "find-v1"
     backtrace:
@@ -894,11 +892,12 @@ events:
       - "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/"
       - "C:/Users/RJ/AppData/Local/spicetify/"
       - "C:/Users/RJ/go/bin/"
-      - "C:/msys64/mingw64/bin/"
     searched_directories:
       - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/link.com"
     found: "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/link.exe"
     search_context:
+      CMAKE_PREFIX_PATH:
+        - "I:/SDL2"
       ENV{PATH}:
         - "C:\\Program Files\\PowerShell\\7"
         - "c:\\Users\\RJ\\.vscode-oss\\extensions\\vadimcn.vscode-lldb-1.12.3\\bin"
@@ -1023,7 +1022,6 @@ events:
         - "G:\\Windows\\RJ\\AppData\\Roaming\\Python\\Python312\\Scripts"
         - "C:\\Users\\RJ\\AppData\\Local\\spicetify"
         - "C:\\Users\\RJ\\go\\bin"
-        - "C:\\msys64\\mingw64\\bin"
   -
     kind: "find-v1"
     backtrace:
@@ -1103,7 +1101,6 @@ events:
       - "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/"
       - "C:/Users/RJ/AppData/Local/spicetify/"
       - "C:/Users/RJ/go/bin/"
-      - "C:/msys64/mingw64/bin/"
     searched_directories:
       - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/mt.com"
       - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/mt.exe"
@@ -1282,11 +1279,10 @@ events:
       - "C:/Users/RJ/go/bin/mt.com"
       - "C:/Users/RJ/go/bin/mt.exe"
       - "C:/Users/RJ/go/bin/mt"
-      - "C:/msys64/mingw64/bin/mt.com"
-      - "C:/msys64/mingw64/bin/mt.exe"
-      - "C:/msys64/mingw64/bin/mt"
     found: false
     search_context:
+      CMAKE_PREFIX_PATH:
+        - "I:/SDL2"
       ENV{PATH}:
         - "C:\\Program Files\\PowerShell\\7"
         - "c:\\Users\\RJ\\.vscode-oss\\extensions\\vadimcn.vscode-lldb-1.12.3\\bin"
@@ -1411,7 +1407,6 @@ events:
         - "G:\\Windows\\RJ\\AppData\\Roaming\\Python\\Python312\\Scripts"
         - "C:\\Users\\RJ\\AppData\\Local\\spicetify"
         - "C:\\Users\\RJ\\go\\bin"
-        - "C:\\msys64\\mingw64\\bin"
   -
     kind: "find-v1"
     backtrace:
@@ -1491,11 +1486,12 @@ events:
       - "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/"
       - "C:/Users/RJ/AppData/Local/spicetify/"
       - "C:/Users/RJ/go/bin/"
-      - "C:/msys64/mingw64/bin/"
     searched_directories:
       - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lib.com"
     found: "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lib.exe"
     search_context:
+      CMAKE_PREFIX_PATH:
+        - "I:/SDL2"
       ENV{PATH}:
         - "C:\\Program Files\\PowerShell\\7"
         - "c:\\Users\\RJ\\.vscode-oss\\extensions\\vadimcn.vscode-lldb-1.12.3\\bin"
@@ -1620,7 +1616,6 @@ events:
         - "G:\\Windows\\RJ\\AppData\\Roaming\\Python\\Python312\\Scripts"
         - "C:\\Users\\RJ\\AppData\\Local\\spicetify"
         - "C:\\Users\\RJ\\go\\bin"
-        - "C:\\msys64\\mingw64\\bin"
   -
     kind: "find-v1"
     backtrace:
@@ -1644,6 +1639,9 @@ events:
     names:
       - "rc"
     candidate_directories:
+      - "I:/SDL2/bin/"
+      - "I:/SDL2/sbin/"
+      - "I:/SDL2/"
       - "C:/Program Files/PowerShell/7/"
       - "C:/Users/RJ/.vscode-oss/extensions/vadimcn.vscode-lldb-1.12.3/bin/"
       - "C:/Program Files/Python312/Scripts/"
@@ -1702,7 +1700,6 @@ events:
       - "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/"
       - "C:/Users/RJ/AppData/Local/spicetify/"
       - "C:/Users/RJ/go/bin/"
-      - "C:/msys64/mingw64/bin/"
       - "C:/Program Files/bin/"
       - "C:/Program Files/sbin/"
       - "C:/Program Files/"
@@ -1716,6 +1713,15 @@ events:
       - "C:/Program Files (x86)/Game_Centralia_Dead_Lend/sbin/"
       - "C:/Program Files (x86)/Game_Centralia_Dead_Lend/"
     searched_directories:
+      - "I:/SDL2/bin/rc.com"
+      - "I:/SDL2/bin/rc.exe"
+      - "I:/SDL2/bin/rc"
+      - "I:/SDL2/sbin/rc.com"
+      - "I:/SDL2/sbin/rc.exe"
+      - "I:/SDL2/sbin/rc"
+      - "I:/SDL2/rc.com"
+      - "I:/SDL2/rc.exe"
+      - "I:/SDL2/rc"
       - "C:/Program Files/PowerShell/7/rc.com"
       - "C:/Program Files/PowerShell/7/rc.exe"
       - "C:/Program Files/PowerShell/7/rc"
@@ -1890,9 +1896,6 @@ events:
       - "C:/Users/RJ/go/bin/rc.com"
       - "C:/Users/RJ/go/bin/rc.exe"
       - "C:/Users/RJ/go/bin/rc"
-      - "C:/msys64/mingw64/bin/rc.com"
-      - "C:/msys64/mingw64/bin/rc.exe"
-      - "C:/msys64/mingw64/bin/rc"
       - "C:/Program Files/bin/rc.com"
       - "C:/Program Files/bin/rc.exe"
       - "C:/Program Files/bin/rc"
@@ -1931,6 +1934,8 @@ events:
       - "C:/Program Files (x86)/Game_Centralia_Dead_Lend/rc"
     found: false
     search_context:
+      CMAKE_PREFIX_PATH:
+        - "I:/SDL2"
       ENV{PATH}:
         - "C:\\Program Files\\PowerShell\\7"
         - "c:\\Users\\RJ\\.vscode-oss\\extensions\\vadimcn.vscode-lldb-1.12.3\\bin"
@@ -2055,7 +2060,6 @@ events:
         - "G:\\Windows\\RJ\\AppData\\Roaming\\Python\\Python312\\Scripts"
         - "C:\\Users\\RJ\\AppData\\Local\\spicetify"
         - "C:\\Users\\RJ\\go\\bin"
-        - "C:\\msys64\\mingw64\\bin"
       CMAKE_INSTALL_PREFIX: "C:/Program Files (x86)/Game_Centralia_Dead_Lend"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "C:/Program Files"
@@ -2071,8 +2075,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "I:/Game_Centralia_Dead_Lend/build/CMakeFiles/CMakeScratch/TryCompile-5n20rv"
-      binary: "I:/Game_Centralia_Dead_Lend/build/CMakeFiles/CMakeScratch/TryCompile-5n20rv"
+      source: "I:/Game_Centralia_Dead_Lend/build/CMakeFiles/CMakeScratch/TryCompile-u266ad"
+      binary: "I:/Game_Centralia_Dead_Lend/build/CMakeFiles/CMakeScratch/TryCompile-u266ad"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /GR /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -2083,39 +2087,39 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'I:/Game_Centralia_Dead_Lend/build/CMakeFiles/CMakeScratch/TryCompile-5n20rv'
+        Change Dir: 'I:/Game_Centralia_Dead_Lend/build/CMakeFiles/CMakeScratch/TryCompile-u266ad'
         
-        Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_6ad60.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-        Версия MSBuild 17.14.40+3e7442088 для .NET Framework
-        Сборка начата 25.09.2026 1:50:45.
+        Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_be8ed.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        ╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.14.40+3e7442088 ╨┤╨╗╤П .NET Framework
+        ╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 26.09.2026 20:53:31.
         
-        Проект "I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\CMakeScratch\\TryCompile-5n20rv\\cmTC_6ad60.vcxproj" в узле 1 (целевые объекты по умолчанию).
+        ╨Я╤А╨╛╨╡╨║╤В "I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\CMakeScratch\\TryCompile-u266ad\\cmTC_be8ed.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
         PrepareForBuild:
-          Структурированный вывод включен. Форматирование диагностики компилятора будет отражать иерархию ошибок. Подробнее см. https://aka.ms/cpp/structured-output.
-          Создание каталога "I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\CMakeScratch\\TryCompile-5n20rv\\Debug\\".
-          Создание каталога "cmTC_6ad60.dir\\Debug\\cmTC_6ad60.tlog\\".
+          ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
+          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\CMakeScratch\\TryCompile-u266ad\\Debug\\".
+          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_be8ed.dir\\Debug\\cmTC_be8ed.tlog\\".
         InitializeBuildStatus:
-          Создание "cmTC_6ad60.dir\\Debug\\cmTC_6ad60.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
-          Обращение к "cmTC_6ad60.dir\\Debug\\cmTC_6ad60.tlog\\unsuccessfulbuild".
+          ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_be8ed.dir\\Debug\\cmTC_be8ed.tlog\\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
+          ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_be8ed.dir\\Debug\\cmTC_be8ed.tlog\\unsuccessfulbuild".
         ClCompile:
-          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_6ad60.dir\\Debug\\\\" /Fd"cmTC_6ad60.dir\\Debug\\vc143.pdb" /external:W1 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
-          Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.44.35225 для x64
-          (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
-          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_6ad60.dir\\Debug\\\\" /Fd"cmTC_6ad60.dir\\Debug\\vc143.pdb" /external:W1 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_be8ed.dir\\Debug\\\\" /Fd"cmTC_be8ed.dir\\Debug\\vc143.pdb" /external:W1 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
+          ╨Ю╨┐╤В╨╕╨╝╨╕╨╖╨╕╤А╤Г╤О╤Й╨╕╨╣ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А Microsoft (R) C/C++ ╨▓╨╡╤А╤Б╨╕╨╕ 19.44.35225 ╨┤╨╗╤П x64
+          (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_be8ed.dir\\Debug\\\\" /Fd"cmTC_be8ed.dir\\Debug\\vc143.pdb" /external:W1 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
           CMakeCXXCompilerABI.cpp
         Link:
-          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\CMakeScratch\\TryCompile-5n20rv\\Debug\\cmTC_6ad60.exe" /INCREMENTAL /ILK:"cmTC_6ad60.dir\\Debug\\cmTC_6ad60.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"I:/Game_Centralia_Dead_Lend/build/CMakeFiles/CMakeScratch/TryCompile-5n20rv/Debug/cmTC_6ad60.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"I:/Game_Centralia_Dead_Lend/build/CMakeFiles/CMakeScratch/TryCompile-5n20rv/Debug/cmTC_6ad60.lib" /MACHINE:X64  /machine:x64 cmTC_6ad60.dir\\Debug\\CMakeCXXCompilerABI.obj
-          cmTC_6ad60.vcxproj -> I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\CMakeScratch\\TryCompile-5n20rv\\Debug\\cmTC_6ad60.exe
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\CMakeScratch\\TryCompile-u266ad\\Debug\\cmTC_be8ed.exe" /INCREMENTAL /ILK:"cmTC_be8ed.dir\\Debug\\cmTC_be8ed.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"I:/Game_Centralia_Dead_Lend/build/CMakeFiles/CMakeScratch/TryCompile-u266ad/Debug/cmTC_be8ed.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"I:/Game_Centralia_Dead_Lend/build/CMakeFiles/CMakeScratch/TryCompile-u266ad/Debug/cmTC_be8ed.lib" /MACHINE:X64  /machine:x64 cmTC_be8ed.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_be8ed.vcxproj -> I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\CMakeScratch\\TryCompile-u266ad\\Debug\\cmTC_be8ed.exe
         FinalizeBuildStatus:
-          Файл "cmTC_6ad60.dir\\Debug\\cmTC_6ad60.tlog\\unsuccessfulbuild" удаляется.
-          Обращение к "cmTC_6ad60.dir\\Debug\\cmTC_6ad60.tlog\\cmTC_6ad60.lastbuildstate".
-        Сборка проекта "I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\CMakeScratch\\TryCompile-5n20rv\\cmTC_6ad60.vcxproj" завершена (целевые объекты по умолчанию).
+          ╨д╨░╨╣╨╗ "cmTC_be8ed.dir\\Debug\\cmTC_be8ed.tlog\\unsuccessfulbuild" ╤Г╨┤╨░╨╗╤П╨╡╤В╤Б╤П.
+          ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_be8ed.dir\\Debug\\cmTC_be8ed.tlog\\cmTC_be8ed.lastbuildstate".
+        ╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "I:\\Game_Centralia_Dead_Lend\\build\\CMakeFiles\\CMakeScratch\\TryCompile-u266ad\\cmTC_be8ed.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
         
-        Сборка успешно завершена.
-            Предупреждений: 0
-            Ошибок: 0
+        ╨б╨▒╨╛╤А╨║╨░ ╤Г╤Б╨┐╨╡╤И╨╜╨╛ ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░.
+            ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
+            ╨Ю╤И╨╕╨▒╨╛╨║: 0
         
-        Прошло времени 00:00:06.22
+        ╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:08.50
         
       exitCode: 0
   -
@@ -2212,1215 +2216,24 @@ events:
         mode: "cps"
         reason: "no_exist"
       -
-        path: "C:/Program Files/PowerShell/7/SDL2Config.cmake"
+        path: "I:/SDL2/SDL2Config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "C:/Program Files/PowerShell/7/sdl2-config.cmake"
+        path: "I:/SDL2/sdl2-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "C:/Program Files/PowerShell/7/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/PowerShell/7/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/PowerShell/7/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/PowerShell/7/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.vscode-oss/extensions/vadimcn.vscode-lldb-1.12.3/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.vscode-oss/extensions/vadimcn.vscode-lldb-1.12.3/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.vscode-oss/extensions/vadimcn.vscode-lldb-1.12.3/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.vscode-oss/extensions/vadimcn.vscode-lldb-1.12.3/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.vscode-oss/extensions/vadimcn.vscode-lldb-1.12.3/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.vscode-oss/extensions/vadimcn.vscode-lldb-1.12.3/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/Scripts/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/Scripts/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/Scripts/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/Scripts/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/Scripts/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/Scripts/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Python312/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/Scripts/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/Scripts/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/Scripts/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/Scripts/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/Scripts/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python34/Scripts/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Oracle/Java/javapath/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Oracle/Java/javapath/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Oracle/Java/javapath/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Oracle/Java/javapath/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Oracle/Java/javapath/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Oracle/Java/javapath/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/Oracle/Java/javapath/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/Oracle/Java/javapath/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/Oracle/Java/javapath/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/Oracle/Java/javapath/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/Oracle/Java/javapath/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/Oracle/Java/javapath/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Common Files/Oracle/Java/java8path/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Common Files/Oracle/Java/java8path/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Common Files/Oracle/Java/java8path/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Common Files/Oracle/Java/java8path/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Common Files/Oracle/Java/java8path/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Common Files/Oracle/Java/java8path/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/Scripts/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/Scripts/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/Scripts/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/Scripts/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/Scripts/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/Scripts/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Python314/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/wbem/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/wbem/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/wbem/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/wbem/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/wbem/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/wbem/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/WindowsPowerShell/v1.0/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/WindowsPowerShell/v1.0/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/WindowsPowerShell/v1.0/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/WindowsPowerShell/v1.0/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/WindowsPowerShell/v1.0/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/WindowsPowerShell/v1.0/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/OpenSSH/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/OpenSSH/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/OpenSSH/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/OpenSSH/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/OpenSSH/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Windows/System32/OpenSSH/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Intel/WiFi/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Intel/WiFi/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Intel/WiFi/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Intel/WiFi/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Intel/WiFi/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Intel/WiFi/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Intel/WirelessCommon/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Intel/WirelessCommon/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Intel/WirelessCommon/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Intel/WirelessCommon/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Intel/WirelessCommon/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Common Files/Intel/WirelessCommon/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/dotnet/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/dotnet/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/dotnet/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/dotnet/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/dotnet/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/dotnet/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/nodejs/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/nodejs/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/nodejs/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/nodejs/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/nodejs/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/nodejs/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/chocolatey/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/chocolatey/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/chocolatey/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/chocolatey/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/chocolatey/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/ProgramData/chocolatey/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Git/cmd/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Git/cmd/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Git/cmd/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Git/cmd/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Git/cmd/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Git/cmd/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/CMake/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/CMake/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/CMake/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/CMake/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/CMake/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/CMake/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Microsoft SQL Server/160/Tools/Binn/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Microsoft SQL Server/160/Tools/Binn/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Microsoft SQL Server/160/Tools/Binn/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Microsoft SQL Server/160/Tools/Binn/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Microsoft SQL Server/160/Tools/Binn/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/Microsoft SQL Server/160/Tools/Binn/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/VSCodium/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/VSCodium/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/VSCodium/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/VSCodium/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/VSCodium/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/VSCodium/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Go/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Go/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Go/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Go/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Go/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/Go/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.local/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.local/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.local/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.local/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.local/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.local/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WindowsApps/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WindowsApps/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WindowsApps/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WindowsApps/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WindowsApps/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WindowsApps/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Microsoft VS Code/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Microsoft VS Code/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Microsoft VS Code/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Microsoft VS Code/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Microsoft VS Code/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Microsoft VS Code/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Roaming/npm/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Roaming/npm/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Roaming/npm/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Roaming/npm/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Roaming/npm/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Roaming/npm/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.bun/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.bun/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.bun/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.bun/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.bun/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/.bun/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Ollama/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Ollama/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Ollama/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Ollama/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Ollama/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Ollama/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.lmstudio/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.lmstudio/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.lmstudio/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.lmstudio/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.lmstudio/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.lmstudio/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python314/Scripts/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python314/Scripts/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python314/Scripts/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python314/Scripts/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python314/Scripts/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python314/Scripts/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.local/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.local/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.local/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.local/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.local/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/.local/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-8.1.2-full_build/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-8.1.2-full_build/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-8.1.2-full_build/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-8.1.2-full_build/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-8.1.2-full_build/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-8.1.2-full_build/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Antigravity IDE/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Antigravity IDE/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Antigravity IDE/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Antigravity IDE/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Antigravity IDE/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/Antigravity IDE/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Freenet/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Freenet/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Freenet/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Freenet/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Freenet/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Freenet/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Python/SDL2Config.cmake"
+        path: "I:/SDL2/cmake/SDL2Config.cmake"
         mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Python/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Python/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Python/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Python/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Python/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/cursor-agent/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/cursor-agent/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/cursor-agent/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/cursor-agent/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/cursor-agent/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/cursor-agent/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/cursor/resources/app/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/cursor/resources/app/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/cursor/resources/app/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/cursor/resources/app/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/cursor/resources/app/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/Programs/cursor/resources/app/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "G:/Windows/RJ/AppData/Roaming/Python/Python312/Scripts/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/spicetify/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/spicetify/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/spicetify/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/spicetify/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/spicetify/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/AppData/Local/spicetify/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/go/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/go/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/go/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/go/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/go/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Users/RJ/go/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/msys64/mingw64/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/msys64/mingw64/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/msys64/mingw64/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/msys64/mingw64/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/msys64/mingw64/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/msys64/mingw64/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/CMake/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/CMake/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files/share/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/SDL2Config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/sdl2-config.cmake"
-        mode: "config"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/lib/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/lib/cps/sdl2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/share/cps/SDL2.cps"
-        mode: "cps"
-        reason: "no_exist"
-      -
-        path: "C:/Program Files (x86)/share/cps/sdl2.cps"
-        mode: "cps"
         reason: "no_exist"
-    found: null
+    found:
+      path: "I:/SDL2/cmake/sdl2-config.cmake"
+      mode: "config"
+      version: "2.30.8"
     search_context:
+      CMAKE_PREFIX_PATH:
+        - "I:/SDL2"
       ENV{PATH}:
         - "C:\\Program Files\\PowerShell\\7"
         - "c:\\Users\\RJ\\.vscode-oss\\extensions\\vadimcn.vscode-lldb-1.12.3\\bin"
@@ -3545,7 +2358,6 @@ events:
         - "G:\\Windows\\RJ\\AppData\\Roaming\\Python\\Python312\\Scripts"
         - "C:\\Users\\RJ\\AppData\\Local\\spicetify"
         - "C:\\Users\\RJ\\go\\bin"
-        - "C:\\msys64\\mingw64\\bin"
       CMAKE_INSTALL_PREFIX: "C:/Program Files (x86)/Game_Centralia_Dead_Lend"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "C:/Program Files"
