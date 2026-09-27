@@ -2,46 +2,102 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include "video/Shader.hpp"      // Дает доступ к типу Shader
+#include "platform/Platform.hpp" // Дает доступ к логеру
 
 namespace Centralia {
 
-// Идентификаторы слоев краски для многоуровневого смешивания
 enum class PaintLayer : uint8_t {
-    Base_Primer,      // 1. Грунтовка / Голый матовый металл
-    Factory_Paint,    // 2. Заводской цвет кузова/брони (синий, стальной, камуфляж)
-    Rust_Decal,       // 3. Слой ржавчины Пустоши ( Fallout-эффект)
-    Rad_Glow_Layer    // 4. Слой радиационного свечения (зеленый изотопный налет)
+    Base_Primer,      
+    Factory_Paint,    
+    Rust_Decal,       
+    Rad_Glow_Layer    
 };
 
 struct MaterialProperties {
     uint32_t materialId;
     std::string materialName;
-
-    // Многоуровневые коэффициенты смешивания красок (0.0f - полностью прозрачно, 1.0f - плотный слой)
-    float baseRoughness = 0.5f;       // Шероховатость (матовость/глянец)
-    float factoryPaintAlpha = 1.0f;   // Плотность основной краски автомобиля/меха
-    float rustIntensity = 0.1f;       // Степень коррозии металла (0.0f - новый, 1.0f - гнилой хлам)
-    float radGlowIntensity = 0.0f;    // Интенсивность свечения заражения (для Rad_Ghoul и зон реактора)
+    float baseRoughness = 0.5f;       
+    float factoryPaintAlpha = 1.0f;   
+    float rustIntensity = 0.1f;       
+    float radGlowIntensity = 0.0f;    
 };
 
 class MaterialSystem {
 private:
     std::unordered_map<uint32_t, MaterialProperties> m_materials;
-    MaterialSystem(); // Синглтон
+    
+    inline MaterialSystem() noexcept {
+        InitializeMaterialLibrary();
+    }
 
 public:
-    static MaterialSystem& GetInstance() {
+    ~MaterialSystem() = default;
+
+    // ИСПРАВЛЕНО: Блокировка копирования защищает Ghost-RAM от утечек памяти в рантайме
+    MaterialSystem(const MaterialSystem&) = delete;
+    MaterialSystem& operator=(const MaterialSystem&) = delete;
+
+    static inline MaterialSystem& GetInstance() {
         static MaterialSystem instance;
         return instance;
     }
 
-    // Загрузка базовых профилей красок для техники и Титанов
-    void InitializeMaterialLibrary();
+    inline void InitializeMaterialLibrary() noexcept {
+        m_materials.clear();
 
-    // Проброс параметров многоуровневой краски в активный Shader перед отрисовкой модели
-    void ApplyMaterialToShader(uint32_t materialId, class Shader& activeShader);
+        // Профиль 1: Заводская краска ВАЗ (Глянец)
+        MaterialProperties classicCarPaint;
+        classicCarPaint.materialId = 801;
+        classicCarPaint.materialName = "Заводской Глянец ВАЗ";
+        classicCarPaint.baseRoughness = 0.2f;       
+        classicCarPaint.factoryPaintAlpha = 1.0f;   
+        classicCarPaint.rustIntensity = 0.05f;      
+        classicCarPaint.radGlowIntensity = 0.0f;    
+        m_materials[classicCarPaint.materialId] = classicCarPaint;
 
-    bool GetMaterialSpecs(uint32_t materialId, MaterialProperties& outProperties) const;
+        // Профиль 2: Ржавая сталь Пустоши (Fallout-эффект брони Титана)
+         MaterialProperties wastelandWreck;
+        wastelandWreck.materialId = 802;
+        wastelandWreck.materialName = "Ржавый Индустриальный Корпус";
+        wastelandWreck.baseRoughness = 0.8f;       
+        wastelandWreck.factoryPaintAlpha = 0.4f;   
+        wastelandWreck.rustIntensity = 0.75f;      // ИСПРАВЛЕНО: Буква i заменена на a
+        wastelandWreck.radGlowIntensity = 0.0f;
+        m_materials[wastelandWreck.materialId] = wastelandWreck;
+
+        // Профиль 3: Радиоактивная био-масса гулей и Бегемотов
+        // ИСПРАВЛЕНО: Код очищен от локальных float-заглушек, ломавших парсер типов MSVC
+        MaterialProperties radGlowBio;
+        radGlowBio.materialId = 803; 
+        radGlowBio.materialName = "Облученная Зараженная Плоть";
+        radGlowBio.baseRoughness = 0.9f;
+        radGlowBio.factoryPaintAlpha = 0.0f;       
+        radGlowBio.rustIntensity = 0.0f;
+        radGlowBio.radGlowIntensity = 0.85f;    // Зеленое фосфорное свечение на GPU
+        m_materials[radGlowBio.materialId] = radGlowBio;
+
+        Platform::Log("MaterialSystem: Многоуровневые профили красок (ВАЗ, Титаны, Рад-Био) запечатаны в RAM.");
+    }
+
+    inline void ApplyMaterialToShader(uint32_t materialId, Shader& activeShader) noexcept {
+        auto it = m_materials.find(materialId);
+        if (it == m_materials.end()) return;
+        const MaterialProperties& mat = it->second;
+
+        // Передаем параметры попиксельного смешивания слоев в uniform-регистры видеокарты
+        activeShader.SetVec3("materialParams", mat.baseRoughness, mat.factoryPaintAlpha, mat.rustIntensity);
+        activeShader.SetVec3("materialGlow", mat.radGlowIntensity, 0.0f, 0.0f);
+    }
+
+    inline bool GetMaterialSpecs(uint32_t materialId, MaterialProperties& outProperties) const noexcept {
+        auto it = m_materials.find(materialId);
+        if (it != m_materials.end()) {
+            outProperties = it->second;
+            return true;
+        }
+        return false;
+    }
 };
 
 } // namespace Centralia

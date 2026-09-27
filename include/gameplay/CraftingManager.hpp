@@ -1,18 +1,13 @@
 #pragma once
 #include <cstdint>
 #include <array>
-#include <cstring>
-#include <string>
-#include "gameplay/ItemDatabase.hpp"
-#include "gameplay/Player.hpp"
-#include "gameplay/FactorySystem.hpp" // Этот инклуд обязан быть здесь в хедере!
-
 
 namespace Centralia {
 
-// Опережающее объявление для предотвращения циклических зависимостей в MSVC
-// class FactoryEngineContext; 
+// Опережающие объявления классов — защищают от циклической зависимости и ошибок C2061/C2027
+class FactorySystem;
 class Player;
+class ItemDatabase;
 
 #pragma pack(push, 1)
 // Плотная структура рецепта крафта по чертежу (State of Decay 2)
@@ -34,9 +29,14 @@ private:
     std::array<BlueprintRecord, MAX_BLUEPRINTS> m_blueprintRegistry;
     uint32_t m_blueprintCount;
 
+    CraftingManager() noexcept; // Приватный конструктор синглтона
+
 public:
-    CraftingManager() noexcept;
     ~CraftingManager() = default;
+
+    // Запрещаем копирование синглтона
+    CraftingManager(const CraftingManager&) = delete;
+    CraftingManager& operator=(const CraftingManager&) = delete;
 
     static CraftingManager& GetInstance() {
         static CraftingManager instance;
@@ -55,8 +55,8 @@ public:
      * @param factoryContext - Твоя фабричная энергосистема для списания ресурсов
      * @param itemDb - Ссылка на базу предметов для валидации ТТХ
      */
-    bool TryExecuteCraft(uint32_t blueprintId, Player& player, FactoryEngineContext& factoryContext, const ItemDatabase& itemDb) noexcept;
-
+    bool TryExecuteCraft(uint32_t blueprintId, Player& player, FactorySystem& factoryContext, const ItemDatabase& itemDb) noexcept;
+    
     // Быстрый поиск рецепта по ID
     [[nodiscard]] const BlueprintRecord* GetBlueprint(uint32_t blueprintId) const noexcept;
 };

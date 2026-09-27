@@ -1,0 +1,71 @@
+# ==========================================
+# Системные файлы (Windows / macOS)
+# ==========================================
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ==========================================
+# Временные файлы игровых движков
+# ==========================================
+
+# Если вы используете Unity:
+/[L]ibrary/
+/[T]emp/
+/[O]bj/
+/[B]uild/
+/[B]uilds/
+/[L]ogs/
+/[U]serSettings/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+
+# Если вы используете Godot:
+.godot/
+*.tmp
+export_presets.cfg
+
+# Если вы используете Unreal Engine:
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+.ue4duck
+*.xcworkspace
+
+
+# ==========================================
+# Редакторы кода и IDE (VS Code, Visual Studio)
+# ==========================================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.suo
+
+
+# ==========================================
+# Github (Файлы и скрипты)
+# ==========================================
+.git
+.gitignore
+
+
+# ==========================================
+# Local Scripts (Do not upload to GitHub)
+# ==========================================
+stat.ps1
+/build

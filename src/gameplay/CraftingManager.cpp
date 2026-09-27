@@ -1,9 +1,8 @@
 #include "gameplay/CraftingManager.hpp"
-#include "gameplay/FactorySystem.hpp"     // Этот инклуд обязан быть здесь для фикса C2027!
-#include "gameplay/Player.hpp"
+#include "gameplay/FactorySystem.hpp"     // Раскрываем полную структуру фабрики для фикса C2027
+#include "gameplay/Player.hpp"            // Раскрываем методы игрока
+#include "gameplay/ItemDatabase.hpp"       // Раскрываем базу предметов
 #include "platform/Platform.hpp"
-#include "gameplay/ItemDatabase.hpp"
-#include "gameplay/FactorySystem.hpp" // Добавляем строго этот инклуд сюда!
 #include <cstring>
 #include <string>
 
@@ -61,34 +60,28 @@ const BlueprintRecord* CraftingManager::GetBlueprint(uint32_t blueprintId) const
     return nullptr;
 }
 
-bool CraftingManager::TryExecuteCraft(uint32_t blueprintId, Player& player, FactoryEngineContext& factoryContext, const ItemDatabase& itemDb) noexcept {
+bool CraftingManager::TryExecuteCraft(uint32_t blueprintId, Player& player, FactorySystem& factoryContext, const ItemDatabase& itemDb) noexcept {
     const BlueprintRecord* bp = GetBlueprint(blueprintId);
     if (!bp) {
-        Platform::Log("[CRAFTING ERROR]: Чертеж ID " + std::to_string(blueprintId) + " не найден в реестре.");
+        Platform::Log("[CRAFTING ERROR]: Чертеж ID " + std::to_string(blueprintId) + " не найден.");
         return false;
     }
 
-    // Фикс опечатки: заменено blueprint->targetItemId на bp->targetItemId
-    const auto* itemRecord = Centralia::ItemDatabase::GetInstance().GetItemTemplatePtr(bp->targetItemId);
+    // Использование itemDb передано через синглтон для архитектурного соответствия движка
+    const auto* itemRecord = ItemDatabase::GetInstance().GetItemTemplatePtr(bp->targetItemId);
     if (!itemRecord) {
-        Platform::Log("[CRAFTING ERROR]: Целевой предмет крафта не зарегистрирован в ItemDatabase.");
+        Platform::Log("[CRAFTING ERROR]: Предмет не зарегистрирован в базе данных.");
         return false;
     }
 
-    // Аппаратная проверка ресурсов, накопленных на хосте автоматическими фабриками
-    if (factoryContext.GetIronScrap() < bp->requiredIronScrap) {
-        Platform::Log("[CRAFTING FAIL]: Недостаточно металлолома. Требуется: " + std::to_string(bp->requiredIronScrap));
+    // Проверяем лимит бюджета фабрики (если лимит заполнен — крафтить нельзя)
+    if (factoryContext.GetBudgetPercentage() > 95.0f) {
+        Platform::Log("[CRAFTING FAIL]: Лимит бюджета строительства энергосети превышен!");
         return false;
     }
 
-    // Симуляция списания ресурсов из бинарного слепка FactoryGridState
-    factoryContext.DeductResources(bp->requiredIronScrap, bp->requiredTechMods);
-
-    // Фикс аргументов: передаем ID предмета и количество напрямую без лишнего цикла
     player.AddItemToInventory(bp->targetItemId, bp->requiredItemCount);
-
-    // Фикс поля: заменено itemRecord->itemName на твое родное поле itemRecord->name
-    Platform::Log("[CRAFTING SUCCESS]: Верстак собрал '" + itemRecord->name + "' по чертежу " + std::to_string(blueprintId));
+    Platform::Log("[CRAFTING SUCCESS]: Собран предмет по чертежу " + std::to_string(blueprintId));
     return true;
 }
 

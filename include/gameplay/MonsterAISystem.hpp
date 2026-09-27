@@ -3,9 +3,11 @@
 #include <vector>
 #include <string>
 #include "core/Math3D.hpp" // Твой Vector3D
-#include "gameplay/Player.hpp"  // Твой класс игрока
 
 namespace Centralia {
+
+// Опережающее объявление игрока защищает ИИ от циклических зависимостей
+class Player;
 
 // Архетипы ИИ для разделения скриптов поведения
 enum class AIArchetype : uint8_t {
@@ -38,7 +40,7 @@ struct AIIntelligenceProfile {
     float         suspicionLevel = 0.0f;
     float         flankAngle = 0.0f;
     
-    // ТТХ Системы Повреждений (Полностью возвращены)
+    // ТТХ Системы Повреждений
     float         health = 500.0f;
     float         maxHealth = 500.0f;
     float         baseHearingRadius = 15.0f;
@@ -76,7 +78,7 @@ public:
     void ThrowWeaponCasingDistraction(const Vector3D& casingLandingPos);
 
     /**
-     * @brief Нанесение покомпонентного урона (Метод боевого взаимодействия - возвращен)
+     * @brief Нанесение покомпонентного урона (Метод боевого взаимодействия)
      */
     void ApplyTargetedDamageToMonster(uint32_t monsterId, float damage, bool hitLegs);
 

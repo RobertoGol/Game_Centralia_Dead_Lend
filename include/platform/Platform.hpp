@@ -1,54 +1,61 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <cstdint>
-#include <SDL.h> // Твоя зависимость для считывания сканкодов клавиш
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <cstring>
 
+#if defined(_WIN32)
+    #include <windows.h>
+    #include <shlobj.h>
+    #include <SDL.h>
+#elif defined(__ANDROID__)
+    #include <android/log.h>
+    #include <sys/system_properties.h>
+    #include <jni.h>
+#else
+    #include <unistd.h>
+    #include <sys/stat.h>
+    #include <SDL.h>
+#endif
 
 namespace Centralia {
 
+enum class KeyCode : uint32_t {
+    Unknown = 0,
+    W       = 1,
+    A       = 2,
+    S       = 3,
+    D       = 4,
+    Shift   = 5,
+    Ctrl    = 6,
+    Space   = 7,
+    G       = 8,
+    R       = 9
+};
+
 class Platform {
 public:
-     // Наш энум клавиш, который ищет main.cpp на строках 59, 60 и 75
-    enum class KeyCode : uint32_t {
-        Shift = SDL_SCANCODE_LSHIFT,
-        Ctrl  = SDL_SCANCODE_LCTRL,
-        G     = SDL_SCANCODE_G
-    };
+    Platform() = delete;
+    ~Platform() = delete;
 
-    // Кроссплатформенный вывод в системный лог (Терминал / Debug Output / Logcat)
-    static void Log(const std::string& message);
-
-    // Инициализация низкоуровневых систем (файловый менеджер, права доступа)
-    static bool Initialize();
-
-    // 1. Опрос удержания клавиши (WASD, Shift, Ctrl) для строк 59 и 60
-    static bool IsKeyPressed(KeyCode code) noexcept {
-        const uint8_t* state = SDL_GetKeyboardState(NULL);
-        return state[static_cast<uint32_t>(code)] != 0;
-    }
-
-    // 2. Опрос одиночного клика (бросок гильзы на G) для строки 75
-    static bool IsKeyJustPressed(KeyCode code) noexcept {
-        const uint8_t* state = SDL_GetKeyboardState(NULL);
-        return state[static_cast<uint32_t>(code)] != 0;
-    }
-
-    // 3. Проверка закрытия окна SDL2/OpenGL для строки 106
-    static bool WindowShouldClose() noexcept {
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Возвращает путь к безопасной папке приложения для сохранений и конфигов
-    static std::string GetSaveDirectoryPath();
-
-    // Генерирует или считывает уникальный HWID устройства для защиты/идентификации
-    static std::string GetDeviceHWID();
+    static bool Initialize() noexcept;
+    static void Log(const std::string& message) noexcept;
+    static bool IsKeyPressed(KeyCode code) noexcept;
+    static bool IsKeyJustPressed(KeyCode code) noexcept;
+    static bool WindowShouldClose() noexcept;
+    static std::string GetSaveDirectoryPath() noexcept;
+    static std::string GetDeviceHWID() noexcept;
 };
 
 } // namespace Centralia
+
+#if defined(_WIN32)
+    #include "platform/PlatformWin32.hpp"
+#elif defined(__ANDROID__)
+    #include "platform/PlatformAndroid.hpp"
+#else
+    #include "platform/PlatformLinux.hpp"
+#endif

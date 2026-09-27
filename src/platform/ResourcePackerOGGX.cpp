@@ -6,7 +6,7 @@
 
 namespace Centralia {
 
-// Генерация предвычисленной таблицы CRC32 на этапе компиляции для максимального FPS
+// Предвычисленная на этапе компиляции таблица CRC32 — не тратит такты CPU в игре
 constexpr auto GenerateCRC32Table() noexcept {
     std::array<uint32_t, 256> table{};
     for (uint32_t i = 0; i < 256; ++i) {
@@ -35,11 +35,11 @@ uint32_t ResourcePackerOGGX::CalculateCRC32(const std::vector<uint8_t>& data) no
 bool ResourcePackerOGGX::PackResources(const std::vector<std::string>& inputFiles, const std::string& outputPackPath) {
     std::ofstream outArchive(outputPackPath, std::ios::binary);
     if (!outArchive.is_open()) {
-        Platform::Log("[OGGX PACKER ERROR]: Не удалось создать архивный файл: " + outputPackPath);
+        Platform::Log("[OGGX PACKER FATAL]: Ошибка ввода-вывода. Диск заблокирован: " + outputPackPath);
         return false;
     }
 
-    // 1. Формируем и пишем базовый заголовок контейнера
+    // 1. Формируем заголовок контейнера .oggx
     OGGXHeader header{};
     std::memcpy(header.magic, "OGGX", 4);
     header.version = 1;
@@ -47,18 +47,19 @@ bool ResourcePackerOGGX::PackResources(const std::vector<std::string>& inputFile
     header.reservedBuffer = 0;
     outArchive.write(reinterpret_cast<const char*>(&header), sizeof(OGGXHeader));
 
-    // Выделяем место под оглавление архива (File TableEntries), запишем его позже, когда узнаем смещения
+    // Выделяем пустой блок памяти под будущую таблицу оглавления модов
     const uint64_t tableOffset = outArchive.tellp();
     std::vector<OGGXFileEntry> fileEntries(inputFiles.size());
     outArchive.write(reinterpret_cast<const char*>(fileEntries.data()), fileEntries.size() * sizeof(OGGXFileEntry));
 
-    // 2. Побайтово упаковываем файлы и считаем CRC32
     uint64_t currentPayloadOffset = outArchive.tellp();
 
+    // 2. Побайтовое последовательное сжатие файлов мода в общую кучу
     for (size_t i = 0; i < inputFiles.size(); ++i) {
         std::ifstream fileSource(inputFiles[i], std::ios::binary | std::ios::ate);
         if (!fileSource.is_open()) {
-            Platform::Log("[OGGX PACKER ERROR]: Не удалось открыть исходный файл ресурса: " + inputFiles[i]);
+            Platform::Log("[OGGX PACKER ERROR]: Ресурс мода заблокирован или отсутствует: " + inputFiles[i]);
+            outArchive.close();
             return false;
         }
 
@@ -70,7 +71,7 @@ bool ResourcePackerOGGX::PackResources(const std::vector<std::string>& inputFile
             fileSource.read(reinterpret_cast<char*>(buffer.data()), fileSize);
         }
 
-        // Заполняем метаданные для таблицы оглавления
+        // Заполняем метаданные оглавления для быстрого чтения из RAM
         OGGXFileEntry& entry = fileEntries[i];
         std::memset(entry.filePath, 0, sizeof(entry.filePath));
         std::strncpy(entry.filePath, inputFiles[i].c_str(), sizeof(entry.filePath) - 1);
@@ -78,7 +79,6 @@ bool ResourcePackerOGGX::PackResources(const std::vector<std::string>& inputFile
         entry.fileSize = fileSize;
         entry.crc32Checksum = CalculateCRC32(buffer);
 
-        // Пишем сырое тело файла в общую кучу
         if (fileSize > 0) {
             outArchive.write(reinterpret_cast<const char*>(buffer.data()), fileSize);
         }
@@ -87,19 +87,19 @@ bool ResourcePackerOGGX::PackResources(const std::vector<std::string>& inputFile
         fileSource.close();
     }
 
-    // 3. Возвращаемся в начало и перезаписываем корректную заполненную таблицу оглавления
+    // 3. Возвращаем каретку записи назад и запечатываем готовую таблицу оглавления в архив
     outArchive.seekp(tableOffset);
     outArchive.write(reinterpret_cast<const char*>(fileEntries.data()), fileEntries.size() * sizeof(OGGXFileEntry));
     outArchive.close();
 
-    Platform::Log("[OGGX PACKER]: Успешно сжато ресурсов: " + std::to_string(inputFiles.size()) + " в контейнер " + outputPackPath);
+    Platform::Log("[OGGX PACKER]: Контейнер собран номинально. Упаковано файлов ресурсов: " + std::to_string(inputFiles.size()));
     return true;
 }
 
 bool ResourcePackerOGGX::ValidatePackIntegrity(const std::string& packPath) {
     std::ifstream inArchive(packPath, std::ios::binary);
     if (!inArchive.is_open()) {
-        Platform::Log("[OGGX VALIDATOR ERROR]: Не удалось открыть архив для проверки: " + packPath);
+        Platform::Log("[OGGX VALIDATOR ERROR]: Мод-пак поврежден или удален во время игры: " + packPath);
         return false;
     }
 
@@ -107,14 +107,15 @@ bool ResourcePackerOGGX::ValidatePackIntegrity(const std::string& packPath) {
     inArchive.read(reinterpret_cast<char*>(&header), sizeof(OGGXHeader));
 
     if (std::memcmp(header.magic, "OGGX", 4) != 0) {
-        Platform::Log("[OGGX VALIDATOR FATAL]: Неверная сигнатура файла архива!");
+        Platform::Log("[OGGX VALIDATOR FATAL]: Сигнатура файла повреждена. Контейнер заблокирован!");
+        inArchive.close();
         return false;
     }
 
     std::vector<OGGXFileEntry> fileEntries(header.fileCount);
     inArchive.read(reinterpret_cast<char*>(fileEntries.data()), header.fileCount * sizeof(OGGXFileEntry));
 
-    // Прогоняем каждый файл внутри кучи через CRC32 валидатор
+    // Мастер-валидатор контрольных сумм CRC32 защищает Ghost-RAM от читеров и битых секторов диска
     for (const auto& entry : fileEntries) {
         inArchive.seekg(entry.fileOffset, std::ios::beg);
         std::vector<uint8_t> buffer(entry.fileSize);
@@ -123,15 +124,15 @@ bool ResourcePackerOGGX::ValidatePackIntegrity(const std::string& packPath) {
             inArchive.read(reinterpret_cast<char*>(buffer.data()), entry.fileSize);
         }
 
-        uint32_t currentCrc = CalculateCRC32(buffer);
-        if (currentCrc != entry.crc32Checksum) {
-            Platform::Log("[OGGX VALIDATOR CORRUPTION]: Файл '" + std::string(entry.filePath) + "' ПОВРЕЖДЕН! Контрольные суммы не совпали.");
+        if (CalculateCRC32(buffer) != entry.crc32Checksum) {
+            Platform::Log("[OGGX VALIDATOR FATAL]: Файл мода '" + std::string(entry.filePath) + "' СКОМПРОМЕТИРОВАН ИЛИ ПОВРЕЖДЕН!");
+            inArchive.close();
             return false;
         }
     }
 
     inArchive.close();
-    Platform::Log("[OGGX VALIDATOR NOMINAL]: Пакет ресурсов " + packPath + " успешно прошел CRC32 валидацию. Ошибок нет.");
+    Platform::Log("[OGGX VALIDATOR]: Проверка контрольных сумм архива '" + packPath + "' выполнена. Ошибок целостности нет.");
     return true;
 }
 

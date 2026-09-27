@@ -26,7 +26,7 @@ struct BodyMorphStats {
 };
 #pragma pack(pop)
 
-// Категории предметов в мире Dead Lend (база из LDoE_Engine и твоих дизайн-доков)
+// Категории предметов в мире Dead Lend
 enum class ItemType : uint8_t {
     Weapon     = 0,
     Armor      = 1,
@@ -63,86 +63,50 @@ private:
     uint32_t m_activeArmorId;
 
     Vector3D m_position;
-    float m_rotationY = 0.0f; // Поворот персонажа вокруг вертикальной оси
-    
-    // --- ИНТЕГРАЦИЯ РЕДАКТОРА ПЕРСОНАЖА ---
-    BodyMorphStats m_bodyMorph; // Хранит точные слайдеры анатомии для GPU-шейдера
+    float m_rotationY;              // Поворот персонажа вокруг вертикальной оси
+    BodyMorphStats m_bodyMorph;     // Хранит точные слайдеры анатомии для GPU-шейдера
 
 public:
-    Player() : m_uid(777), m_nickname("Vault_Survivor"), m_maxInventorySlots(20), 
-               m_activeWeaponId(0), m_activeArmorId(0), m_position(0.0f,0.0f,0.0f) {
-
-        // Дефолтные параметры анатомии, если редактор пропущен
-        m_bodyMorph.gender = CharacterGender::Male;
-        m_bodyMorph.breastSize = 1.0f;
-        m_bodyMorph.intimateInt = 1.0f;
-        m_bodyMorph.gluteusSize = 1.0f;
-        m_bodyMorph.heightScale = 1.0f;
-        m_bodyMorph.muscleMass = 1.0f;
-    }
-
-    // Геттер для передачи данных морфинга в Renderer3D.cpp для деформации вершин
-    [[nodiscard]] const BodyMorphStats& GetBodyMorph() const noexcept { return m_bodyMorph; }
-    void SetBodyMorph(const BodyMorphStats& morph) noexcept { m_bodyMorph = morph; }
-
-    // Конструктор с параметрами, который уже есть
+    // Конструкторы и деструктор
+    Player();
     Player(uint64_t uid, const std::string& name, size_t slots = 20);
     ~Player();
 
-    // 2. Метод обновления стейта движения из main.cpp:59
-    const Vector3D& GetPosition() const { return m_position; }
-    void SetPosition(const Vector3D& pos) { m_position = pos; }
-    
-    float GetRotation() const { return m_rotationY; }
-    void SetRotation(float angle) { m_rotationY = angle; }
+    // Константные и инлайн-совместимые геттеры/сеттеры
+    [[nodiscard]] uint32_t GetActiveArmorId() const noexcept { return m_activeArmorId; }
+    [[nodiscard]] uint32_t GetActiveWeaponId() const noexcept { return m_activeWeaponId; }
+    [[nodiscard]] const BodyMorphStats& GetBodyMorph() const noexcept { return m_bodyMorph; }
+    void SetBodyMorph(const BodyMorphStats& morph) noexcept { m_bodyMorph = morph; }
 
-    // 2. Метод обновления стейта движения из main.cpp:59
-    void UpdateMovementState(float deltaTime, bool isSprinting, bool isCtrlPressed) {
-        // Логика переключения скоростей и траты выносливости
-    }
+    [[nodiscard]] const Vector3D& GetPosition() const noexcept { return m_position; }
+    void SetPosition(const Vector3D& pos) noexcept { m_position = pos; }
+    [[nodiscard]] float GetRotation() const noexcept { return m_rotationY; }
+    void SetRotation(float angle) noexcept { m_rotationY = angle; }
 
-    void Move(const Vector3D& direction, float speed, float deltaTime) {
-        m_position = m_position + (direction.Normalize() * speed * deltaTime);
-    }
-    
-    // 3. Метод проверки движения персонажа из main.cpp:66
-    [[nodiscard]] bool IsMoving() const noexcept {
-        return true; // Возвращаем true, если вектор скорости не нулевой
-    }
+    [[nodiscard]] uint64_t GetUID() const noexcept { return m_uid; }
+    [[nodiscard]] const std::string& GetNickname() const noexcept { return m_nickname; }
+    [[nodiscard]] const std::vector<Item>& GetInventory() const noexcept { return m_inventory; }
+    [[nodiscard]] SurvivalStats& GetStats() noexcept { return m_stats; }
 
-    // 4. Метод получения высоты слоя карты из main.cpp:78
-    [[nodiscard]] float GetCurrentMapTileHeight() const noexcept {
-        return 51.0f; // Возвращаем базовый высотный слой земли из test.map
-    }
+    // Прототипы методов управления, перемещения и расчетов высот/веса
+    void UpdateMovementState(float deltaTime, bool isSprinting, bool isCtrlPressed);
+    void Move(const Vector3D& direction, float speed, float deltaTime);
     
-    // Добавляем строго сюда для связи с CraftingManager:
-    void AddItemToInventory(uint32_t itemId, uint32_t count) {
-        AddItem(itemId, static_cast<uint16_t>(count));
-    }
+    [[nodiscard]] bool IsMoving() const noexcept;
+    [[nodiscard]] float GetCurrentMapTileHeight() const noexcept;
+    [[nodiscard]] float GetEquippedArmorWeight() const noexcept;
+    
+    // Шлюз связи с кузнечным верстаком CraftingManager
+    void AddItemToInventory(uint32_t itemId, uint32_t count);
 
-    // Геттеры и сеттеры для механик выживания
-    uint64_t GetUID() const { return m_uid; }
-    const std::string& GetNickname() const { return m_nickname; }
-    SurvivalStats& GetStats() { return m_stats; }
-    
-    // Логика инвентаря
+    // Логика инвентаря, выживания и применения медикаментов
     bool AddItem(uint32_t itemId, uint16_t qty, float durability = 1.0f);
     bool RemoveItem(size_t slotIndex, uint16_t qty);
-    const std::vector<Item>& GetInventory() const { return m_inventory; }
-
-    // Использовать предмет из инвентаря по его индексу (аптечка, вода и т.д.)
     bool UseItem(size_t slotIndex);
-
-    // Экипировать оружие или броню
     bool EquipItem(size_t slotIndex);
-
-    // Пошаговый обсчет выживания (вызывается в игровом цикле)
     void UpdateSurvival(float deltaTime);
 
-    uint32_t GetActiveWeaponId() const { return m_activeWeaponId; }
-    uint32_t GetActiveArmorId() const { return m_activeArmorId; }
-
-    // Кроссплатформенная сериализация состояния игрока в байты (для сети или сохранений)
+    // Сериализация стейта для сетевого P2P-кооператива
     std::vector<uint8_t> SerializeState() const;
     bool DeserializeState(const std::vector<uint8_t>& buffer, size_t& offset);
 };

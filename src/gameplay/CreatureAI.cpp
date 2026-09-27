@@ -1,4 +1,4 @@
-#include "gameplay/CreatureAI.hpp"
+#include "gameplay/Creature.hpp"
 #include "platform/Platform.hpp"
 #include "core/MemoryManager.hpp"
 #include <algorithm>
@@ -41,7 +41,7 @@ void Creature::ApplyComponentDamage(AnatomyPart part, float rawDamage) {
     // 1. Специфика РОБОТОВ И МЕХОВ: Броня гасит урон, уязвимость у сенсоров
     if (m_species == CreatureSpecies::Mechanical_Mecha) {
         if (part == AnatomyPart::Torso_Chassis) {
-            finalDmg -= 20.0f; // Листы титановой брони поглощают 23 единицы урона пули
+            finalDmg -= 20.0f; // Листы титановой брони поглощают 20 единиц урона пули
             if (finalDmg < 0.0f) finalDmg = 0.0f;
         }
         if (part == AnatomyPart::Head_Sensor) {
@@ -60,7 +60,7 @@ void Creature::ApplyComponentDamage(AnatomyPart part, float rawDamage) {
     comp.health -= finalDmg;
     m_totalHealth -= finalDmg;
 
-    // Физика отсечения / полного уничтожения детали (Расчлененка из твоей задумки LDoE)
+    // Физика отсечения / полного уничтожения детали (Расчлененка из твоей задумки)
     if (comp.health <= 0.0f) {
         comp.health = 0.0f;
         comp.isSeveredOrDestroyed = true;
@@ -93,7 +93,7 @@ void Creature::UpdateAiTick(float deltaTime, const Vector3D& playerPos, MemoryMa
             if (delta.Length() < 6.0f) { // Радиус поражения выброса изотопов — 6 метров в 3D
                 int32_t currentRad = memory.GetRegistryValue("player_radiation");
                 memory.SetRegistryValue("player_radiation", currentRad + 25); // Лупит +25 рад по игроку
-                Platform::Log("[AI EVENT]: Радиоактивный гуль детонировал! Игрок облучен радиоактивной пылью.");
+                Platform::Log("[AI EVENT]: Radioactivity Ghoul detorated! Player irradiated with fallback dust.");
             }
             // Меняем вид на органику, чтобы предотвратить повторный круговой обсчет взрыва трупа на CPU
             m_species = CreatureSpecies::Humanoid_Organic; 
@@ -104,7 +104,7 @@ void Creature::UpdateAiTick(float deltaTime, const Vector3D& playerPos, MemoryMa
     // ХАРДКОРНЫЙ ОБСЧЕТ ХРОМОТЫ: Скорость ИИ падает, если повреждены ноги/приводы шасси
     float movementSpeed = 3.5f; // Базовая скорость бега мобов
     
-    // БЕЗОПАСНАЯ ИСПРАВЛЕННАЯ ПРОВЕРКА ФЛАГОВ РАСЧЛЕНЕНКИ (Убрали некорректный метод isOriginal)
+    // БЕЗОПАСНАЯ ИСПРАВЛЕННАЯ ПРОВЕРКА ФЛАГОВ РАСЧЛЕНЕНКИ
     if (m_anatomyProfile[AnatomyPart::Left_Leg_Hydraulic].isSeveredOrDestroyed || 
         m_anatomyProfile[AnatomyPart::Right_Leg_Hydraulic].isSeveredOrDestroyed) 
     {

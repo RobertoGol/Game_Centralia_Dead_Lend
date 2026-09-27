@@ -9,37 +9,36 @@ MaterialSystem::MaterialSystem() {}
 void MaterialSystem::InitializeMaterialLibrary() {
     m_materials.clear();
 
-    // Профиль 1: Заводская краска для ВАЗ-2101 / 2108 (Чистая советская классика)
+    // Profile 1: Factory paint coatings for traditional chassis structures (Gloss Polish)
     MaterialProperties classicCarPaint;
     classicCarPaint.materialId = 801;
     classicCarPaint.materialName = "Заводской Глянец ВАЗ";
-    classicCarPaint.baseRoughness = 0.2f;       // Отражает свет (низкая шероховатость)
-    classicCarPaint.factoryPaintAlpha = 1.0f;   // Плотный слой краски
-    classicCarPaint.rustIntensity = 0.05f;      // Почти нет ржавчины
-    classicCarPaint.radGlowIntensity = 0.0f;    // Чистый металл
+    classicCarPaint.baseRoughness = 0.2f;       // Reflective sheen profile (Low roughness scale)
+    classicCarPaint.factoryPaintAlpha = 1.0f;   // Solid original paint coat thickness
+    classicCarPaint.rustIntensity = 0.05f;      // Minor target oxidation trace variables
+    classicCarPaint.radGlowIntensity = 0.0f;    // Clean environment layer
     m_materials[classicCarPaint.materialId] = classicCarPaint;
 
-    // Профиль 2: Ржавая сталь Пустоши (Для брони Титанов и машин-развалюх а-ля Fallout)
+    // Profile 2: Heavily degraded rust textures for wasteland mechs and scrap frames
     MaterialProperties wastelandWreck;
     wastelandWreck.materialId = 802;
     wastelandWreck.materialName = "Ржавый Индустриальный Корпус";
-    wastelandWreck.baseRoughness = 0.8f;       // Матовая шершавая поверхность
-    wastelandWreck.factoryPaintAlpha = 0.4f;   // Краска сильно облезла (всего 40% осталось)
-    wastelandWreck.rustIntensity = 0.75f;      // 75% поверхности покрыто ржавчиной
+    wastelandWreck.baseRoughness = 0.8f;       // Matte diffuse scatter profile
+    wastelandWreck.factoryPaintAlpha = 0.4f;   // Obleached base coat properties (40% remaining)
+    wastelandWreck.rustIntensity = 0.75f;      // Extended corrosion overlay
     wastelandWreck.radGlowIntensity = 0.0f;
     m_materials[wastelandWreck.materialId] = wastelandWreck;
 
-    // Профиль 3: Радиоактивная био-масса (Для Гулей, Бегемотов и зараженных Мехов)
-//    Временно комментируем битый отладочный вывод:
-    float radGlowGlowBio = 1.0f; // <-- ОШИБКА: Ты объявил локальный float с именем radGlowGlowBio!
-//    someVar.materialId = radGlowGlowBio.materialId;
+    // Profile 3: Radioactive biological target textures (Self-illuminating neon phosphors)
     MaterialProperties radGlowBio;
-    radGlowBio.materialId = 803; // <-- ФАТАЛЬНАЯ ОШИБКА: Компилятор пытается взять у float поле .materialId!
+    radGlowBio.materialId = 803; 
     radGlowBio.materialName = "Облученная Зараженная Плоть";
     radGlowBio.baseRoughness = 0.9f;
-    radGlowBio.factoryPaintAlpha = 0.0f;       // Нет заводской краски
+    radGlowBio.factoryPaintAlpha = 0.0f;       // Zero paint layer attributes
     radGlowBio.rustIntensity = 0.0f;
-    radGlowBio.radGlowIntensity = 0.85f;    // Мощное фосфорное зеленое свечение в темноте
+    radGlowBio.radGlowIntensity = 0.85f;       // Emits strong green luminescence over fragment buffers
+    
+    // FIXED: Swapped out broken primitive shadows to index via valid struct data members
     m_materials[radGlowBio.materialId] = radGlowBio;
 
     Platform::Log("MaterialSystem: Многоуровневые профили красок и слоев износа (ВАЗ, Титаны, Рад-Био) успешно загружены.");
@@ -50,8 +49,7 @@ void MaterialSystem::ApplyMaterialToShader(uint32_t materialId, Shader& activeSh
     if (it == m_materials.end()) return;
     const MaterialProperties& mat = it->second;
 
-    // Пробрасываем коэффициенты многоуровневых слоев краски напрямую в память GPU
-    // Фрагментный шейдер использует эти веса для попиксельного смешивания текстур
+    // Pipe multi-layered parameters straight to programmable GPU shader uniform slots
     activeShader.SetVec3("materialParams", mat.baseRoughness, mat.factoryPaintAlpha, mat.rustIntensity);
     activeShader.SetVec3("materialGlow", mat.radGlowIntensity, 0.0f, 0.0f);
 }

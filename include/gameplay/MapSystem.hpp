@@ -6,6 +6,10 @@
 
 namespace Centralia {
 
+// Опережающие объявления классов выжившего и его профиля
+class Player;
+class ClassSystem;
+
 enum class SurfaceMaterial : uint8_t {
     Grass_Dirt   = 0,
     Concrete     = 1,
@@ -36,7 +40,7 @@ enum class EnvironmentEffect : uint8_t {
 #pragma pack(push, 1) // Отключаем авто-выравнивание компилятора, фиксируем ровно 22 байта
 struct MapTile {
     uint8_t heightLevel;          // 1 байт
-    SurfaceMaterial material;     // 1 байт
+    SurfaceMaterial material;     // 1 байt
     MapObject object;             // 1 байт
     EnvironmentEffect effect;     // 1 байт
     float tileHealth;             // 4 байта (разрушаемость окружающей среды)
@@ -55,6 +59,12 @@ private:
     MapSystem() = default; // Синглтон
 
 public:
+    ~MapSystem() = default;
+
+    // Запрещаем копирование синглтона
+    MapSystem(const MapSystem&) = delete;
+    MapSystem& operator=(const MapSystem&) = delete;
+
     static MapSystem& GetInstance() {
         static MapSystem instance;
         return instance;
@@ -71,12 +81,11 @@ public:
 
     bool CheckCollision(const Vector3D& position) const;
 
-    void UpdateMapEnvironment(float deltaTime, class Player& player, class ClassSystem& classSystem);
+    void UpdateMapEnvironment(float deltaTime, Player& player, ClassSystem& classSystem);
 
-    uint32_t GetWidth() const { return m_width; }
-    uint32_t GetHeight() const { return m_height; }
-    const std::vector<MapTile>& GetGrid() const { return m_tileGrid; }
+    [[nodiscard]] uint32_t GetWidth() const noexcept { return m_width; }
+    [[nodiscard]] uint32_t GetHeight() const noexcept { return m_height; }
+    [[nodiscard]] const std::vector<MapTile>& GetGrid() const noexcept { return m_tileGrid; }
 };
 
 } // namespace Centralia
-s

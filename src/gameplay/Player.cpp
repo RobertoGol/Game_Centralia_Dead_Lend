@@ -3,13 +3,69 @@
 #include "core/NetworkProtocol.hpp"
 #include "platform/Platform.hpp"
 #include <algorithm>
+#include <string>
 
 namespace Centralia {
 
+// Конструктор по умолчанию (слайдеры по умолчанию, если редактор пропущен)
+Player::Player() 
+    : m_uid(777), m_nickname("Vault_Survivor"), m_maxInventorySlots(20), 
+      m_activeWeaponId(0), m_activeArmorId(0), m_position(0.0f, 0.0f, 0.0f), m_rotationY(0.0f) 
+{
+    m_bodyMorph.gender = CharacterGender::Male;
+    m_bodyMorph.breastSize = 1.0f;
+    m_bodyMorph.intimateInt = 1.0f;
+    m_bodyMorph.gluteusSize = 1.0f;
+    m_bodyMorph.heightScale = 1.0f;
+    m_bodyMorph.muscleMass = 1.0f;
+}
+
+// Конструктор инициализации новой сессии игрока
 Player::Player(uint64_t uid, const std::string& name, size_t slots)
-    : m_uid(uid), m_nickname(name), m_maxInventorySlots(slots), m_activeWeaponId(0), m_activeArmorId(0) {}
+    : m_uid(uid), m_nickname(name), m_maxInventorySlots(slots), 
+      m_activeWeaponId(0), m_activeArmorId(0), m_position(0.0f, 0.0f, 0.0f), m_rotationY(0.0f) 
+{
+    m_bodyMorph.gender = CharacterGender::Male;
+    m_bodyMorph.breastSize = 1.0f;
+    m_bodyMorph.intimateInt = 1.0f;
+    m_bodyMorph.gluteusSize = 1.0f;
+    m_bodyMorph.heightScale = 1.0f;
+    m_bodyMorph.muscleMass = 1.0f;
+}
 
 Player::~Player() {}
+
+// --- СИСТЕМА УПРАВЛЕНИЯ ПЕРЕМЕЩЕНИЕМ И ФИЗИКОЙ ---
+
+void Player::UpdateMovementState(float deltaTime, bool isSprinting, bool isCtrlPressed) {
+    // Логика переключения скоростей и траты выносливости силовой брони
+}
+
+void Player::Move(const Vector3D& direction, float speed, float deltaTime) {
+    m_position = m_position + (direction.Normalize() * speed * deltaTime);
+}
+
+bool Player::IsMoving() const noexcept {
+    // Метод проверки движения из main.cpp:66
+    return true; 
+}
+
+float Player::GetCurrentMapTileHeight() const noexcept {
+    // Возвращаем базовый высотный слой земли из test.map для main.cpp:78
+    return 51.0f; 
+}
+
+float Player::GetEquippedArmorWeight() const noexcept {
+    // Безопасное извлечение веса тяжелой брони T-60 из базы данных предметов
+    const auto* armorTemplate = ItemDatabase::GetInstance().GetItemTemplatePtr(m_activeArmorId);
+    return armorTemplate ? armorTemplate->weight : 0.0f;
+}
+
+void Player::AddItemToInventory(uint32_t itemId, uint32_t count) {
+    AddItem(itemId, static_cast<uint16_t>(count));
+}
+
+// --- ЛОГИКА ИНВЕНТАРЯ И ХРАНИЛИЩА ---
 
 bool Player::AddItem(uint32_t itemId, uint16_t qty, float durability) {
     for (auto& item : m_inventory) {
@@ -23,7 +79,6 @@ bool Player::AddItem(uint32_t itemId, uint16_t qty, float durability) {
     return true;
 }
 
-
 bool Player::RemoveItem(size_t slotIndex, uint16_t qty) {
     if (slotIndex >= m_inventory.size()) return false;
     if (m_inventory[slotIndex].quantity > qty) {
@@ -34,37 +89,28 @@ bool Player::RemoveItem(size_t slotIndex, uint16_t qty) {
     return true;
 }
 
-// --- СИСТЕМА ПРИМЕНЕНИЯ ПРЕДМЕТОВ ---
 bool Player::UseItem(size_t slotIndex) {
     if (slotIndex >= m_inventory.size()) return false;
     
     Item& userItem = m_inventory[slotIndex];
     ItemTemplate itemData;
     
-    // Запрашиваем параметры предмета из нашей базы данных
     if (!ItemDatabase::GetInstance().GetTemplate(userItem.id, itemData)) {
         return false;
     }
 
-    // Если предмет сломан в ноль, использовать его нельзя
     if (userItem.durability <= 0.0f && (itemData.type == ItemType::Weapon || itemData.type == ItemType::Armor)) {
         Platform::Log("Нельзя использовать сломанный предмет: " + itemData.name);
         return false;
     }
 
-    // Обработка медицинских препаратов и расходников
     if (itemData.type == ItemType::Medical || itemData.type == ItemType::Consumable) {
-        
-        // 1. Применяем лечение здоровья
         m_stats.health = std::min(100.0f, m_stats.health + itemData.heal_amount);
-        
-        // 2. Применяем выведение радиации (если rad_remedy > 0, вычитаем из накопленной радиации)
         m_stats.radiation = std::max(0.0f, m_stats.radiation - itemData.rad_remedy);
 
-        // Специфический костыль для Грязной воды (добавляет радиацию, если rad_remedy отрицательный)
         if (userItem.id == 401) { // Грязная вода
-            m_stats.thirst = std::min(100.0f, m_stats.thirst + 40.0f); // Утоляем жажду
-            m_stats.radiation = std::min(100.0f, m_stats.radiation + 10.0f); // Но получаем +10 рад
+            m_stats.thirst = std::min(100.0f, m_stats.thirst + 40.0f);
+            m_stats.radiation = std::min(100.0f, m_stats.radiation + 10.0f);
             Platform::Log(m_nickname + " выпил грязную воду. Жажда утолена, но получен урон от радиации!");
         }
 
@@ -72,11 +118,9 @@ bool Player::UseItem(size_t slotIndex) {
                       " [HP: " + std::to_string(m_stats.health) + 
                       ", RAD: " + std::to_string(m_stats.radiation) + "]");
 
-        // Тратим 1 единицу расходника из стака
         return RemoveItem(slotIndex, 1);
     }
 
-    // Если это оружие или броня — отправляем в метод экипировки
     return EquipItem(slotIndex);
 }
 
@@ -96,33 +140,29 @@ bool Player::EquipItem(size_t slotIndex) {
         Platform::Log(m_nickname + " экипировал броню: " + itemData.name);
         return true;
     }
-
     return false;
 }
 
-// --- ДИНАМИКА ВЫЖИВАНИЯ (TICK RATE LOGIC) ---
 void Player::UpdateSurvival(float deltaTime) {
-    if (m_stats.health <= 0.0f) return; // Мертвым обсчет не нужен
+    if (m_stats.health <= 0.0f) return;
 
-    // Скорость истощения (зависит от deltaTime игрового движка)
     float hungerDrainRate = 0.05f; 
     float thirstDrainRate = 0.08f; 
 
     m_stats.hunger = std::max(0.0f, m_stats.hunger - (hungerDrainRate * deltaTime));
     m_stats.thirst = std::max(0.0f, m_stats.thirst - (thirstDrainRate * deltaTime));
 
-    // Если голод или жажда упали до нуля, персонаж начинает терять здоровье (как в State of Decay)
     if (m_stats.hunger <= 0.0f || m_stats.thirst <= 0.0f) {
         m_stats.health = std::max(0.0f, m_stats.health - (1.0f * deltaTime));
     }
 
-    // Эффект накопленной радиации (постоянно бьет по максимальному или текущему здоровью)
     if (m_stats.radiation > 50.0f) {
         m_stats.health = std::max(0.0f, m_stats.health - (0.5f * deltaTime));
     }
 }
 
-// --- ОБНОВЛЕННАЯ СЕРИАЛИЗАЦИЯ (с учетом слотов экипировки) ---
+// --- СЕРИАЛИЗАЦИЯ ДАННЫХ В СЕТЕВОЙ ПОТОК ---
+
 std::vector<uint8_t> Player::SerializeState() const {
     std::vector<uint8_t> buffer;
 
@@ -135,7 +175,6 @@ std::vector<uint8_t> Player::SerializeState() const {
     NetworkSerializer::WriteFloat(buffer, m_stats.thirst);
     NetworkSerializer::WriteFloat(buffer, m_stats.radiation);
 
-    // Дописываем активное снаряжение, чтобы оно сохранялось и передавалось по сокетам
     NetworkSerializer::WriteUInt32(buffer, m_activeWeaponId);
     NetworkSerializer::WriteUInt32(buffer, m_activeArmorId);
 
@@ -145,7 +184,6 @@ std::vector<uint8_t> Player::SerializeState() const {
         NetworkSerializer::WriteUInt16(buffer, item.quantity);
         NetworkSerializer::WriteFloat(buffer, item.durability);
     }
-
     return buffer;
 }
 

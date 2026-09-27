@@ -45,6 +45,7 @@ bool ServerShop::RequestResourcePurchase(uint32_t resourceId, uint32_t quantity)
 void ServerShop::DisconnectShop() {
     m_shopSocket.Close();
     m_shopOnline = false;
+    Platform::Log("[SHOP]: Сессия связи с сервером поддержки закрыта.");
 }
 
 } // namespace Centralia

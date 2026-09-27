@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 #include <cstdint>
-#include <algorithm>
 
 namespace Centralia {
 
@@ -31,22 +30,20 @@ struct Modification {
 struct VehicleModification {
     uint32_t id;
     std::string name;
-    std::string loreDescription; // Текстовый лор для погружения в мир игры
+    std::string loreDescription;    // Текстовый лор для погружения в мир игры
     ModSlot slot;
     
-    // --- 5 КЛЮЧЕВЫХ МЕХАНИК КОЛЕСА // МОДУЛЯ ---
+    // --- 5 КЛЮЧЕВЫХ МЕХАНИК КОЛЕСА / МОДУЛЯ ---
     float health = 100.0f;          // 1. Текущее здоровье колеса (можно прострелить)
     float armorValue = 5.0f;        // 2. Бронирование колеса (сопротивление урону)
     float terrainPassability = 1.0f;// 3. Проходимость (колеса: грязь -0.2, асфальт +0.3; гусеницы: везде 1.0)
-    float weightAdded = 150.0f;     // 4. Вес колеса/детали в кг (влияет на разгон и нагрузку процессора)
+    float weightAdded = 150.0f;     // 4. Вес колеса/детали в кг (влияет на разгон)
     float speedMultiplier = 1.0f;   // 5. Модификатор максимальной скорости техники
-    float tirePressurePsi = 32.0f;  // 6. Текущее давление в шинах (min 0.0f slm 15.0f max 32.0f)
-    bool isDetached = false;        // 7. Текущее состояние колеса (полного отрыва/разрушения колеса)
+    float tirePressurePsi = 32.0f;  // 6. Текущее давление в шинах (min 0.0f max 32.0f)
+    bool isDetached = false;        // 7. Текущее состояние колеса (полного отрыва/разрушения)
 };
 
-// Универсальный шаблон лорного предмета (Фотоаппарат, Снимок из прошлого и т.д.)
-// Universal lore item template
-// Universal item template
+// Универсальный шаблон лорного предмета (Фотоаппарат, Снимок из прошлого)
 struct UniverseItem {
     uint32_t t_id;
     std::string name;
@@ -55,7 +52,6 @@ struct UniverseItem {
     uint32_t quantity;
     bool isQuestItem;
 };
-
 
 // Интерфейс для всего, что можно модифицировать (Танки, Титаны, Экзоскелеты)
 class ModdableEntity {
@@ -67,31 +63,14 @@ protected:
 public:
     virtual ~ModdableEntity() = default;
 
-    bool InstallModification(const Modification& mod) {
-        // Проверяем, не занят ли уже этот слот (в простых системах один слот — один мод)
-        for (const auto& installed : m_installedMods) {
-            if (installed.slot == mod.slot) return false; 
-        }
-        m_installedMods.push_back(mod);
-        return true;
-    }
+    // Установка детали в слот хоста базы
+    bool InstallModification(const Modification& mod);
 
-    void RemoveModification(uint32_t modId) {
-        m_installedMods.erase(
-            std::remove_if(m_installedMods.begin(), m_installedMods.end(),
-                [modId](const Modification& m) { return m.id == modId; }),
-            m_installedMods.end()
-        );
-    }
+    // Снятие детали
+    void RemoveModification(uint32_t modId); 
 
     // Высчитываем итоговую скорость с учетом колес, гусениц или тяжелой брони
-    float GetModifiedSpeed() const {
-        float speed = m_baseSpeed;
-        for (const auto& mod : m_installedMods) {
-            speed *= mod.speedMultiplier;
-        }
-        return speed;
-    }
+    [[nodiscard]] float GetModifiedSpeed() const noexcept;
 };
 
 } // namespace Centralia

@@ -1,7 +1,8 @@
 #pragma once
 #include "core/Math3D.hpp"
-#include "gameplay/ModificationSystem.hpp"
+#include "gameplay/ModificationSystem.hpp" // Наследует функционал ModdableEntity
 #include <vector>
+#include <cstdint>
 
 namespace Centralia {
 
@@ -16,7 +17,7 @@ private:
 
 public:
     VehiclePhysics(bool isTracked = false);
-    ~VehiclePhysics() = default;
+    virtual ~VehiclePhysics() override = default;
 
     // Инициализация 4 колес или 2 гусеничных траков тяжелой техники со скриншотов
     void SetupChassis(const VehicleModification& baseModTemplate);
@@ -28,8 +29,8 @@ public:
     void SimulatePhysics(float deltaTime, const Vector3D& moveInput, Vector3D& outVelocity);
 
     // Геттеры для связи с системами шейдеров и 3D-камеры
-    float GetCameraShake() const { return m_cameraShakeIntensity; }
-    const std::vector<VehicleModification>& GetWheels() const { return m_wheels; }
+    [[nodiscard]] float GetCameraShake() const noexcept { return m_cameraShakeIntensity; }
+    [[nodiscard]] const std::vector<VehicleModification>& GetWheels() const noexcept { return m_wheels; }
 };
 
 } // namespace Centralia

@@ -3,8 +3,18 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include <algorithm>
 
 namespace Centralia {
+
+// Внутренняя вспомогательная утилита для очистки строк от мусорных пробелов и переносов строк
+static std::string TrimWhitespace(const std::string& str) noexcept {
+    if (str.empty()) return str;
+    size_t first = str.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) return "";
+    size_t last = str.find_last_not_of(" \t\r\n");
+    return str.substr(first, (last - first + 1));
+}
 
 bool AssetParser::LoadModFromDisk(
     const std::string& category, 
@@ -20,7 +30,7 @@ bool AssetParser::LoadModFromDisk(
     std::string texturePath = basePath + "texture.bmp"; // Текстура и краски (.col)
     std::string meshPath    = basePath + "mesh.obj";    // 3D-сетка тяжелого Титана/Танка
 
-    // ----------------================================------------------------
+    // ----------------================================================--------
     // 1. ЧТЕНИЕ И СБОРКА ТЕКСТУРЫ (.BMP / .COL)
     // ----------------================================================--------
     std::ifstream textureFile(texturePath, std::ios::binary | std::ios::ate);
@@ -36,7 +46,7 @@ bool AssetParser::LoadModFromDisk(
 
     // ----------------================================================--------
     // 2. ЧТЕНИЕ И ПАРСИНГ ГЕОМЕТРИИ 3D-СЕТКИ (.OBJ) НА CPU
-    // ----------------================================================--------
+    // ------------------------------------------------------------------------
     std::ifstream meshFile(meshPath);
     if (!meshFile.is_open()) {
         Platform::Log("[ASSET PARSER ERROR]: Критическая ошибка! 3D-сетка меша отсутствует: " + meshPath);
@@ -78,9 +88,16 @@ bool AssetParser::LoadModFromDisk(
                 std::size_t firstSlash = vertexBlock.find('/');
                 std::size_t lastSlash = vertexBlock.rfind('/');
                 
+                if (firstSlash == std::string::npos) continue; // Защита от кривой разметки
+                
                 uint32_t vIdx = std::stoul(vertexBlock.substr(0, firstSlash)) - 1;
                 uint32_t nIdx = 0;
                 
+                // ИСПРАВЛЕНО: Жесткий предохранитель от выхода за границы вектора (Ошибки SIGSEGV / Краха CPU)
+                if ((vIdx * 3 + 2) >= temporaryPositions.size()) {
+                    continue; 
+                }
+
                 Vertex3D_GPU gpuVertex{};
                 gpuVertex.x = temporaryPositions[vIdx * 3];
                 gpuVertex.y = temporaryPositions[vIdx * 3 + 1];
@@ -88,9 +105,15 @@ bool AssetParser::LoadModFromDisk(
 
                 if (lastSlash != std::string::npos && lastSlash != firstSlash) {
                     nIdx = std::stoul(vertexBlock.substr(lastSlash + 1)) - 1;
-                    gpuVertex.nx = temporaryNormals[nIdx * 3];
-                    gpuVertex.ny = temporaryNormals[nIdx * 3 + 1];
-                    gpuVertex.nz = temporaryNormals[nIdx * 3 + 2];
+                    
+                    // Валидация индексов нормалей перед чтением из ОЗУ
+                    if ((nIdx * 3 + 2) < temporaryNormals.size()) {
+                        gpuVertex.nx = temporaryNormals[nIdx * 3];
+                        gpuVertex.ny = temporaryNormals[nIdx * 3 + 1];
+                        gpuVertex.nz = temporaryNormals[nIdx * 3 + 2];
+                    } else {
+                        gpuVertex.nx = 0.0f; gpuVertex.ny = 1.0f; gpuVertex.nz = 0.0f;
+                    }
                 } else {
                     // Если нормалей в файле нет, проц забивает авто-заглушку, направленную вверх
                     gpuVertex.nx = 0.0f; gpuVertex.ny = 1.0f; gpuVertex.nz = 0.0f;
@@ -103,19 +126,20 @@ bool AssetParser::LoadModFromDisk(
 
     // ----------------================================================--------
     // 3. ЧТЕНИЕ КОНФИГУРАЦИОННОГО ФАЙЛА ХАРАКТЕРИСТИК (.TXT / .CFG)
-    // ----------------================================================--------
+    // ------------------------------------------------------------------------
     std::ifstream configFile(configPath);
     if (!configFile.is_open()) {
         Platform::Log("[ASSET PARSER ERROR]: Конфиг мода уничтожен или отсутствует: " + configPath);
         return false;
     }
 
-    std::string line;
-    while (std::getline(configFile, line)) {
-        std::size_t delimiter = line.find('=');
+    std::string configFileBufferLine;
+    while (std::getline(configFile, configFileBufferLine)) {
+        std::size_t delimiter = configFileBufferLine.find('=');
         if (delimiter != std::string::npos) {
-            std::string key = line.substr(0, delimiter);
-            std::string value = line.substr(delimiter + 1);
+            // ИСПРАВЛЕНО: Ключ и значение очищаются от мусорных пробелов до знака равенства
+            std::string key = TrimWhitespace(configFileBufferLine.substr(0, delimiter));
+            std::string value = TrimWhitespace(configFileBufferLine.substr(delimiter + 1));
             
             if (key == "id") outMod.id = std::stoul(value);
             else if (key == "name") outMod.name = value;
@@ -129,7 +153,7 @@ bool AssetParser::LoadModFromDisk(
     configFile.close();
 
     Platform::Log("[ASSET PARSER]: Ресурс '" + outMod.name + "' успешно собран процессором. Выделено " + 
-                  std::to_string(outMeshVertices.size()) + " вершин в буфер GPU.");
+                  std::to_string(outMeshVertices.size()) + " вершин в буфер GPU. Ошибки Out-of-Bounds устранены.");
     return true;
 }
 

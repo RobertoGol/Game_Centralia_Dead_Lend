@@ -1,14 +1,25 @@
 #include "core/InputController.hpp"
 #include "platform/Platform.hpp"
 #include <cmath>
+#include <algorithm>
 
 namespace Centralia {
 
-InputController::InputController() {}
-InputController::~InputController() { Shutdown(); }
+InputController::InputController() : m_gamepad(nullptr), m_currentType(ControllerType::KeyboardMouse) {
+    // Обнуляем бинарную структуру действий Fallout 76 при старте
+    m_actions.jump = false;
+    m_actions.useAction = false;
+    m_actions.reload = false;
+    m_actions.useHeal = false;
+    m_actions.ghostMode = false;
+}
+
+InputController::~InputController() { 
+    Shutdown(); 
+}
 
 void InputController::Initialize() {
-    // Сканируем системные порты Windows на наличие подключенных геймпадов
+    // Сканируем системные порты Windows/Linux на наличие подключенных геймпадов
     if (SDL_NumJoysticks() > 0) {
         for (int i = 0; i < SDL_NumJoysticks(); ++i) {
             if (SDL_IsGameController(i)) {
@@ -29,15 +40,19 @@ void InputController::Initialize() {
     }
 }
 
-void InputController::Update(SDL_Event& event) {
-    // Очищаем триггеры мгновенных одиночных действий перед опросом нового кадра
+void InputController::ClearFrameTriggers() noexcept {
+    // ИСПРАВЛЕНО: Флаги одиночных действий сбрасываются строго один раз за итерацию цикла в Engine::Update
     m_actions.jump = false;
     m_actions.useAction = false;
     m_actions.reload = false;
     m_actions.useHeal = false;
     m_actions.ghostMode = false;
+}
 
-    // Проверяем, не переключил ли пользователь устройство на лету
+void InputController::Update(SDL_Event& event) {
+    // ИСПРАВЛЕНО: Убрана ежекадровая очистка флагов из этого метода, ломавшая прыжки при движениях мыши
+
+    // Проверяем, не переключил ли пользователь устройство на лету (Hot Swap геймпада)
     if (event.type == SDL_CONTROLLERDEVICEADDED && !m_gamepad) {
         Initialize();
     }
@@ -61,12 +76,10 @@ void InputController::Update(SDL_Event& event) {
 
     // 2. ПОЛУЧЕНИЕ СИГНАЛОВ ОТ VR / AR ПЕРЧАТОК (Резервный слой OpenXR)
     if (m_currentType == ControllerType::VR_AR_HandTracker) {
-        // Здесь будет считываться пространственная дельта координат рук трекеров.
-        // Оставляем пустым для будущей интеграции AR-модулей.
         return;
     }
 
-    // 3. ПОЛУЧЕНИЕ СИГНАЛОВ ОТ КЛАВИАТУРЫ (Fallout 76 ПК-раскладка)
+    // 3. ПОЛУЧЕНИЕ СИГНАЛОВ ОТ КЛАВИАТУРЫ (Edge-triggered одиночные нажатия кликов)
     if (event.type == SDL_KEYDOWN) {
         switch (event.key.keysym.scancode) {
             case SDL_SCANCODE_SPACE:  m_actions.jump = true;       break; // Прыжок
@@ -82,19 +95,19 @@ void InputController::Update(SDL_Event& event) {
 Vector3D InputController::GetMovementVector() const {
     Vector3D direction(0.0f, 0.0f, 0.0f);
 
-    // Чтение осей геймпада
+    // Чтение осей аналогового стика геймпада
     if (m_currentType == ControllerType::Gamepad_Xbox_PS && m_gamepad) {
         int16_t rawX = SDL_GameControllerGetAxis(m_gamepad, SDL_CONTROLLER_AXIS_LEFTX);
         int16_t rawY = SDL_GameControllerGetAxis(m_gamepad, SDL_CONTROLLER_AXIS_LEFTY);
 
-        // Мёртвая зона аналогового стика геймпада (защита от дрифта осей)
+        // Мёртвая зона аналогового стика геймпада (защита от дрифта осей и старых потенциометров)
         if (std::abs(rawX) > 4200) direction.x = static_cast<float>(rawX) / 32767.0f;
-        if (std::abs(rawY) > 4200) direction.z = static_cast<float>(-rawY) / 32767.0f; // Переворачиваем Y ось для 3D
+        if (std::abs(rawY) > 4200) direction.z = static_cast<float>(-rawY) / 32767.0f; // Инвертируем Y для 3D
         return direction;
     }
 
-    // Чтение клавиатуры WASD
-    const Uint8* state = SDL_GetKeyboardState(NULL);
+    // Чтение клавиатуры WASD через прямое сканирование буфера ОЗУ
+    const uint8_t* state = SDL_GetKeyboardState(NULL);
     if (state[SDL_SCANCODE_W]) direction.z += 1.0f; // Вперед
     if (state[SDL_SCANCODE_S]) direction.z -= 1.0f; // Назад
     if (state[SDL_SCANCODE_A]) direction.x -= 1.0f; // Влево (стрейф)
@@ -114,21 +127,17 @@ void InputController::GetLookOffsets(float& outX, float& outY) const {
 
         if (std::abs(axisX) > 4000) outX = (static_cast<float>(axisX) / 32767.0f) * m_gamepadSensitivity;
         if (std::abs(axisY) > 4000) outY = (static_cast<float>(-axisY) / 32767.0f) * m_gamepadSensitivity;
-        return;
     }
-
-    // Если геймпад не подключен, то смещение мыши считывается через SDL_MOUSEMOTION 
-    // напрямую в цикле обработки событий main.cpp с множителем m_mouseSensitivity.
 }
 
 bool InputController::IsSprintPressed() const {
     if (m_currentType == ControllerType::Gamepad_Xbox_PS && m_gamepad) {
-        // Спринт в Fallout 76 на геймпаде — это нажатие на Левый Стик (L3)
+        // Спринт в Fallout 76 на геймпаде — это нажатие на Левый Стик (Кнопка L3)
         return SDL_GameControllerGetButton(m_gamepad, SDL_CONTROLLER_BUTTON_LEFTSTICK) == 1;
     }
     
-    // Спринт на ПК — удержание Левого Shift
-    const Uint8* state = SDL_GetKeyboardState(NULL);
+    // Спринт на ПК — удержание Левого Shift в ОЗУ
+    const uint8_t* state = SDL_GetKeyboardState(NULL);
     return state[SDL_SCANCODE_LSHIFT] == 1;
 }
 

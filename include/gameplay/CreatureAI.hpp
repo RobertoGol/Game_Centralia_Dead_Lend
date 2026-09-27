@@ -7,6 +7,9 @@
 
 namespace Centralia {
 
+// Опережающее объявление менеджера памяти для тиков ИИ
+class MemoryManager;
+
 // Группы видов существ со своими уникальными законами физики урона
 enum class CreatureSpecies : uint8_t {
     Humanoid_Organic, // Люди, Эльфы, Дварфы
@@ -15,10 +18,10 @@ enum class CreatureSpecies : uint8_t {
     Rad_Ghoul         // Радиоактивные гули Пустоши
 };
 
-// Зоны поражения / Компоненты
+// Зоны поражения / Компоненты анатомии существ
 enum class AnatomyPart : uint8_t {
-    Head_Sensor,      // Голова человека / Сенсорный блок робота
-    Torso_Chassis,    // Корпус / Броня техники
+    Head_Sensor,       // Голова человека / Сенсорный блок робота
+    Torso_Chassis,     // Корпус / Броня техники
     Left_Leg_Hydraulic,// Левая нога / Привод шасси
     Right_Leg_Hydraulic,// Правая нога / Привод шасси
     Weapon_System_Link // Оружие в руках / Заплечное орудие робота
@@ -50,14 +53,14 @@ public:
     void ApplyComponentDamage(AnatomyPart part, float rawDamage);
 
     // Обновление состояния ИИ на CPU (вызывается в Engine::Update)
-    void UpdateAiTick(float deltaTime, const Vector3D& playerPos, class MemoryManager& memory);
+    void UpdateAiTick(float deltaTime, const Vector3D& playerPos, MemoryManager& memory);
 
-    // Геттеры
-    CreatureSpecies GetSpecies() const { return m_species; }
-    const Vector3D& GetPosition() const { return m_position; }
-    void SetPosition(const Vector3D& pos) { m_position = pos; }
-    float GetTotalHealth() const { return m_totalHealth; }
-    bool IsEnraged() const { return m_isEnraged; }
+    // Геттеры и сеттеры состояний сущности
+    [[nodiscard]] CreatureSpecies GetSpecies() const noexcept { return m_species; }
+    [[nodiscard]] const Vector3D& GetPosition() const noexcept { return m_position; }
+    void SetPosition(const Vector3D& pos) noexcept { m_position = pos; }
+    [[nodiscard]] float GetTotalHealth() const noexcept { return m_totalHealth; }
+    [[nodiscard]] bool IsEnraged() const noexcept { return m_isEnraged; }
 };
 
 } // namespace Centralia

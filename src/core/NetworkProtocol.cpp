@@ -1,5 +1,6 @@
-#include "core/NetworkProtocol.hpp"
+#include "core/NetworkSerializer.hpp" // ИСПРАВЛЕНО: Подключаем каноничный хедер вместо NetworkProtocol.hpp
 #include <cstring>
+#include <algorithm>
 
 namespace Centralia {
 
@@ -19,7 +20,7 @@ void NetworkSerializer::WriteUInt32(std::vector<uint8_t>& buffer, uint32_t value
 
 void NetworkSerializer::WriteFloat(std::vector<uint8_t>& buffer, float value) {
     uint32_t temp;
-    std::memcpy(&temp, &value, sizeof(float)); // Безопасное копирование float в побайтовое представление
+    std::memcpy(&temp, &value, sizeof(float)); 
     WriteUInt32(buffer, temp);
 }
 
@@ -69,31 +70,33 @@ std::vector<uint8_t> NetworkSerializer::Serialize(const NetworkPacket& packet) {
     std::vector<uint8_t> rawBytes;
     rawBytes.reserve(8 + packet.payload.size());
 
-    // Записываем заголовок пакета
     WriteUInt16(rawBytes, packet.header.magic_number);
     WriteUInt16(rawBytes, static_cast<uint16_t>(packet.header.type));
     WriteUInt32(rawBytes, static_cast<uint32_t>(packet.payload.size()));
 
-    // Добавляем полезную нагрузку (данные игрока или чата)
     rawBytes.insert(rawBytes.end(), packet.payload.begin(), packet.payload.end());
     return rawBytes;
 }
 
-bool NetworkSerializer::Deserialize(const std::vector<uint8_t>& rawBytes, NetworkPacket& outPacket) {
-    if (rawBytes.size() < 8) return false; // Пакет слишком мал (битый заголовок)
+// ИСПРАВЛЕНО: Интегрирован ioOffset. Метод больше не стирает склеенные TCP-пакеты из буфера сети.
+bool NetworkSerializer::Deserialize(const std::vector<uint8_t>& rawBytes, size_t& ioOffset, NetworkPacket& outPacket) {
+    if (ioOffset + 8 > rawBytes.size()) return false; 
 
-    size_t offset = 0;
-    outPacket.header.magic_number = ReadUInt16(rawBytes, offset);
+    size_t localOffset = ioOffset;
+    uint16_t magic = ReadUInt16(rawBytes, localOffset);
     
-    // Проверка сигнатуры: если это не наш пакет, сразу его отбрасываем
-    if (outPacket.header.magic_number != 0xCE44) return false;
+    if (magic != 0xCE44) return false; // Защита от мусорных пакетов
 
-    outPacket.header.type = static_cast<PacketType>(ReadUInt16(rawBytes, offset));
-    outPacket.header.payload_size = ReadUInt32(rawBytes, offset);
+    outPacket.header.magic_number = magic;
+    outPacket.header.type = static_cast<PacketType>(ReadUInt16(rawBytes, localOffset));
+    outPacket.header.payload_size = ReadUInt32(rawBytes, localOffset);
 
-    if (offset + outPacket.header.payload_size > rawBytes.size()) return false; // Данные не полные
+    if (localOffset + outPacket.header.payload_size > rawBytes.size()) return false; 
 
-    outPacket.payload.assign(rawBytes.begin() + offset, rawBytes.begin() + offset + outPacket.header.payload_size);
+    outPacket.payload.assign(rawBytes.begin() + localOffset, rawBytes.begin() + localOffset + outPacket.header.payload_size);
+    
+    localOffset += outPacket.header.payload_size;
+    ioOffset = localOffset; // Сдвигаем глобальный указатель чтения для обработки следующего пакета в цикле
     return true;
 }
 

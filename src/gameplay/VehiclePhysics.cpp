@@ -2,6 +2,7 @@
 #include "platform/Platform.hpp"
 #include <algorithm>
 #include <cmath>
+#include <string>
 
 namespace Centralia {
 
@@ -52,7 +53,7 @@ void VehiclePhysics::TakeDamageToWheel(size_t wheelIndex, float damageAmount) {
         wheel.terrainPassability = 0.0f;
         wheel.isDetached = true;
         wheel.speedMultiplier = 0.0f;
-        Platform::Log("[CRITICAL]: Колесо [" + std::to_string(wheelIndex) + "] полностью ОТОРВАНО или ОНУЛЕНО уничтожено огнем!");
+        Platform::Log("[CRITICAL]: Колесо [" + std::to_string(wheelIndex) + "] полностью ОТОРВАНО или уничтожено огнем!");
     }
 }
 
@@ -71,13 +72,21 @@ void VehiclePhysics::SimulatePhysics(float deltaTime, const Vector3D& moveInput,
     }
 
     size_t activeCount = m_wheels.size();
-    float passabilityAverage = (activeCount > 0) ? (totalPassability / activeCount) : 0.0f;
-    float speedModifierAverage = (activeCount > 0) ? (totalSpeedModifier / activeCount) : 1.0f;
+    
+    // Если колеса еще не инициализированы, гасим скорость, избегая деления на ноль
+    if (activeCount == 0) {
+        outVelocity = Vector3D(0.0f, 0.0f, 0.0f);
+        m_cameraShakeIntensity = 0.0f;
+        return;
+    }
+
+    float passabilityAverage = totalPassability / static_cast<float>(activeCount);
+    float speedModifierAverage = totalSpeedModifier / static_cast<float>(activeCount);
 
     // Рассчитываем итоговую скорость с учетом сцепления с грунтом Пустоши
     float finalSpeed = GetModifiedSpeed() * speedModifierAverage * passabilityAverage;
     
-    // Если часть колес отстрелена, накладываем сильный штраф к скорости
+    // ИСПРАВЛЕНО: Безопасное деление на activeCount защищено от генерации -NaN
     if (destroyedWheelsCount > 0.0f) {
         finalSpeed *= (1.0f - (destroyedWheelsCount / static_cast<float>(activeCount)));
         

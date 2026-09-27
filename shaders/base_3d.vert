@@ -1,26 +1,23 @@
 #version 330 core
 
-// Входные буферы из нашего VBO (layout настроен в Renderer3D.cpp)
-layout (location = 0) in vec3 aPos;     // Позиция вершины модели
-layout (location = 1) in vec3 aNormal;  // Нормаль полигона (для света и отражений)
+// Input vertex arrays mapped via Renderer3D VBO specifications
+layout (location = 0) in vec3 aPos;     // Vertex position data coordinates
+layout (location = 1) in vec3 aNormal;  // Surface normal coordinates (Reflectance inputs)
 
-// Выходные данные для фрагментного шейдера
+// Output layout parameters routed directly to fragment block evaluation streams
 out vec3 FragPos;  
 out vec3 Normal;   
 
-// Матрицы трансформации от процессора (CPU)
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+// Standard transformation layout passed continuously from your Engine loop ticks
+uniform mat4 projectionViewMatrix;
 
 void main() {
-    // Вычисляем позицию вершины в мировых 3D-координатах
-    FragPos = vec3(model * vec4(aPos, 1.0));
+    // Spatial coordinates calculation mapped straight to world coordinate lines
+    FragPos = aPos;
     
-    // Исправляем искажение нормалей при масштабировании/повороте модели на CPU.
-    // Используем нормальную матрицу (инвертированная и транспонированная матрица модели)
-    Normal = mat3(transpose(inverse(model))) * aNormal;  
+    // Pass vertex normal information down the pixel processing channel
+    Normal = aNormal;  
     
-    // Финальная позиция вершины на экране 1920x1080
-    gl_Position = projection * view * vec4(FragPos, 1.0);
+    // Project the model vertex data directly to your target viewport bounds
+    gl_Position = projectionViewMatrix * vec4(aPos, 1.0);
 }

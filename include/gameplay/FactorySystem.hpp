@@ -6,6 +6,10 @@
 
 namespace Centralia {
 
+// Опережающие объявления классов выжившего и его специализации
+class Player;
+class ClassSystem;
+
 // Категории строительства в стиле оригинального интерфейса Fallout 76
 enum class BuildCategory : uint8_t {
     Doors_Walls,     // Двери и Стены
@@ -54,11 +58,14 @@ public:
     bool PlaceStructure(uint32_t structureId, const Vector3D& position);
 
     // Фоновый ежекадровый обсчет работы заводов и энергосети на CPU
-    void UpdateFactoriesTick(float deltaTime, class Player& player, const class ClassSystem& classSystem);
+    void UpdateFactoriesTick(float deltaTime, Player& player, const ClassSystem& classSystem);
 
-    int32_t GetCurrentPowerOutput() const { return m_totalPowerGenerated - m_totalPowerConsumed; }
-    float GetBudgetPercentage() const { return (m_buildBudget / m_maxBudget) * 100.0f; }
-    const std::vector<FactoryStructure>& GetPlacedStructures() const { return m_placedStructures; }
+    [[nodiscard]] int32_t GetCurrentPowerOutput() const noexcept { return m_totalPowerGenerated - m_totalPowerConsumed; }
+    [[nodiscard]] float GetBudgetPercentage() const noexcept { return (m_buildBudget / m_maxBudget) * 100.0f; }
+    [[nodiscard]] const std::vector<FactoryStructure>& GetPlacedStructures() const noexcept { return m_placedStructures; }
 };
+
+// Псевдоним для интеграции в CraftingManager
+using FactoryEngineContext = FactorySystem;
 
 } // namespace Centralia

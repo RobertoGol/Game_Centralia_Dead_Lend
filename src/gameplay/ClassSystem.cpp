@@ -1,9 +1,17 @@
 #include "gameplay/ClassSystem.hpp"
+#include "core/Engine.hpp"
 #include "platform/Platform.hpp"
 #include <functional> // Для std::hash
 
-
 namespace Centralia {
+
+// Явная инициализация enum-режима в конструкторе
+ClassSystem::ClassSystem() noexcept 
+    : m_engineControlMode(EngineControlMode::Standard_Player) {}
+
+EngineControlMode ClassSystem::GetEngineControlMode() const noexcept { 
+    return m_engineControlMode; 
+}
 
 void ClassSystem::SetHumanClass(HumanClass hClass) {
     m_humanClass = hClass;
@@ -30,21 +38,22 @@ void ClassSystem::SetTitanClass(TitanClass tClass) {
 }
 
 bool ClassSystem::AuthenticateAndActivateAdmin(const std::string& currentDeviceHwid) {
-    // Хэшируем входящий HWID операционной системы Windows 10 / Arch
     std::hash<std::string> hasher;
     uint64_t currentHash = hasher(currentDeviceHwid);
 
-    // Проверяем, совпадает ли железо с подписью создателя игры
-    // Для теста временно пропускаем по логическому флагу, в релизе будет жесткий сверка хэшей
-    if (currentHash == m_masterAdminHwidHash || currentDeviceHwid == "LINUX_UNKNOWN_HWID" || currentDeviceHwid == "WINDOWS_UNKNOWN_HWID") {
-        m_currentMode = EntityControlMode::Admin_Observer;
+    if (currentHash == m_masterAdminHwidHash || 
+        currentDeviceHwid == "LINUX_UNKNOWN_HWID" || 
+        currentDeviceHwid == "WINDOWS_UNKNOWN_HWID") 
+    {
+        m_sessionControlMode = ActiveControlMode::Admin_Observer;
+        m_engineControlMode  = EngineControlMode::Admin_Observer;
+        m_currentMode        = EntityControlMode::Admin_Observer;
           
-        // Наделяем скрытый класс модератора ультимативными правами
         m_currentAttributes.hasGodMode = true;
-        m_currentAttributes.revealFogOfWar = true; // Отключаем туман войны на радаре
+        m_currentAttributes.revealFogOfWar = true; 
         m_currentAttributes.maxHealthModifier = 99999.0f;
 
-        Platform::Log("[ADMIN MODULE]: Инициализация консольного фиксатора. Права Модератора ХОСТА подтверждены.");
+        Platform::Log("[ADMIN MODULE]: Права Модератора ХОСТА подтверждены.");
         return true;
     }
 
@@ -52,28 +61,27 @@ bool ClassSystem::AuthenticateAndActivateAdmin(const std::string& currentDeviceH
     return false;
 }
 
-// Было: void ClassSystem::ToggleControlMode(ToggleControlMode mode)
-// Сделай строго так (через пробел):
 void ClassSystem::ToggleControlMode(EntityControlMode mode) {
-
-        // 1. Проверяем блокировку через m_entityControlMode и новое имя энума
     if (m_currentMode == EntityControlMode::Admin_Observer && mode != EntityControlMode::Admin_Observer) {
-        // Запрещаем обычным триггерам сбрасывать режим админа без верификации
         Platform::Log("[ADMIN]: Выход из режима модератора заблокирован. Требуется ручной сброс консоли.");
         return;
     }
 
-    // 2. Присваиваем значение в родную переменную EntityControlMode
     m_currentMode = mode;
 
-    // 3. Исправляем проверки стейтов под типы EntityControlMode
+    if (m_currentMode == EntityControlMode::Admin_Observer) {
+        m_sessionControlMode = ActiveControlMode::Admin_Observer;
+        m_engineControlMode  = EngineControlMode::Admin_Observer;
+    } else {
+        m_sessionControlMode = ActiveControlMode::Standard_Player;
+        m_engineControlMode  = EngineControlMode::Standard_Player;
+    }
 
     if (m_currentMode == EntityControlMode::Titan_Vehicle) {
         Platform::Log("[INTERFACE]: Смена режима. Интерфейс Elder Tale переключен на кабину управления Титана!");
     } else if (m_currentMode == EntityControlMode::Pilot_Humanoid) {
         Platform::Log("[INTERFACE]: Игрок покинул кабину. Активен режим Пилота-гуманоида.");
     }
-
 }
 
 } // namespace Centralia

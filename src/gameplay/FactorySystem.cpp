@@ -1,8 +1,9 @@
 #include "gameplay/FactorySystem.hpp"
-#include "gameplay/Player.hpp"
-#include "gameplay/ClassSystem.hpp"
+#include "gameplay/Player.hpp"            // ПОДКЛЮЧЕНО: Дает доступ к методу player.AddItem
+#include "gameplay/ClassSystem.hpp"       // ПОДКЛЮЧЕНО: Разрешает чтение бонусов профессий
 #include "platform/Platform.hpp"
 #include <algorithm>
+#include <string>
 
 namespace Centralia {
 
@@ -70,8 +71,8 @@ void FactorySystem::UpdateFactoriesTick(float deltaTime, Player& player, const C
             if (structObj.productionTimer >= structObj.productionIntervalSec) {
                 structObj.productionTimer = 0.0f;
 
-                // Пассивно генерируем ресурсы в инвентарь игрока
-                player.AddItem(structObj.outputResourceId, structObj.amountPerTick, 1.0f);
+                // Пассивно генерируем ресурсы в инвентарь игрока (1.0f - прочность нового ресурса)
+                player.AddItem(structObj.outputResourceId, static_cast<uint16_t>(structObj.amountPerTick), 1.0f);
                 
                 Platform::Log("[FACTORY]: Пассивное производство! Конвейер '" + structObj.name + 
                               "' выдал ресурс ID " + std::to_string(structObj.outputResourceId));

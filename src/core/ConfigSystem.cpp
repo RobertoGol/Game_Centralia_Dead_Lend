@@ -1,6 +1,6 @@
 #include "core/ConfigSystem.hpp"
 #include "core/MemoryManager.hpp"
-#include "core/NetworkProtocol.hpp"
+#include "core/NetworkSerializer.hpp" // ИСПРАВЛЕНО: Прямой инклуд сериализатора для фикса ошибок C2653 и C3861
 #include "platform/Platform.hpp"
 
 namespace Centralia {
@@ -20,7 +20,11 @@ std::string ConfigSystem::GetString(const std::string& key, const std::string& d
 
 int ConfigSystem::GetInt(const std::string& key, int defaultVal) {
     auto it = m_settings.find(key);
-    return (it != m_settings.end()) ? std::stoi(it->second) : defaultVal;
+    try {
+        return (it != m_settings.end()) ? std::stoi(it->second) : defaultVal;
+    } catch (...) {
+        return defaultVal; // Предохранитель на случай, если в строке оказался битый мусор вместо числа
+    }
 }
 
 // Побайтовое сжатие и упаковка структуры словаря (как фреймы в ogg формате)
@@ -68,7 +72,7 @@ bool ConfigSystem::SaveToFile(const std::string& filename) {
     
     // Используем наш MemoryManager для наложения XOR-шифрования по HWID железа ПК
     // Конфиг, созданный на одной Windows 10, нельзя будет подделать на другом ПК
-    MemoryManager crypto;
+    MemoryManager& crypto = MemoryManager::GetInstance();
     crypto.Initialize(Platform::GetDeviceHWID());
     
     std::string fullPath = Platform::GetSaveDirectoryPath() + filename;
@@ -76,7 +80,7 @@ bool ConfigSystem::SaveToFile(const std::string& filename) {
 }
 
 bool ConfigSystem::LoadFromFile(const std::string& filename) {
-    MemoryManager crypto;
+    MemoryManager& crypto = MemoryManager::GetInstance();
     crypto.Initialize(Platform::GetDeviceHWID());
     
     std::string fullPath = Platform::GetSaveDirectoryPath() + filename;

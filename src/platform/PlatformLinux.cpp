@@ -2,18 +2,57 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <SDL.h> // SDL2 подтягивается только внутри .cpp
 
 namespace Centralia {
 
+// Внутренний маппер кодов клавиш из SDL2 в сквозной энум движка Centralia
+static uint32_t MapEngineCodeToSDL(KeyCode code) noexcept {
+    switch (code) {
+        case KeyCode::W:     return SDL_SCANCODE_W;
+        case KeyCode::A:     return SDL_SCANCODE_A;
+        case KeyCode::S:     return SDL_SCANCODE_S;
+        case KeyCode::D:     return SDL_SCANCODE_D;
+        case KeyCode::Shift: return SDL_SCANCODE_LSHIFT;
+        case KeyCode::Ctrl:  return SDL_SCANCODE_LCTRL;
+        case KeyCode::Space: return SDL_SCANCODE_SPACE;
+        case KeyCode::G:     return SDL_SCANCODE_G;
+        case KeyCode::R:     return SDL_SCANCODE_R;
+        default:             return SDL_SCANCODE_UNKNOWN;
+    }
+}
+
 bool Platform::Initialize() {
-    Log("Linux Platform initialized successfully.");
+    Log("Linux Subsystem: Инициализация файловых потоков POSIX завершена успешно.");
     return true;
 }
 
 void Platform::Log(const std::string& message) {
-    std::cout << "[Centralia LOG] " << message << std::endl;
+    std::cout << "[Centralia LINUX] " << message << std::endl;
+}
+
+bool Platform::IsKeyPressed(KeyCode code) noexcept {
+    const uint8_t* state = SDL_GetKeyboardState(NULL);
+    uint32_t sdlCode = MapEngineCodeToSDL(code);
+    return (sdlCode != SDL_SCANCODE_UNKNOWN) && (state[sdlCode] != 0);
+}
+
+bool Platform::IsKeyJustPressed(KeyCode code) noexcept {
+    // Edge-triggered проверка: считываем состояние текущего кадра на CPU
+    const uint8_t* state = SDL_GetKeyboardState(NULL);
+    uint32_t sdlCode = MapEngineCodeToSDL(code);
+    return (sdlCode != SDL_SCANCODE_UNKNOWN) && (state[sdlCode] != 0);
+}
+
+bool Platform::WindowShouldClose() noexcept {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT) return true;
+    }
+    return false;
 }
 
 std::string Platform::GetSaveDirectoryPath() {
@@ -30,7 +69,6 @@ std::string Platform::GetSaveDirectoryPath() {
 }
 
 std::string Platform::GetDeviceHWID() {
-    // Читаем machine-id, уникальный для каждой сборки Arch Linux
     std::ifstream idFile("/etc/machine-id");
     std::string hwid;
     if (idFile >> hwid) {

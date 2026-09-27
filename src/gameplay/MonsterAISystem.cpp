@@ -1,10 +1,12 @@
 #include "gameplay/MonsterAISystem.hpp"
 #include "platform/Platform.hpp"
+#include "gameplay/Player.hpp" // Подключен заголовок для извлечения веса брони игрока
 #include <cmath>
 #include <algorithm>
 
 namespace Centralia {
 
+// Внутренняя изолированная функция расчета расстояния в 3D
 static float GetDistance3D(const Vector3D& a, const Vector3D& b) {
     return std::sqrt(std::pow(a.x - b.x, 2) + std::pow(a.y - b.y, 2) + std::pow(a.z - b.z, 2));
 }
@@ -198,8 +200,7 @@ void MonsterAISystem::ProcessAIScriptsTick(float deltaTime, const Player& player
             }
 
             case BehaviorState::FlankingTarget: {
-            case BehaviorState::FlankingTarget: {
-                // Вторичный тактический режим обхода
+                // Тактический режим обхода по радиусу (Фланкирование)
                 float flankRadius = 10.0f;
                 float targetX = playerPos.x + std::cos(agent.flankAngle) * flankRadius;
                 float targetZ = playerPos.z + std::sin(agent.flankAngle) * flankRadius;

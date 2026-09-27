@@ -1,29 +1,48 @@
-#include "platform/Platform.hpp"
-#include <android/log.h>
+#include "platform/PlatformAndroid.hpp"
+#include <android/log.h> // ПОДКЛЮЧЕНО: Дает доступ к функции __android_log_print
+#include <sys/system_properties.h> // Дает доступ к чтению ro.product.model
+#include <cstring>
 
 #define LOG_TAG "CentraliaEngine"
 
 namespace Centralia {
 
-bool Platform::Initialize() {
-    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Android Platform initialized successfully.");
+bool Platform::Initialize() noexcept {
+    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "[PLATFORM]: Android Native NDK Subsystem booted successfully.");
     return true;
 }
 
-void Platform::Log(const std::string& message) {
+void Platform::Log(const std::string& message) noexcept {
+    // Пишем логи напрямую в системный буфер Android Logcat вместо std::cout
     __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%s", message.c_str());
 }
 
-std::string Platform::GetSaveDirectoryPath() {
-    // В Android путь передается из Java-слоя (через context.getFilesDir().getAbsolutePath())
-    // На этапе чистого NDK без JNI используем стандартную внутреннюю временную директорию
-    return "/data/data/com.robertogol.centralia/files/";
+std::string Platform::GetDeviceHWID() noexcept {
+    char propBuffer[PROP_VALUE_MAX];
+    
+    // 1. Пытаемся прочесть аппаратный серийный номер Android-устройства
+    if (__system_property_get("ro.serialno", propBuffer) > 0 && std::strlen(propBuffer) > 0) {
+        return std::string(propBuffer);
+    }
+
+    // 2. Фаллбек-вариант: если серийник скрыт политикой приватности, собираем HWID из модели процессора и платы
+    std::string fallbackHwid = "ANDROID_";
+    if (__system_property_get("ro.product.model", propBuffer) > 0) {
+        fallbackHwid += propBuffer;
+    } else {
+        fallbackHwid += "UNKNOWN_BUILD_MODEL";
+    }
+
+    if (__system_property_get("ro.hardware", propBuffer) > 0) {
+        fallbackHwid += "_" + std::string(propBuffer);
+    }
+
+    return fallbackHwid;
 }
 
-std::string Platform::GetDeviceHWID() {
-    // В Android 10-13 доступ к железу ограничен. Идентификатор генерируется на Java через Settings.Secure.ANDROID_ID 
-    // и пробрасывается в C++. Возвращаем плейсхолдер для нативного слоя.
-    return "ANDROID_NATIVE_HWID_LAYER";
+bool Platform::WindowShouldClose() noexcept {
+    // На Android жизненным циклом рулит ОС, возвращаем false, пока Activity не уничтожено
+    return false;
 }
 
 } // namespace Centralia

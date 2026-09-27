@@ -1,56 +1,77 @@
-#define _USE_MATH_DEFINES // Ставим на самую первую строчку для cl.exe
 #pragma once
-#include <cmath> // Теперь cmath на Windows увидит M_PI
-#include <cstdint> // ЖЕСТКО ДОБАВЛЯЕМ ДЛЯ ИСПРАВЛЕНИЯ ОШИБКИ C3064!
+#define _USE_MATH_DEFINES 
+#include <cmath>          
+#include <cstdint>        
 
 namespace Centralia {
 
-// Специфические перечисления для логики классов и контроля админа
 enum class ActiveControlMode : int32_t {
     Standard_Player = 0,
     Admin_Observer  = 1
 };
 
-// Структура трехмерного вектора для позиций в мире, как в Fallout
+enum class EngineControlMode : int32_t {
+    Standard_Player = 0,
+    Admin_Observer  = 1
+};
+
 struct Vector3D {
     float x = 0.0f;
     float y = 0.0f;
     float z = 0.0f;
 
-    Vector3D() = default;
-    Vector3D(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
+    inline Vector3D() noexcept = default;
+    inline Vector3D(float _x, float _y, float _z) noexcept : x(_x), y(_y), z(_z) {}
 
-    Vector3D operator+(const Vector3D& other) const { return {x + other.x, y + other.y, z + other.z}; }
-    Vector3D operator-(const Vector3D& other) const { return {x - other.x, y - other.y, z - other.z}; }
-    Vector3D operator*(float scalar) const { return {x * scalar, y * scalar, z * scalar}; }
+    inline Vector3D operator+(const Vector3D& other) const noexcept { 
+        return { x + other.x, y + other.y, z + other.z }; 
+    }
     
-    float Length() const { return std::sqrt(x*x + y*y + z*z); }
+    inline Vector3D operator-(const Vector3D& other) const noexcept { 
+        return { x - other.x, y - other.y, z - other.z }; 
+    }
     
-    Vector3D Normalize() const {
+    inline Vector3D operator*(float scalar) const noexcept { 
+        return { x * scalar, y * scalar, z * scalar }; 
+    }
+    
+    [[nodiscard]] inline Vector3D Cross(const Vector3D& other) const noexcept {
+        return {
+            y * other.z - z * other.y,
+            z * other.x - x * other.z,
+            x * other.y - y * other.x
+        };
+    }
+
+    [[nodiscard]] inline float Dot(const Vector3D& other) const noexcept {
+        return x * other.x + y * other.y + z * other.z;
+    }
+    
+    [[nodiscard]] inline float Length() const noexcept { 
+        return std::sqrt(x * x + y * y + z * z); 
+    }
+    
+    [[nodiscard]] inline Vector3D Normalize() const noexcept {
         float len = Length();
-        if (len > 0.0f) return {x / len, y / len, z / len};
-        return {0.0f, 0.0f, 0.0f};
+        if (len > 0.0f) return { x / len, y / len, z / len };
+        return { 0.0f, 0.0f, 0.0f };
     }
 };
 
-// Свободная камера от третьего лица (как в State of Decay / Fallout)
 class Camera3D {
 public:
-    Vector3D position;   // Позиция камеры в 3D пространстве
-    Vector3D target;     // Куда смотрит 
+    Vector3D position;        
+    Vector3D target;          
     float pitch = 0.0f;  
     float yaw = -90.0f;  
     float distanceToPlayer = 5.0f; 
-    
-    // НАШИ АДМИНСКИЕ МОДИФИКАТОРЫ:
-    bool  isAdminMode = false;   // Флаг переключения режима
-    float flySpeed = 15.0f;       // Скорость полета админа
+    bool  isAdminMode = false; 
+    float flySpeed = 15.0f;    
 
-    Camera3D() : position(0.0f, 5.0f, -5.0f), target(0.0f, 0.0f, 0.0f) {}
+    inline Camera3D() noexcept : position(0.0f, 5.0f, -5.0f), target(0.0f, 0.0f, 0.0f) {}
 
-    // 1. Твой оригинальный метод следования за игроком
-    void FollowPlayer(const Vector3D& playerPos, float mouseXOffset, float mouseYOffset) {
-        if (isAdminMode) return; // Если включен админ-режим, этот обсчет пропускается
+    inline void FollowPlayer(const Vector3D& playerPos, float mouseXOffset, float mouseYOffset) noexcept {
+        if (isAdminMode) return;
 
         yaw += mouseXOffset;
         pitch += mouseYOffset;
@@ -58,8 +79,8 @@ public:
         if (pitch > 89.0f) pitch = 89.0f;
         if (pitch < -89.0f) pitch = -89.0f;
 
-        float pitchRad = pitch * M_PI / 180.0f;
-        float yawRad = yaw * M_PI / 180.0f;
+        float pitchRad = pitch * static_cast<float>(M_PI) / 180.0f;
+        float yawRad = yaw * static_cast<float>(M_PI) / 180.0f;
 
         position.x = playerPos.x - distanceToPlayer * std::cos(pitchRad) * std::sin(yawRad);
         position.y = playerPos.y + distanceToPlayer * std::sin(pitchRad) + 1.5f; 
@@ -68,18 +89,15 @@ public:
         target = playerPos;
     }
 
-    // 2. Новый метод свободного полета админа (без привязки к координатам игрока)
-    void MoveFreeCam(float forward, float right, float up, float deltaTime) noexcept {
+    inline void MoveFreeCam(float forward, float right, float up, float deltaTime) noexcept {
         if (!isAdminMode) return;
         
         position.x += right * flySpeed * deltaTime;
         position.y += up * flySpeed * deltaTime;
         position.z += forward * flySpeed * deltaTime;
         
-        target = position + Vector3D(0.0f, 0.0f, 1.0f); // Смотрим строго перед собой
+        target = position + Vector3D(0.0f, 0.0f, 1.0f); 
     }
 };
-
-
 
 } // namespace Centralia

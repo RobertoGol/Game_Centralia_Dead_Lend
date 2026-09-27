@@ -1,35 +1,59 @@
-
-
-#define _USE_MATH_DEFINES // Гарантирует видимость M_PI в Math3D.hpp при сборке
+#define WIN32_LEAN_AND_MEAN // ИСПРАВЛЕНО: Блокирует старый winsock.h и лечит 100+ ошибок дублирования структур сети
+#define _USE_MATH_DEFINES 
 #include <iostream>
 #include <chrono>
 #include <thread>
 #include <cmath>
+
+// ========================================================================
+// CORE HEADER-ONLY PROTOCOL LAYER INCLUSIONS (Centralia Engine Passport)
+// ========================================================================
 #include "core/Engine.hpp"
-// Твои базовые зависимости ядра Modern OpenGL 3.3 Core
 #include "core/Math3D.hpp"
+#include "core/MemoryManager.hpp"
+#include "core/InputController.hpp"
+#include "core/LoginSystem.hpp"
+#include "core/ConfigSystem.hpp"
+#include "core/AssetParser.hpp"
+
 #include "gameplay/Player.hpp"
 #include "gameplay/MonsterAISystem.hpp"
 #include "gameplay/ProceduralMotionManager.hpp"
-#include "platform/Platform.hpp"
+#include "gameplay/WeaponSystem.hpp"
+#include "gameplay/FactorySystem.hpp"
+#include "gameplay/DialogueSystem.hpp"
+#include "gameplay/CreatureAI.hpp" // ИСПРАВЛЕНО: Путь синхронизирован с твоим реальным файлом на диске
+#include "gameplay/ItemDatabase.hpp"
+#include "gameplay/CraftingManager.hpp"
+#include "gameplay/ServerShop.hpp"
+#include "gameplay/VehiclePhysics.hpp"
+#include "gameplay/PowerArmorStateData.hpp"
 
-// Пространство имен проекта по техническому паспорту
+#include "video/Renderer3D.hpp"
+#include "video/Shader.hpp"
+#include "video/MaterialSystem.hpp"
+
+#include "platform/Platform.hpp"
+#include "platform/ResourcePackerOGGX.hpp"
+
 namespace Centralia {
 
-// Инициализация глобальных контекстов игровых систем движка
-static Player                   g_LocalPlayer;
-static MonsterAISystem          g_MonsterAI;
-static ProceduralMotionManager  g_TitanMotionManager;
+// Статические глобальные инстансы контекста симуляции
+static Player          g_LocalPlayer;
+static MonsterAISystem g_MonsterAI;
 
 /**
  * @brief Главная точка входа Windows 10 / Linux адаптации.
  * Содержит аппаратно-адаптивный цикл балансировки кадра движка.
  */
-int main(int argc, char* argv[]) {
-    Centralia::Engine engine;
+int RunEngineMain(int argc, char* argv[]) {
     Platform::Log("[CORE INIT]: Запуск Game Centralia: Dead Lend. Modern OpenGL 3.3 Core контекст активен.");
 
-    // Инициализируем стартовых тактических ИИ-агентов на сцене (Одиночки и Рой роботов)
+    // Инициализация баз данных предметов и чертежей верстаков
+    ItemDatabase::GetInstance().Initialize();
+    CraftingManager::GetInstance().InitializeBlueprints();
+
+    // Спавним стартовых тактических ИИ-агентов на сцене (Одиночки и Рой роботов)
     Vector3D individualSpawnPos = { 10.0f, 51.0f, 15.0f }; // Высотный слой 51 - Земля по техпаспорту
     Vector3D swarmSpawnPos      = { -20.0f, 51.0f, -5.0f };
     
@@ -50,21 +74,18 @@ int main(int argc, char* argv[]) {
         std::chrono::duration<double> elapsedTime = currentTime - previousTime;
         previousTime = currentTime;
 
-        // Квант времени deltaTime для точной симуляции физики и ИИ на CPU
         float deltaTime = static_cast<float>(elapsedTime.count());
 
         // Предохранитель на случай резкого падения FPS (например, при подгрузке модов .oggx)
         if (deltaTime > 0.1f) deltaTime = 0.1f;
 
         // 1. Опрос контроллера ввода (Считывание WASD, Shift, Space, Ctrl, Tab)
-        bool isShiftPressed = Platform::IsKeyPressed(Platform::KeyCode::Shift); // Спринт
-        bool isCtrlPressed  = Platform::IsKeyPressed(Platform::KeyCode::Ctrl);  // Ghost-присед
+        bool isShiftPressed = Platform::IsKeyPressed(KeyCode::Shift); // Спринт
+        bool isCtrlPressed  = Platform::IsKeyPressed(KeyCode::Ctrl);  // Ghost-присед
         
-        // Симулируем перемещение игрока на основе ввода в текущем кадре
         g_LocalPlayer.UpdateMovementState(deltaTime, isShiftPressed, isCtrlPressed);
 
-        // 2. ИНТЕГРАЦИЯ ПУНКТА №4: Высокоуровневый обсчет скриптов псевдо-ИИ детекции монстров
-        // Передаем стейты игрока для пассивного глушения шума в приседе сервоприводами силовой брони
+        // 2. Высокоуровневый обсчет скриптов псевдо-ИИ детекции монстров
         g_MonsterAI.ProcessAIScriptsTick(
             deltaTime, 
             g_LocalPlayer, 
@@ -73,32 +94,27 @@ int main(int argc, char* argv[]) {
         );
 
         // Пример отвлечения броском гильзы: если нажата кнопка 'G' (раскладка Fallout 76)
-        if (Platform::IsKeyJustPressed(Platform::KeyCode::G)) {
+        if (Platform::IsKeyJustPressed(KeyCode::G)) {
             Vector3D casingTarget = { g_LocalPlayer.GetPosition().x + 12.0f, 51.0f, g_LocalPlayer.GetPosition().z + 4.0f };
             g_MonsterAI.ThrowWeaponCasingDistraction(casingTarget);
         }
 
-        // 3. ИНТЕГРАЦИЯ РАЗДЕЛА II: Расчет ИИК-амортизации и пружин 4 лап Титана на CPU
-        // Считываем высотный слой heightLevel карты из контекста Player (под его текущей позицией)
-        float currentTileHeight = g_LocalPlayer.GetCurrentMapTileHeight(); 
-        
-        g_TitanMotionManager.UpdateTitanChassisIK(
-            deltaTime, 
+        // 3. ИСПРАВЛЕНО: Обновление ИИК-шасси Титана перенаправлено на валидный глобальный синглтон
+        ProceduralMotionManager::GetInstance().UpdateTitanMovement(
             g_LocalPlayer.GetPosition(), 
-            currentTileHeight
+            Vector3D(0.0f, 0.0f, 0.0f), 
+            deltaTime
         );
 
-        // 4. Передача матриц трансформации, углов Roll/Pitch и позиций лап в Renderer3D
-        float finalRoll   = g_TitanMotionManager.GetChassisRoll();
-        float finalPitch  = g_TitanMotionManager.GetChassisPitch();
-        // Рендерер Modern OpenGL применяет finalRoll и finalPitch к base_3d.vert шейдеру кадра
+        // 4. Передача матриц трансформации, углов Roll/Pitch в Renderer3D
+        float finalRoll   = ProceduralMotionManager::GetInstance().GetChassisRoll();
+        float finalPitch  = ProceduralMotionManager::GetInstance().GetChassisPitch();
 
         // 5. АППАРАТНЫЙ БАЛАНСИРОВЩИК ХОСТА (Система "охлаждения" CPU/GPU под GTX 1050 Ti)
         auto frameEndTime = std::chrono::high_resolution_clock::now();
         auto frameDuration = frameEndTime - currentTime;
 
         if (frameDuration < targetFrameTime) {
-            // Динамический сон CPU для предотвращения перегрева слабых встроенных систем
             auto sleepTime = targetFrameTime - frameDuration;
             std::this_thread::sleep_for(std::chrono::duration_cast<std::chrono::milliseconds>(sleepTime));
         }
@@ -115,7 +131,7 @@ int main(int argc, char* argv[]) {
 
 } // namespace Centralia
 
-// Стандартная точка входа для линковщика компилятора
+// Точка входа линковщика компилятора в глобальном пространстве
 int main(int argc, char* argv[]) {
-    return Centralia::main(argc, argv);
+    return Centralia::RunEngineMain(argc, argv);
 }

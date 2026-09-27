@@ -5,6 +5,9 @@
 
 namespace Centralia {
 
+// Опережающее объявление игрока защищает баллистический узел от циклических петель хэдеров
+class Player;
+
 // Типы магазинов оружия и тяжелых пушек Титанов/Танков
 enum class MagazineType : uint8_t {
     Magazine_Clip,         // Классический магазинный (коробка/диск)
@@ -25,7 +28,7 @@ struct WeaponSpecs {
     float baseDamage;            // Базовый урон снаряда
     float fireRateRpm;           // Скорострельность в минуту
     float verticalRecoil;        // Сила отдачи (увод 3D-камеры вверх)
-    float reloadTimeSec;         // Время полной перезарядки
+    float reloadTimeSec;         // Время полной перезарядки (или одной каморы)
     
     bool isReloading = false;
     float reloadProgressTimer = 0.0f;
@@ -48,12 +51,12 @@ public:
     bool Fire(float deltaTime, float playerMovementSpeed, float& outCameraRecoilY);
 
     // Старт перезарядки на кнопку 'R' или кнопку Х геймпада Xbox
-    void StartReload(class Player& player);
+    void StartReload(Player& player);
 
     // Обновление таймеров автоматики оружия на CPU (вызывается в Engine::Update)
-    void UpdateWeaponTick(float deltaTime, class Player& player);
+    void UpdateWeaponTick(float deltaTime, Player& player);
 
-    const WeaponSpecs& GetActiveWeaponSpecs() const { return m_activeWeapon; }
+    [[nodiscard]] const WeaponSpecs& GetActiveWeaponSpecs() const noexcept { return m_activeWeapon; }
 };
 
 } // namespace Centralia

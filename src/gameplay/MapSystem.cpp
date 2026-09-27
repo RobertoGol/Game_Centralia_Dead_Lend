@@ -1,5 +1,5 @@
 #include "gameplay/MapSystem.hpp"
-#include "core/MemoryManager.hpp"
+#include "core/MemoryManager.hpp" // ПОДКЛЮЧЕНО: Дает доступ к глобальному реестру Ghost-RAM
 #include "platform/Platform.hpp"
 #include "gameplay/Player.hpp"
 #include "gameplay/ClassSystem.hpp"
@@ -120,13 +120,16 @@ void MapSystem::UpdateMapEnvironment(float deltaTime, Player& player, ClassSyste
         }
     }
 
+    // ИСПРАВЛЕНО: Вызовы осуществляются через глобальный синглтон реестра Ghost-RAM
+    MemoryManager& memory = MemoryManager::GetInstance();
+
     // Дебаффы среды
-    if (tile.effect == EnvironmentEffect::Radiation_Critical && m_memoryManager.GetRegistryValue("player_race") != 2) {
+    if (tile.effect == EnvironmentEffect::Radiation_Critical && memory.GetRegistryValue("player_race") != 2) {
         stats.radiation = std::min(100.0f, stats.radiation + (8.0f * deltaTime));
     }
     
     if (tile.effect == EnvironmentEffect::EMP_Annulet && 
-        (m_memoryManager.GetRegistryValue("player_race") == 1 || m_memoryManager.GetRegistryValue("player_race") == 2)) 
+        (memory.GetRegistryValue("player_race") == 1 || memory.GetRegistryValue("player_race") == 2)) 
     {
         stats.thirst = std::max(0.0f, stats.thirst - (10.0f * deltaTime));
     }

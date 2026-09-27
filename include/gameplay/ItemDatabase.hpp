@@ -1,7 +1,9 @@
 #pragma once
-#include "gameplay/Player.hpp" // Берем типы ItemType из класса игрока
+#include "gameplay/Player.hpp" // Предоставляет типы ItemType для бесшовной интеграции
+#include "gameplay/ModificationSystem.hpp" // Предоставляет типы VehicleModification и UniverseItem
 #include <string>
 #include <unordered_map>
+#include <cstdint>
 
 namespace Centralia {
 
@@ -26,17 +28,27 @@ struct ItemTemplate {
 class ItemDatabase {
 private:
     std::unordered_map<uint32_t, ItemTemplate> m_templates;
+    
+    // Внутренние специализированные хранилища расширенных ТТХ
+    std::unordered_map<uint32_t, VehicleModification> m_vehicleMods;
+    std::unordered_map<uint32_t, UniverseItem> m_loreItems;
 
-    ItemDatabase(); // Синглтон
+    ItemDatabase(); // Приватный конструктор синглтона
 
 public:
+    ~ItemDatabase() = default;
+
+    // Запрещаем копирование синглтона
+    ItemDatabase(const ItemDatabase&) = delete;
+    ItemDatabase& operator=(const ItemDatabase&) = delete;
+
     static ItemDatabase& GetInstance() {
         static ItemDatabase instance;
         return instance;
     }
 
-    // Правильный метод поиска для CraftingManager, возвращающий твою структуру предметов
-    const ItemTemplate* GetItemTemplatePtr(uint32_t itemId) const noexcept {
+    // Правильный константный метод поиска для CraftingManager, возвращающий указатель
+    [[nodiscard]] const ItemTemplate* GetItemTemplatePtr(uint32_t itemId) const noexcept {
         auto it = m_templates.find(itemId);
         if (it != m_templates.end()) {
             return &it->second;
@@ -47,8 +59,12 @@ public:
     // Инициализация дефолтного лута (Fallout / State of Decay сеттинг)
     void Initialize();
 
-    // Поиск шаблона предмета по ID
+    // Поиск шаблона предмета по ID с копированием в выходную структуру
     bool GetTemplate(uint32_t id, ItemTemplate& outTemplate) const;
+
+    // Дополнительные геттеры расширенных модификаций для автофизики
+    [[nodiscard]] const std::unordered_map<uint32_t, VehicleModification>& GetVehicleMods() const noexcept { return m_vehicleMods; }
+    [[nodiscard]] const std::unordered_map<uint32_t, UniverseItem>& GetLoreItems() const noexcept { return m_loreItems; }
 };
 
 } // namespace Centralia

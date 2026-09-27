@@ -1,7 +1,8 @@
 #include "gameplay/WeaponSystem.hpp"
-#include "gameplay/Player.hpp"
+#include "gameplay/Player.hpp"            // ПОДКЛЮЧЕНО: Дает доступ к инвентарю для списания патронов
 #include "platform/Platform.hpp"
 #include <algorithm>
+#include <string>
 
 namespace Centralia {
 
@@ -17,40 +18,40 @@ void WeaponSystem::EquipWeapon(uint32_t weaponId) {
     // Конфигурируем разные типы магазинов на основе твоих требований
     if (weaponId == 101) { // Наш ржавый автомат из базы
         m_activeWeapon.name = "Ржавый автомат 5.45";
-        m_activeWeapon.magType = MagazineType::Magazine_Clip; // Магазинный тип
+        m_activeWeapon.magType = MagazineType::Magazine_Clip; 
         m_activeWeapon.requiredAmmoId = 601; // ID патронов 5.45
         m_activeWeapon.clipMaxCapacity = 30;
         m_activeWeapon.currentAmmoInClip = 30;
         m_activeWeapon.baseDamage = 25.0f;
         m_activeWeapon.fireRateRpm = 600.0f;
-        m_activeWeapon.verticalRecoil = 0.4f; // Умеренная отдача шутера
-        m_activeWeapon.reloadTimeSec = 2.5f;   // Быстро заменил рожок
+        m_activeWeapon.verticalRecoil = 0.4f; 
+        m_activeWeapon.reloadTimeSec = 2.5f;   
     } 
     else if (weaponId == 999) { // Тяжелая пушка Титана со скриншота
         m_activeWeapon.name = "Противотанковое орудие 'Молот'";
-        m_activeWeapon.magType = MagazineType::Single_Shot; // Однопатронный тип
+        m_activeWeapon.magType = MagazineType::Single_Shot; 
         m_activeWeapon.requiredAmmoId = 602; // Тяжелый снаряд
         m_activeWeapon.clipMaxCapacity = 1;
         m_activeWeapon.currentAmmoInClip = 1;
         m_activeWeapon.baseDamage = 500.0f;
         m_activeWeapon.fireRateRpm = 12.0f;
-        m_activeWeapon.verticalRecoil = 4.5f; // Огромная отдача, шасси трясется
+        m_activeWeapon.verticalRecoil = 4.5f; 
         m_activeWeapon.reloadTimeSec = 4.0f;  
     }
     else if (weaponId == 888) { // Кустарный мушкет Пустоши Centralia
         m_activeWeapon.name = "Пороховой мушкет выжившего";
-        m_activeWeapon.magType = MagazineType::Powder_Single_Shot; // Порошково-однопатронный
-        m_activeWeapon.requiredAmmoId = 603; // Круглая пуля (нужен еще порох)
+        m_activeWeapon.magType = MagazineType::Powder_Single_Shot; 
+        m_activeWeapon.requiredAmmoId = 603; // Круглая пуля
         m_activeWeapon.clipMaxCapacity = 1;
         m_activeWeapon.currentAmmoInClip = 0;
         m_activeWeapon.baseDamage = 120.0f;
         m_activeWeapon.fireRateRpm = 6.0f;
         m_activeWeapon.verticalRecoil = 2.0f;
-        m_activeWeapon.reloadTimeSec = 6.0f; // Долгая зарядка: насыпать порох, забить пулю
+        m_activeWeapon.reloadTimeSec = 6.0f; 
     }
     else if (weaponId == 777) { // Магический револьверный карабин из Log Horizon
         m_activeWeapon.name = "Револьверный карабин 'Элдер'";
-        m_activeWeapon.magType = MagazineType::Revolver_Cylinder; // Револьверный тип
+        m_activeWeapon.magType = MagazineType::Revolver_Cylinder; 
         m_activeWeapon.requiredAmmoId = 604;
         m_activeWeapon.clipMaxCapacity = 6; // 6 камор в барабане
         m_activeWeapon.currentAmmoInClip = 6;
@@ -116,6 +117,27 @@ void WeaponSystem::UpdateWeaponTick(float deltaTime, Player& player) {
     if (m_activeWeapon.magType == MagazineType::Revolver_Cylinder) {
         if (m_activeWeapon.reloadProgressTimer >= m_activeWeapon.reloadTimeSec) {
             m_activeWeapon.reloadProgressTimer = 0.0f;
+            
+            // ИСПРАВЛЕНО: Честное поштучное списание патронов из инвентаря игрока на каждом тике досыла
+            // Ищем патрон во временных слотах инвентаря (Передаем индекс 0, логика Player сама найдет нужный стак)
+            // Для упрощения и безопасности списываем через внутренний метод AddItem с отрицательным количеством, либо RemoveItem
+            // Так как RemoveItem требует индекс слота, мы симулируем честную трату боеприпаса:
+            bool hasAmmo = false;
+            const auto& inv = player.GetInventory();
+            for (size_t i = 0; i < inv.size(); ++i) {
+                if (inv[i].id == m_activeWeapon.requiredAmmoId && inv[i].quantity > 0) {
+                    player.RemoveItem(i, 1);
+                    hasAmmo = true;
+                    break;
+                }
+            }
+
+            if (!hasAmmo) {
+                m_activeWeapon.isReloading = false;
+                Platform::Log("[RELOAD WARNING]: Нет патронов в инвентаре! Перезарядка барабана аварийно прервана.");
+                return;
+            }
+
             m_activeWeapon.currentAmmoInClip++;
             Platform::Log("[RELOAD]: Патрон дослан в камору барабана [" + std::to_string(m_activeWeapon.currentAmmoInClip) + "]");
             
@@ -128,9 +150,31 @@ void WeaponSystem::UpdateWeaponTick(float deltaTime, Player& player) {
     // ВСЕ ОСТАЛЬНЫЕ ТИПЫ (Мгновенная замена магазина целиком по истечении таймера)
     else {
         if (m_activeWeapon.reloadProgressTimer >= m_activeWeapon.reloadTimeSec) {
-            m_activeWeapon.currentAmmoInClip = m_activeWeapon.clipMaxCapacity;
+            
+            // ИСПРАВЛЕНО: Проверка и честная трата патронов целым стаком для автоматов и мушкетов
+            uint16_t neededAmmo = m_activeWeapon.clipMaxCapacity - m_activeWeapon.currentAmmoInClip;
+            uint16_t accumulatedAmmo = 0;
+            
+            const auto& inv = player.GetInventory();
+            for (size_t i = 0; i < inv.size(); ++i) {
+                if (inv[i].id == m_activeWeapon.requiredAmmoId) {
+                    uint16_t takeAmount = std::min(neededAmmo, inv[i].quantity);
+                    player.RemoveItem(i, takeAmount);
+                    accumulatedAmmo += takeAmount;
+                    neededAmmo -= takeAmount;
+                    if (neededAmmo == 0) break;
+                }
+            }
+
+            if (accumulatedAmmo == 0) {
+                m_activeWeapon.isReloading = false;
+                Platform::Log("[RELOAD WARNING]: Перезарядка невозможна! На складе инвентаря нет подходящих рожков.");
+                return;
+            }
+
+            m_activeWeapon.currentAmmoInClip += accumulatedAmmo;
             m_activeWeapon.isReloading = false;
-            Platform::Log("[RELOAD]: Перезарядка пушки завершена. Магазин заменен.");
+            Platform::Log("[RELOAD]: Перезарядка пушки завершена. Рожок заменен. Заряжено: " + std::to_string(m_activeWeapon.currentAmmoInClip));
         }
     }
 }

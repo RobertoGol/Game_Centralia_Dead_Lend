@@ -1,11 +1,12 @@
 #pragma once
 #include "core/Math3D.hpp"
 #include <vector>
+#include <cstdint>
 
 namespace Centralia {
 
 // Типы шасси для всей будущей техники и роботов Централии
-enum class ChassisType {
+enum class ChassisType : uint8_t {
     Titan_4_Legged,   // Наш текущий четвероногий Титан
     Titan_Bipedal,    // Гуманоидный робот / Экзоскелет
     Crawler_Multileg, // Ползущая многоногая платформа
@@ -30,9 +31,15 @@ private:
     float m_stepHeight = 0.8f;   // Насколько высоко Титан поднимает ногу над грунтом
     float m_stepSpeed = 4.0f;    // Скорость анимации переноса суставов
 
-    ProceduralMotionManager(ChassisType type = ChassisType::Titan_4_Legged); // Синглтон / Конструктор
+    ProceduralMotionManager();   // Приватный конструктор синглтона
 
 public:
+    ~ProceduralMotionManager() = default;
+
+    // Запрет копирования
+    ProceduralMotionManager(const ProceduralMotionManager&) = delete;
+    ProceduralMotionManager& operator=(const ProceduralMotionManager&) = delete;
+
     static ProceduralMotionManager& GetInstance() {
         static ProceduralMotionManager instance;
         return instance;
@@ -44,7 +51,8 @@ public:
     // Главный математический обсчет походки на CPU (вызывается каждый кадр в Update)
     void UpdateTitanMovement(const Vector3D& bodyPosition, const Vector3D& moveDirection, float deltaTime);
 
-    const std::vector<ProceduralLeg>& GetLegs() const { return m_legs; }
+    [[nodiscard]] const std::vector<ProceduralLeg>& GetLegs() const noexcept { return m_legs; }
+    [[nodiscard]] ChassisType GetChassisType() const noexcept { return m_type; }
 };
 
 } // namespace Centralia
