@@ -33,63 +33,57 @@ private:
     std::unordered_map<std::string, int32_t> m_runtimeRegistry; // Быстрый реестр игровых стейтов
     std::string m_encryptionKey;
 
-    class MemoryManager {
-private:
-    std::vector<uint8_t> m_ghostRamBuffer;
-    std::unordered_map<std::string, int32_t> m_runtimeRegistry;
-    std::string m_encryptionKey;
-
-    void ApplyCipher(std::vector<uint8_t>& data) noexcept;
-    MemoryManager(size_t poolSize = 1024 * 1024) noexcept;
+    void ApplyCipher(std::vector<uint8_t>& data)  ;
+    MemoryManager(size_t poolSize = 1024 * 1024)  ;
 
 public:
     ~MemoryManager();
     MemoryManager(const MemoryManager&) = delete;
     MemoryManager& operator=(const MemoryManager&) = delete;
 
-    static MemoryManager& GetInstance() noexcept {
+    static MemoryManager& GetInstance()   {
         static MemoryManager instance;
         return instance;
-    }
+    };
 
-    bool Initialize(const std::string& deviceHwid) noexcept;
-    bool SaveEncryptedFile(const std::string& filepath, const std::vector<uint8_t>& rawData) noexcept;
-    bool LoadDecryptedFile(const std::string& filepath, std::vector<uint8_t>& outData) noexcept;
-    void SetRegistryValue(const std::string& key, int32_t value) noexcept;
-    [[nodiscard]] int32_t GetRegistryValue(const std::string& key) const noexcept;
-    void ExecuteDecisionScript(const std::vector<Instruction>& bytecode) noexcept;
+    bool Initialize(const std::string& deviceHwid)  ;
+    bool SaveEncryptedFile(const std::string& filepath, const std::vector<uint8_t>& rawData)  ;
+    bool LoadDecryptedFile(const std::string& filepath, std::vector<uint8_t>& outData)  ;
+    void SetRegistryValue(const std::string& key, int32_t value)  ;
+    [[nodiscard]] int32_t GetRegistryValue(const std::string& key) const  ;
+    void ExecuteDecisionScript(const std::vector<Instruction>& bytecode)  ;
 };
 
-    inline MemoryManager(size_t poolSize = 1024 * 1024) noexcept {
+    inline MemoryManager(size_t poolSize = 1024 * 1024)   {
         m_ghostRamBuffer.resize(poolSize, 0x00);
-    }
+    };
 
 public:
     inline ~MemoryManager() {
         // Гарантированная зачистка ОЗУ при закрытии приложения для защиты от дамперов памяти
         std::fill(m_ghostRamBuffer.begin(), m_ghostRamBuffer.end(), 0x00); 
-    }
+    };
 
     // Запрет копирования синглтона
     MemoryManager(const MemoryManager&) = delete;
     MemoryManager& operator=(const MemoryManager&) = delete;
 
-    static inline MemoryManager& GetInstance() noexcept {
+    static inline MemoryManager& GetInstance()   {
         static MemoryManager instance;
         return instance;
-    }
+    };
 
-    inline bool Initialize(const std::string& deviceHwid) noexcept {
+    inline bool Initialize(const std::string& deviceHwid)   {
         if (deviceHwid.empty()) return false;
         
         // Соль на основе HWID устройства — делает невозможным перенос читерских сейвов между девайсами
         m_encryptionKey = deviceHwid + "_Centralia_DeadLend_2026_Salt";
         Platform::Log("MemoryManager: Ghost-RAM secure layer deployed.");
         return true;
-    }
+    };
 
     // Система работы с защищенными конфигами и сейвами персонажей LoginSystem
-    inline bool SaveEncryptedFile(const std::string& filepath, const std::vector<uint8_t>& rawData) noexcept {
+    inline bool SaveEncryptedFile(const std::string& filepath, const std::vector<uint8_t>& rawData)   {
         std::vector<uint8_t> encrypted = rawData;
         ApplyCipher(encrypted); // Зашифровываем байты перед записью на жесткий диск
 
@@ -99,9 +93,9 @@ public:
         file.write(reinterpret_cast<const char*>(encrypted.data()), encrypted.size());
         file.close();
         return true;
-    }
+    };
 
-    inline bool LoadDecryptedFile(const std::string& filepath, std::vector<uint8_t>& outData) noexcept {
+    inline bool LoadDecryptedFile(const std::string& filepath, std::vector<uint8_t>& outData)   {
         std::ifstream file(filepath, std::ios::binary | std::ios::ate);
         if (!file.is_open()) return false; 
 
@@ -112,28 +106,28 @@ public:
         if (!file.read(reinterpret_cast<char*>(outData.data()), size)) {
             file.close();
             return false;
-        }
+        };
         file.close();
 
         ApplyCipher(outData); // Расшифровываем обратно в валидную структуру данных в ОЗУ
         return true;
-    }
+    };
 
     // Интерфейс чтения/записи стейтов виртуальной памяти реестра
-    inline void SetRegistryValue(const std::string& key, int32_t value) noexcept {
+    inline void SetRegistryValue(const std::string& key, int32_t value)   {
         m_runtimeRegistry[key] = value;
-    }
+    };
 
-    [[nodiscard]] inline int32_t GetRegistryValue(const std::string& key) const noexcept {
+    [[nodiscard]] inline int32_t GetRegistryValue(const std::string& key) const   {
         auto it = m_runtimeRegistry.find(key);
         return (it != m_runtimeRegistry.end()) ? it->second : 0;
-    }
+    };
 
     /**
      * @brief Исполнитель void.run — полностью изолированная обработка логики решений квестов и ИИ.
      * Реализован в монолитном инлайне с жесткой аппаратной защитой от краха Out-of-Bounds.
      */
-    inline void ExecuteDecisionScript(const std::vector<Instruction>& bytecode) noexcept {
+    inline void ExecuteDecisionScript(const std::vector<Instruction>& bytecode)   {
         size_t ip = 0; // Исполнительный указатель (Instruction Pointer)
         bool halted = false;
         size_t bufferSize = m_ghostRamBuffer.size();
@@ -183,10 +177,10 @@ public:
                     Platform::Log("void.run: Unknown Memory-Opcode encountered! Halting stack.");
                     halted = true;
                     break;
-            }
+            };
             ip++;
-        }
-    }
+        };
+    };
 };
 
-} // namespace Centralia
+}; // namespace Centralia

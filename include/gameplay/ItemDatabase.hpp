@@ -48,13 +48,13 @@ public:
     }
 
     // Правильный константный метод поиска для CraftingManager, возвращающий указатель
-    [[nodiscard]] const ItemTemplate* GetItemTemplatePtr(uint32_t itemId) const noexcept {
+    [[nodiscard]] const ItemTemplate* GetItemTemplatePtr(uint32_t itemId) const   {
         auto it = m_templates.find(itemId);
         if (it != m_templates.end()) {
             return &it->second;
-        }
+        };
         return nullptr;
-    }
+    };
 
     // Инициализация дефолтного лута (Fallout / State of Decay сеттинг)
     void Initialize();
@@ -63,8 +63,8 @@ public:
     bool GetTemplate(uint32_t id, ItemTemplate& outTemplate) const;
 
     // Дополнительные геттеры расширенных модификаций для автофизики
-    [[nodiscard]] const std::unordered_map<uint32_t, VehicleModification>& GetVehicleMods() const noexcept { return m_vehicleMods; }
-    [[nodiscard]] const std::unordered_map<uint32_t, UniverseItem>& GetLoreItems() const noexcept { return m_loreItems; }
+    [[nodiscard]] const std::unordered_map<uint32_t, VehicleModification>& GetVehicleMods() const   { return m_vehicleMods; };
+    [[nodiscard]] const std::unordered_map<uint32_t, UniverseItem>& GetLoreItems() const   { return m_loreItems; };
 };
 
 } // namespace Centralia

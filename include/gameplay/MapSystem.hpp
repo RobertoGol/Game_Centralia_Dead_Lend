@@ -83,9 +83,9 @@ public:
 
     void UpdateMapEnvironment(float deltaTime, Player& player, ClassSystem& classSystem);
 
-    [[nodiscard]] uint32_t GetWidth() const noexcept { return m_width; }
-    [[nodiscard]] uint32_t GetHeight() const noexcept { return m_height; }
-    [[nodiscard]] const std::vector<MapTile>& GetGrid() const noexcept { return m_tileGrid; }
+    [[nodiscard]] uint32_t GetWidth() const   { return m_width; };
+    [[nodiscard]] uint32_t GetHeight() const   { return m_height; };
+    [[nodiscard]] const std::vector<MapTile>& GetGrid() const   { return m_tileGrid; };
 };
 
 } // namespace Centralia

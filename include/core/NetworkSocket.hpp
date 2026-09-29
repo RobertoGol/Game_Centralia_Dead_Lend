@@ -33,33 +33,33 @@ private:
     bool m_isListening;
 
 public:
-    inline NetworkSocket() noexcept : m_socket(INVALID_SOCKET_VAL), m_isListening(false) {}
+    inline NetworkSocket()   : m_socket(INVALID_SOCKET_VAL), m_isListening(false) {};
 
     inline ~NetworkSocket() {
         Close();
-    }
+    };
 
     // Запрет случайного копирования сокетов для предотвращения утечки системных дескрипторов
     NetworkSocket(const NetworkSocket&) = delete;
     NetworkSocket& operator=(const NetworkSocket&) = delete;
 
     // Инициализация сетевых платформ ОС (Winsock старт)
-    inline static bool GlobalInit() noexcept {
+    inline static bool GlobalInit()   {
 #if defined(_WIN32)
         WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
             Platform::Log("Network: Winsock initialization failed!");
             return false;
-        }
+        };
 #endif
         return true;
-    }
+    };
 
-    inline static void GlobalCleanup() noexcept {
+    inline static void GlobalCleanup()   {
 #if defined(_WIN32)
         WSACleanup();
 #endif
-    }
+    };
 
     // Логика Хоста (Сервера Centralia)
 class NetworkSocket {
@@ -68,23 +68,23 @@ private:
     bool m_isListening;
 
 public:
-    NetworkSocket() noexcept;
+    NetworkSocket()  ;
     ~NetworkSocket();
     NetworkSocket(const NetworkSocket&) = delete;
     NetworkSocket& operator=(const NetworkSocket&) = delete;
 
-    static bool GlobalInit() noexcept;
-    static void GlobalCleanup() noexcept;
-    bool StartServer(uint16_t port) noexcept;
-    bool AcceptConnection(NetworkSocket& clientSocket) noexcept;
-    bool ConnectToServer(const std::string& ipAddress, uint16_t port) noexcept;
-    bool SendBytes(const std::vector<uint8_t>& data) noexcept;
-    bool ReceiveBytes(std::vector<uint8_t>& outData, size_t maxBytes) noexcept;
-    void Close() noexcept;
-    [[nodiscard]] bool IsValid() const noexcept { return m_socket != INVALID_SOCKET_VAL; }
+    static bool GlobalInit()  ;
+    static void GlobalCleanup()  ;
+    bool StartServer(uint16_t port)  ;
+    bool AcceptConnection(NetworkSocket& clientSocket)  ;
+    bool ConnectToServer(const std::string& ipAddress, uint16_t port)  ;
+    bool SendBytes(const std::vector<uint8_t>& data)  ;
+    bool ReceiveBytes(std::vector<uint8_t>& outData, size_t maxBytes)  ;
+    void Close()  ;
+    [[nodiscard]] bool IsValid() const   { return m_socket != INVALID_SOCKET_VAL; };
 };
 
-    inline bool AcceptConnection(NetworkSocket& clientSocket) noexcept {
+    inline bool AcceptConnection(NetworkSocket& clientSocket)   {
         if (!m_isListening) return false;
 
         sockaddr_in clientAddr{};
@@ -93,7 +93,7 @@ public:
         SocketType incoming = accept(m_socket, reinterpret_cast<sockaddr*>(&clientAddr), &clientLen);
         if (incoming == INVALID_SOCKET_VAL) {
             return false;
-        }
+        };
 
         clientSocket.Close();
         clientSocket.m_socket = incoming;
@@ -106,12 +106,12 @@ public:
     }
 
     // Логика Клиента Centralia (Подключение к Хосту)
-    inline bool ConnectToServer(const std::string& ipAddress, uint16_t port) noexcept {
+    inline bool ConnectToServer(const std::string& ipAddress, uint16_t port)   {
         m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (!IsValid()) {
             Platform::Log("Network: Failed to create client socket.");
             return false;
-        }
+        };
 
         sockaddr_in serverAddr{};
         serverAddr.sin_family = AF_INET;
@@ -121,20 +121,20 @@ public:
             Platform::Log("Network: Invalid IP Address configuration: " + ipAddress);
             Close();
             return false;
-        }
+        };
 
         if (connect(m_socket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR_VAL) {
             Platform::Log("Network: Connection to host " + ipAddress + ":" + std::to_string(port) + " failed.");
             Close();
             return false;
-        }
+        };
 
         Platform::Log("Network: Successfully connected to Centralia host: " + ipAddress);
         return true;
-    }
+    };
 
     // Общие методы отправки и получения сырых байтов
-    inline bool SendBytes(const std::vector<uint8_t>& data) noexcept {
+    inline bool SendBytes(const std::vector<uint8_t>& data)   {
         if (!IsValid()) return false;
         
         size_t totalSent = 0;
@@ -149,14 +149,14 @@ public:
             if (sent == SOCKET_ERROR_VAL) {
                 Platform::Log("Network: transmission failure during send.");
                 return false;
-            }
+            };
             totalSent += static_cast<size_t>(sent);
             bytesLeft -= static_cast<size_t>(sent);
-        }
+        };
         return true;
-    }
+    };
 
-    inline bool ReceiveBytes(std::vector<uint8_t>& outData, size_t maxBytes) noexcept {
+    inline bool ReceiveBytes(std::vector<uint8_t>& outData, size_t maxBytes)   {
         if (!IsValid()) return false;
 
         outData.resize(maxBytes);
@@ -169,23 +169,23 @@ public:
         if (bytesRead <= 0) {
             outData.clear();
             return false; 
-        }
+        };
 
         outData.resize(static_cast<size_t>(bytesRead));
         return true;
-    }
+    };
 
-    inline void Close() noexcept {
+    inline void Close()   {
         if (IsValid()) {
             CLOSE_SOCKET(m_socket);
             m_socket = INVALID_SOCKET_VAL;
-        }
+        };
         m_isListening = false;
-    }
+    };
 
-    [[nodiscard]] inline bool IsValid() const noexcept {
+    [[nodiscard]] inline bool IsValid() const   {
         return m_socket != INVALID_SOCKET_VAL;
-    }
+    };
 };
 
-} // namespace Centralia
+}; // namespace Centralia

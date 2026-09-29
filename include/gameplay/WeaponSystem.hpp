@@ -56,7 +56,7 @@ public:
     // Обновление таймеров автоматики оружия на CPU (вызывается в Engine::Update)
     void UpdateWeaponTick(float deltaTime, Player& player);
 
-    [[nodiscard]] const WeaponSpecs& GetActiveWeaponSpecs() const noexcept { return m_activeWeapon; }
+    [[nodiscard]] const WeaponSpecs& GetActiveWeaponSpecs() const noexcept { return m_activeWeapon; };
 };
 
 } // namespace Centralia

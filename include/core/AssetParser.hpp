@@ -27,7 +27,7 @@ private:
         uint32_t originalSize;
     };
 
-    static std::string TrimWhitespace(const std::string& str) noexcept;
+    static std::string TrimWhitespace(const std::string& str)  ;
 
 public:
     AssetParser() = default;
@@ -42,14 +42,14 @@ public:
         const std::string& modName, 
         VehicleModification& outMod,
         std::vector<uint8_t>& outTextureBytes,
-        std::vector<Vertex3D_GPU>& outMeshVertices) noexcept;
+        std::vector<Vertex3D_GPU>& outMeshVertices)  ;
     /**
      * @brief Утилита для будущего разжатия фреймов .oggx в память Ghost-RAM
      */
-    bool DecompressOggxFrame(const std::vector<uint8_t>& packedStream, std::vector<uint8_t>& outRawBytes) noexcept;{
+    bool DecompressOggxFrame(const std::vector<uint8_t>& packedStream, std::vector<uint8_t>& outRawBytes)  ;{
         // Архитектурный шлюз под будущее распаковывание гигабайты моделей на лету
         return true;
-    }
+    };
 };
 
 } // namespace Centralia

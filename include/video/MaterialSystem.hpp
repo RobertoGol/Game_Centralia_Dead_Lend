@@ -29,7 +29,7 @@ private:
     
     inline MaterialSystem() noexcept {
         InitializeMaterialLibrary();
-    }
+    };
 
 public:
     ~MaterialSystem() = default;
@@ -78,7 +78,7 @@ public:
         m_materials[radGlowBio.materialId] = radGlowBio;
 
         Platform::Log("MaterialSystem: Многоуровневые профили красок (ВАЗ, Титаны, Рад-Био) запечатаны в RAM.");
-    }
+    };
 
 class MaterialSystem {
 private:
@@ -93,7 +93,7 @@ public:
     static MaterialSystem& GetInstance() {
         static MaterialSystem instance;
         return instance;
-    }
+    };
 
     void InitializeMaterialLibrary() noexcept;
     void ApplyMaterialToShader(uint32_t materialId, Shader& activeShader) noexcept;
@@ -105,9 +105,9 @@ public:
         if (it != m_materials.end()) {
             outProperties = it->second;
             return true;
-        }
+        };
         return false;
-    }
+    };
 };
 
-} // namespace Centralia
+}; // namespace Centralia

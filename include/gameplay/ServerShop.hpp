@@ -32,7 +32,7 @@ public:
     void ConnectToSupportServer();
 
     // Проверка статуса: мультиплеер работает всегда, магазин — только если есть сеть
-    [[nodiscard]] bool IsShopOnline() const noexcept { return m_shopOnline; }
+    [[nodiscard]] bool IsShopOnline() const noexcept { return m_shopOnline; };
 
     // Покупка базовых ресурсов поддержки серверов хоста (Дерево, Железо, Энергия)
     bool RequestResourcePurchase(uint32_t resourceId, uint32_t quantity);

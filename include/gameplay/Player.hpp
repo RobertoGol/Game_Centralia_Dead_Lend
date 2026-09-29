@@ -73,20 +73,20 @@ public:
     ~Player();
 
     // Константные и инлайн-совместимые геттеры/сеттеры
-    [[nodiscard]] uint32_t GetActiveArmorId() const noexcept { return m_activeArmorId; }
-    [[nodiscard]] uint32_t GetActiveWeaponId() const noexcept { return m_activeWeaponId; }
-    [[nodiscard]] const BodyMorphStats& GetBodyMorph() const noexcept { return m_bodyMorph; }
-    void SetBodyMorph(const BodyMorphStats& morph) noexcept { m_bodyMorph = morph; }
+    [[nodiscard]] uint32_t GetActiveArmorId() const noexcept { return m_activeArmorId; };
+    [[nodiscard]] uint32_t GetActiveWeaponId() const noexcept { return m_activeWeaponId; };
+    [[nodiscard]] const BodyMorphStats& GetBodyMorph() const noexcept { return m_bodyMorph; };
+    void SetBodyMorph(const BodyMorphStats& morph) noexcept { m_bodyMorph = morph; };
 
-    [[nodiscard]] const Vector3D& GetPosition() const noexcept { return m_position; }
-    void SetPosition(const Vector3D& pos) noexcept { m_position = pos; }
-    [[nodiscard]] float GetRotation() const noexcept { return m_rotationY; }
-    void SetRotation(float angle) noexcept { m_rotationY = angle; }
+    [[nodiscard]] const Vector3D& GetPosition() const noexcept { return m_position; };
+    void SetPosition(const Vector3D& pos) noexcept { m_position = pos; };
+    [[nodiscard]] float GetRotation() const noexcept { return m_rotationY; };
+    void SetRotation(float angle) noexcept { m_rotationY = angle; };
 
-    [[nodiscard]] uint64_t GetUID() const noexcept { return m_uid; }
-    [[nodiscard]] const std::string& GetNickname() const noexcept { return m_nickname; }
-    [[nodiscard]] const std::vector<Item>& GetInventory() const noexcept { return m_inventory; }
-    [[nodiscard]] SurvivalStats& GetStats() noexcept { return m_stats; }
+    [[nodiscard]] uint64_t GetUID() const noexcept { return m_uid; };
+    [[nodiscard]] const std::string& GetNickname() const noexcept { return m_nickname; };
+    [[nodiscard]] const std::vector<Item>& GetInventory() const noexcept { return m_inventory; };
+    [[nodiscard]] SurvivalStats& GetStats() noexcept { return m_stats; };
 
     // Прототипы методов управления, перемещения и расчетов высот/веса
     void UpdateMovementState(float deltaTime, bool isSprinting, bool isCtrlPressed);

@@ -48,7 +48,7 @@ private:
     uint64_t m_masterAdminHwidHash = 0x8C5A3F11B29DEE77;
 
 public:
-    ClassSystem() noexcept; // Конструктор объявлен явно для инициализации enum
+    ClassSystem()  ; // Конструктор объявлен явно для инициализации enum
 
     void SetHumanClass(HumanClass hClass);
     void SetTitanClass(TitanClass tClass);
@@ -56,11 +56,11 @@ public:
     bool AuthenticateAndActivateAdmin(const std::string& currentDeviceHwid);
     void ToggleControlMode(EntityControlMode mode);
 
-    ActiveControlMode GetControlMode() const noexcept { return m_sessionControlMode; }
-    EngineControlMode GetEngineControlMode() const noexcept; 
-    HumanClass GetHumanClass() const noexcept { return m_humanClass; }
-    TitanClass GetTitanClass() const noexcept { return m_titanClass; }
-    const ClassAttributes& GetAttributes() const noexcept { return m_currentAttributes; }
+    ActiveControlMode GetControlMode() const   { return m_sessionControlMode; };
+    EngineControlMode GetEngineControlMode() const  ; 
+    HumanClass GetHumanClass() const   { return m_humanClass; };
+    TitanClass GetTitanClass() const   { return m_titanClass; };
+    const ClassAttributes& GetAttributes() const   { return m_currentAttributes; };
 };
 
-} // namespace Centralia
+}; // namespace Centralia

@@ -24,8 +24,8 @@ public:
         s_internalStoragePath = internalPath;
         if (!s_internalStoragePath.empty() && s_internalStoragePath.back() != '/') {
             s_internalStoragePath += '/';
-        }
-    }
+        };
+    };
 
     /**
      * @brief Инициализация базовых систем платформы
@@ -47,7 +47,7 @@ public:
      */
     [[nodiscard]] static std::string GetSaveDirectoryPath() noexcept {
         return s_internalStoragePath;
-    }
+    };
 
     /**
      * @brief Проверка флага закрытия окна приложения (для Android — сворачивание/уничтожение Activity)
@@ -63,4 +63,4 @@ enum class KeyCode : uint32_t {
     G = 8, R = 9
 };
 
-} // namespace Centralia
+}; // namespace Centralia

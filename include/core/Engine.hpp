@@ -58,7 +58,7 @@ public:
      */
     void HandleMouseMovement(float deltaX, float deltaY);
 
-    [[nodiscard]] bool IsRunning() const noexcept { return m_isRunning; }
+    [[nodiscard]] bool IsRunning() const   { return m_isRunning; };
 };
 
 } // namespace Centralia

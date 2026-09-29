@@ -29,8 +29,8 @@ public:
     void SimulatePhysics(float deltaTime, const Vector3D& moveInput, Vector3D& outVelocity);
 
     // Геттеры для связи с системами шейдеров и 3D-камеры
-    [[nodiscard]] float GetCameraShake() const noexcept { return m_cameraShakeIntensity; }
-    [[nodiscard]] const std::vector<VehicleModification>& GetWheels() const noexcept { return m_wheels; }
+    [[nodiscard]] float GetCameraShake() const noexcept { return m_cameraShakeIntensity; };
+    [[nodiscard]] const std::vector<VehicleModification>& GetWheels() const noexcept { return m_wheels; };
 };
 
 } // namespace Centralia

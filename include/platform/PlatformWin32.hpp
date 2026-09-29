@@ -20,31 +20,31 @@ inline static uint32_t MapEngineCodeToSDLWin32(KeyCode code) noexcept {
         case KeyCode::G:     return SDL_SCANCODE_G;
         case KeyCode::R:     return SDL_SCANCODE_R;
         default:             return SDL_SCANCODE_UNKNOWN;
-    }
-}
+    };
+};
 
 inline bool Platform::Initialize() noexcept {
     Log("Windows Subsystem: Крюки реестра Win32 и менеджер памяти MSVC переведены в номинальный режим.");
     return true;
-}
+};
 
 inline void Platform::Log(const std::string& message) noexcept {
     std::string formatted = "[Centralia WIN32] " + message + "\n";
     std::cout << formatted;
     OutputDebugStringA(formatted.c_str()); // Вывод в консоль отладчика Visual Studio
-}
+};
 
 inline bool Platform::IsKeyPressed(KeyCode code) noexcept {
     const uint8_t* state = SDL_GetKeyboardState(NULL);
     uint32_t sdlCode = MapEngineCodeToSDLWin32(code);
     return (sdlCode != SDL_SCANCODE_UNKNOWN) && (state[sdlCode] != 0);
-}
+};
 
 inline bool Platform::IsKeyJustPressed(KeyCode code) noexcept {
     const uint8_t* state = SDL_GetKeyboardState(NULL);
     uint32_t sdlCode = MapEngineCodeToSDLWin32(code);
     return (sdlCode != SDL_SCANCODE_UNKNOWN) && (state[sdlCode] != 0);
-}
+};
 
 inline bool Platform::WindowShouldClose() noexcept {
     SDL_Event event;
@@ -52,7 +52,7 @@ inline bool Platform::WindowShouldClose() noexcept {
         if (event.type == SDL_QUIT) return true;
     }
     return false;
-}
+};
 
 inline std::string Platform::GetSaveDirectoryPath() noexcept {
     char szPath[MAX_PATH];
@@ -62,7 +62,7 @@ inline std::string Platform::GetSaveDirectoryPath() noexcept {
         return path;
     }
     return ".\\saves\\";
-}
+};
 
 inline std::string Platform::GetDeviceHWID() noexcept {
     HKEY hKey;
@@ -75,8 +75,8 @@ inline std::string Platform::GetDeviceHWID() noexcept {
             return std::string(value);
         }
         RegCloseKey(hKey);
-    }
+    };
     return "WINDOWS_UNKNOWN_HWID";
-}
+};
 
-} // namespace Centralia
+}; // namespace Centralia

@@ -38,7 +38,7 @@ private:
 
     inline ProceduralMotionManager() noexcept {
         InitializeChassis(ChassisType::Titan_4_Legged);
-    }
+    };
 
 public:
     ~ProceduralMotionManager() = default;
@@ -50,7 +50,7 @@ public:
     static inline ProceduralMotionManager& GetInstance() noexcept {
         static ProceduralMotionManager instance;
         return instance;
-    }
+    };
 
     inline void InitializeChassis(ChassisType type) noexcept {
         m_type = type;
@@ -70,11 +70,11 @@ public:
                 leg.startFootPos = leg.hipOffset; 
                 leg.stepProgress = 1.0f;
                 leg.isMoving = false;
-            }
+            };
             
             Platform::Log("ProceduralMotion: Header-Only ИИК-шасси 4-х ногого Титана инициализировано.");
-        }
-    }
+        };
+    };
 
 class ProceduralMotionManager {
 private:
@@ -96,21 +96,21 @@ public:
     static ProceduralMotionManager& GetInstance() noexcept {
         static ProceduralMotionManager instance;
         return instance;
-    }
+    };
 
     void InitializeChassis(ChassisType type) noexcept;
     void UpdateTitanMovement(const Vector3D& bodyPosition, const Vector3D& moveDirection, float deltaTime) noexcept;
 
-    [[nodiscard]] float GetChassisRoll() const noexcept { return m_chassisRoll; }
-    [[nodiscard]] float GetChassisPitch() const noexcept { return m_chassisPitch; }
-    [[nodiscard]] const std::vector<ProceduralLeg>& GetLegs() const noexcept { return m_legs; }
-    [[nodiscard]] ChassisType GetChassisType() const noexcept { return m_type; }
+    [[nodiscard]] float GetChassisRoll() const noexcept { return m_chassisRoll; };
+    [[nodiscard]] float GetChassisPitch() const noexcept { return m_chassisPitch; };
+    [[nodiscard]] const std::vector<ProceduralLeg>& GetLegs() const noexcept { return m_legs; };
+    [[nodiscard]] ChassisType GetChassisType() const noexcept { return m_type; };
 };
 
-    [[nodiscard]] inline float GetChassisRoll() const noexcept { return m_chassisRoll; }
-    [[nodiscard]] inline float GetChassisPitch() const noexcept { return m_chassisPitch; }
-    [[nodiscard]] inline const std::vector<ProceduralLeg>& GetLegs() const noexcept { return m_legs; }
-    [[nodiscard]] inline ChassisType GetChassisType() const noexcept { return m_type; }
+    [[nodiscard]] inline float GetChassisRoll() const noexcept { return m_chassisRoll; };
+    [[nodiscard]] inline float GetChassisPitch() const noexcept { return m_chassisPitch; };
+    [[nodiscard]] inline const std::vector<ProceduralLeg>& GetLegs() const noexcept { return m_legs; };
+    [[nodiscard]] inline ChassisType GetChassisType() const noexcept { return m_type; };
 };
 
-} // namespace Centralia
+}; // namespace Centralia

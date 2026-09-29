@@ -73,4 +73,4 @@ public:
     [[nodiscard]] float GetModifiedSpeed() const noexcept;
 };
 
-} // namespace Centralia
+}; // namespace Centralia

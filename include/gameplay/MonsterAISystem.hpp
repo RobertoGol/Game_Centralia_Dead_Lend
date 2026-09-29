@@ -93,7 +93,7 @@ public:
     void SpawnTacticalAgent(uint32_t id, const std::string& loreName, AIArchetype archetype, const Vector3D& spawnPos);
 
     // Геттер для контекста Renderer3D
-    [[nodiscard]] const std::vector<AIIntelligenceProfile>& GetActiveAgents() const noexcept { return m_simulatedAgents; }
+    [[nodiscard]] const std::vector<AIIntelligenceProfile>& GetActiveAgents() const noexcept { return m_simulatedAgents; };
 };
 
-} // namespace Centralia
+}; // namespace Centralia

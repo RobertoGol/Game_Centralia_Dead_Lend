@@ -37,21 +37,21 @@ private:
                     crc = (crc >> 1) ^ 0xEDB88320;
                 } else {
                     crc >>= 1;
-                }
+                };
             }
             table[i] = crc;
-        }
+        };
         return table;
-    }
+    };
 
     inline static uint32_t CalculateCRC32(const std::vector<uint8_t>& data) noexcept {
         static constexpr auto crc32Table = GenerateCRC32Table();
         uint32_t crc = 0xFFFFFFFF;
         for (const uint8_t byte : data) {
             crc = (crc >> 8) ^ crc32Table[(crc ^ byte) & 0xFF];
-        }
+        };
         return crc ^ 0xFFFFFFFF;
-    }
+    };
 
 public:
     ResourcePackerOGGX() = default;
@@ -66,11 +66,11 @@ private:
             for (uint32_t j = 0; j < 8; ++j) {
                 if (crc & 1) crc = (crc >> 1) ^ 0xEDB88320;
                 else crc >>= 1;
-            }
+            };
             table[i] = crc;
-        }
+        };
         return table;
-    }
+    };
     static uint32_t CalculateCRC32(const std::vector<uint8_t>& data) noexcept;
 
 public:

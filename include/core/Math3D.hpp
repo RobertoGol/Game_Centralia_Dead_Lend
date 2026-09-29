@@ -20,42 +20,42 @@ struct Vector3D {
     float y = 0.0f;
     float z = 0.0f;
 
-    inline Vector3D() noexcept = default;
-    inline Vector3D(float _x, float _y, float _z) noexcept : x(_x), y(_y), z(_z) {}
+    inline Vector3D()   = default;
+    inline Vector3D(float _x, float _y, float _z)   : x(_x), y(_y), z(_z) {};
 
-    inline Vector3D operator+(const Vector3D& other) const noexcept { 
+    inline Vector3D operator+(const Vector3D& other) const   { 
         return { x + other.x, y + other.y, z + other.z }; 
-    }
+    };
     
-    inline Vector3D operator-(const Vector3D& other) const noexcept { 
+    inline Vector3D operator-(const Vector3D& other) const   { 
         return { x - other.x, y - other.y, z - other.z }; 
-    }
+    };
     
-    inline Vector3D operator*(float scalar) const noexcept { 
+    inline Vector3D operator*(float scalar) const   { 
         return { x * scalar, y * scalar, z * scalar }; 
-    }
+    };
     
-    [[nodiscard]] inline Vector3D Cross(const Vector3D& other) const noexcept {
+    [[nodiscard]] inline Vector3D Cross(const Vector3D& other) const   {
         return {
             y * other.z - z * other.y,
             z * other.x - x * other.z,
             x * other.y - y * other.x
         };
-    }
+    };
 
-    [[nodiscard]] inline float Dot(const Vector3D& other) const noexcept {
+    [[nodiscard]] inline float Dot(const Vector3D& other) const   {
         return x * other.x + y * other.y + z * other.z;
-    }
+    };
     
-    [[nodiscard]] inline float Length() const noexcept { 
+    [[nodiscard]] inline float Length() const   { 
         return std::sqrt(x * x + y * y + z * z); 
-    }
+    };
     
-    [[nodiscard]] inline Vector3D Normalize() const noexcept {
+    [[nodiscard]] inline Vector3D Normalize() const   {
         float len = Length();
         if (len > 0.0f) return { x / len, y / len, z / len };
         return { 0.0f, 0.0f, 0.0f };
-    }
+    };
 };
 
 class Camera3D {
@@ -68,9 +68,9 @@ public:
     bool  isAdminMode = false; 
     float flySpeed = 15.0f;    
 
-    inline Camera3D() noexcept : position(0.0f, 5.0f, -5.0f), target(0.0f, 0.0f, 0.0f) {}
+    inline Camera3D()   : position(0.0f, 5.0f, -5.0f), target(0.0f, 0.0f, 0.0f) {};
 
-    inline void FollowPlayer(const Vector3D& playerPos, float mouseXOffset, float mouseYOffset) noexcept {
+    inline void FollowPlayer(const Vector3D& playerPos, float mouseXOffset, float mouseYOffset)   {
         if (isAdminMode) return;
 
         yaw += mouseXOffset;
@@ -87,9 +87,9 @@ public:
         position.z = playerPos.z - distanceToPlayer * std::cos(pitchRad) * std::cos(yawRad);
         
         target = playerPos;
-    }
+    };
 
-    inline void MoveFreeCam(float forward, float right, float up, float deltaTime) noexcept {
+    inline void MoveFreeCam(float forward, float right, float up, float deltaTime)   {
         if (!isAdminMode) return;
         
         position.x += right * flySpeed * deltaTime;
@@ -97,7 +97,7 @@ public:
         position.z += forward * flySpeed * deltaTime;
         
         target = position + Vector3D(0.0f, 0.0f, 1.0f); 
-    }
+    };
 };
 
 } // namespace Centralia

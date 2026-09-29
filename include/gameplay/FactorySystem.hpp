@@ -60,9 +60,9 @@ public:
     // Фоновый ежекадровый обсчет работы заводов и энергосети на CPU
     void UpdateFactoriesTick(float deltaTime, Player& player, const ClassSystem& classSystem);
 
-    [[nodiscard]] int32_t GetCurrentPowerOutput() const noexcept { return m_totalPowerGenerated - m_totalPowerConsumed; }
-    [[nodiscard]] float GetBudgetPercentage() const noexcept { return (m_buildBudget / m_maxBudget) * 100.0f; }
-    [[nodiscard]] const std::vector<FactoryStructure>& GetPlacedStructures() const noexcept { return m_placedStructures; }
+    [[nodiscard]] int32_t GetCurrentPowerOutput() const   { return m_totalPowerGenerated - m_totalPowerConsumed; };
+    [[nodiscard]] float GetBudgetPercentage() const   { return (m_buildBudget / m_maxBudget) * 100.0f; };
+    [[nodiscard]] const std::vector<FactoryStructure>& GetPlacedStructures() const   { return m_placedStructures; };
 };
 
 // Псевдоним для интеграции в CraftingManager

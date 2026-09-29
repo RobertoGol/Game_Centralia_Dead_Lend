@@ -53,8 +53,8 @@ public:
     bool CreateCharacterInSlot(uint8_t slotId, const std::string& name, CharacterRace race, HumanClass hClass, TitanClass tClass);
     bool LoadCharacterFromSlot(uint8_t slotId, Player& player, ClassSystem& outClassSystem);
     
-    [[nodiscard]] const std::vector<CharacterSaveSlot>& GetSaveSlots() const noexcept { return m_slots; }
-    [[nodiscard]] bool IsOnlineMode() const noexcept { return m_isOnlineMode; }
+    [[nodiscard]] const std::vector<CharacterSaveSlot>& GetSaveSlots() const   { return m_slots; };
+    [[nodiscard]] bool IsOnlineMode() const   { return m_isOnlineMode; };
 };
 
 } // namespace Centralia

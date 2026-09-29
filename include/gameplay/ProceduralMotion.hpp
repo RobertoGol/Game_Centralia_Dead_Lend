@@ -51,8 +51,8 @@ public:
     // Главный математический обсчет походки на CPU (вызывается каждый кадр в Update)
     void UpdateTitanMovement(const Vector3D& bodyPosition, const Vector3D& moveDirection, float deltaTime);
 
-    [[nodiscard]] const std::vector<ProceduralLeg>& GetLegs() const noexcept { return m_legs; }
-    [[nodiscard]] ChassisType GetChassisType() const noexcept { return m_type; }
+    [[nodiscard]] const std::vector<ProceduralLeg>& GetLegs() const noexcept { return m_legs; };
+    [[nodiscard]] ChassisType GetChassisType() const noexcept { return m_type; };
 };
 
 } // namespace Centralia

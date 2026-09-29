@@ -56,11 +56,11 @@ public:
     void UpdateAiTick(float deltaTime, const Vector3D& playerPos, MemoryManager& memory);
 
     // Геттеры и сеттеры состояний сущности
-    [[nodiscard]] CreatureSpecies GetSpecies() const noexcept { return m_species; }
-    [[nodiscard]] const Vector3D& GetPosition() const noexcept { return m_position; }
-    void SetPosition(const Vector3D& pos) noexcept { m_position = pos; }
-    [[nodiscard]] float GetTotalHealth() const noexcept { return m_totalHealth; }
-    [[nodiscard]] bool IsEnraged() const noexcept { return m_isEnraged; }
+    [[nodiscard]] CreatureSpecies GetSpecies() const   { return m_species; };
+    [[nodiscard]] const Vector3D& GetPosition() const   { return m_position; };
+    void SetPosition(const Vector3D& pos)   { m_position = pos; };
+    [[nodiscard]] float GetTotalHealth() const   { return m_totalHealth; };
+    [[nodiscard]] bool IsEnraged() const   { return m_isEnraged; };
 };
 
 } // namespace Centralia

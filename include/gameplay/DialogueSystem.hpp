@@ -89,8 +89,8 @@ private:
     DialogueReactionType m_currentReaction;
 
     // Внутренние методы валидации скрытых параметров игрока
-    bool CheckPlayerIntellectRequirements(const DialogueChoiceAdvanced& choice, const Player& player) const noexcept;
-    void LogDialogueStep(uint32_t speakerId, const std::string& text, bool checkPassed) noexcept;
+    bool CheckPlayerIntellectRequirements(const DialogueChoiceAdvanced& choice, const Player& player) const  ;
+    void LogDialogueStep(uint32_t speakerId, const std::string& text, bool checkPassed)  ;
 
 public:
     // Исправленный чистый конструктор и деструктор для MSVC cl.exe
@@ -115,11 +115,11 @@ public:
     std::vector<std::string> GetCurrentPlayerOptions(const Player& player) const;
 
     // Геттеры расширенной лорной аналитики
-    [[nodiscard]] bool IsActive() const noexcept { return m_conversationRunning; }
-    [[nodiscard]] const NPCDialogueProfile& GetNPCProfile() const noexcept { return m_activeNPC; }
-    [[nodiscard]] bool IsDialogueActive() const noexcept { return m_isDialogueActive; }
-    [[nodiscard]] uint32_t GetCurrentNodeId() const noexcept { return m_currentNodeId; }
-    [[nodiscard]] DialogueReactionType GetCurrentReaction() const noexcept { return m_currentReaction; }
+    [[nodiscard]] bool IsActive() const   { return m_conversationRunning; };
+    [[nodiscard]] const NPCDialogueProfile& GetNPCProfile() const   { return m_activeNPC; };
+    [[nodiscard]] bool IsDialogueActive() const   { return m_isDialogueActive; };
+    [[nodiscard]] uint32_t GetCurrentNodeId() const   { return m_currentNodeId; };
+    [[nodiscard]] DialogueReactionType GetCurrentReaction() const   { return m_currentReaction; };
     
     // Метод выгрузки бинарных логов диалога для сохранений OGGX
     std::vector<uint8_t> ExportDialogueLog() const;

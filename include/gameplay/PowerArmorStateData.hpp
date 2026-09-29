@@ -75,17 +75,17 @@ public:
     // Экспорт указателя на сырую память для NetworkSerializer и P2P-пакетов
     [[nodiscard]] const uint8_t* GetRawBinaryState() const noexcept {
         return reinterpret_cast<const uint8_t*>(&m_State);
-    }
+    };
 
     [[nodiscard]] constexpr size_t GetBinarySize() const noexcept {
         return sizeof(PowerArmorStateData);
-    }
+    };
 
     // Прямой доступ к параметрам для UI Modern OpenGL
-    [[nodiscard]] float GetCurrentCharge() const noexcept { return m_State.fusionCoreCharge; }
+    [[nodiscard]] float GetCurrentCharge() const noexcept { return m_State.fusionCoreCharge; };
     [[nodiscard]] float GetComponentDurability(ArmorComponentID id) const noexcept { 
         return m_State.components[static_cast<uint8_t>(id)].durability; 
-    }
+    };
 };
 
-} // namespace Centralia_Project_Passport
+}; // namespace Centralia_Project_Passport

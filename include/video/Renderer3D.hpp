@@ -121,28 +121,28 @@ public:
         SetupCubeBuffers();
         Platform::Log("Renderer3D: Контекст Modern OpenGL Core 3.3 запущен номинально.");
         return true;
-    }
+    };
 
     inline void ClearScreen() noexcept {
         glClearColor(0.12f, 0.12f, 0.12f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
+    };
 
     inline void Present() noexcept {
         SDL_GL_SwapWindow(m_window);
-    }
+    };
 
     inline void DrawTestCube(const Vector3D& position, float rotationY) noexcept {
         glBindVertexArray(m_cubeVAO);
         
         // ИСПРАВЛЕНО: Безопасный кроссплатформенный рендеринг без разрушения осей куба
-#if defined(GL_QUADS)
-        glDrawArrays(GL_QUADS, 0, 24); 
-#else
-        glDrawArrays(GL_TRIANGLES, 0, 24);
-#endif
-        glBindVertexArray(0);
-    }
+        #if defined(GL_QUADS)
+                glDrawArrays(GL_QUADS, 0, 24); 
+        #else
+                glDrawArrays(GL_TRIANGLES, 0, 24);
+        #endif
+                glBindVertexArray(0);
+    };
 
     inline void Shutdown() noexcept {
         if (m_cubeVAO != 0) glDeleteVertexArrays(1, &m_cubeVAO);
@@ -157,11 +157,11 @@ public:
             m_window = nullptr;
         }
         SDL_Quit();
-    }
+    };
 
     inline bool ShouldClose() noexcept {
         return Platform::WindowShouldClose();
-    }
+    };
 };
 
-} // namespace Centralia
+}; // namespace Centralia
