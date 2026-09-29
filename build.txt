@@ -1,0 +1,537 @@
+CMake is re-running because I:/Game_Centralia_Dead_Lend/build-clean/CMakeFiles/generate.stamp is out-of-date.
+  the file 'I:/Game_Centralia_Dead_Lend/CMakeLists.txt'
+  is newer than 'I:/Game_Centralia_Dead_Lend/build-clean/CMakeFiles/generate.stamp.depend'
+  result='-1'
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.19045.
+-- Configuring done (0.0s)
+-- Generating done (1.3s)
+-- Build files have been written to: I:/Game_Centralia_Dead_Lend/build-clean
+Версия MSBuild 17.14.40+3e7442088 для .NET Framework
+
+  main.cpp
+I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9): warning C4005: _USE_MATH_DEFINES: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/main.cpp")
+      I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9):
+      "_USE_MATH_DEFINES" ранее объявлен в командной строке
+  
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244: =: преобразование "const _Ty" в "unsigned char", возможна потеря данных [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:         with [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:         [ [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:             _Ty=int [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:         ] [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/main.cpp")
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24):
+      контекст создания экземпляра шаблона (сначала самый старый)
+          I:\Game_Centralia_Dead_Lend\include\core\MemoryManager.hpp(54,14):
+          выполняется компиляция ссылки на экземпляр шаблон функции "void std::fill<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,int>(const _FwdIt,const _FwdIt,const int &)"
+          with
+          [
+              _Ty=uint8_t,
+              _FwdIt=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<uint8_t>>>
+          ]
+  
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244: инициализация: преобразование "const _Ty" в "unsigned char", возможна потеря данных [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:         with [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:         [ [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:             _Ty=int [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:         ] [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/main.cpp")
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37):
+      контекст создания экземпляра шаблона (сначала самый старый)
+          I:\Game_Centralia_Dead_Lend\include\core\MemoryManager.hpp(54,14):
+          выполняется компиляция ссылки на экземпляр шаблон функции "void std::fill<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,int>(const _FwdIt,const _FwdIt,const int &)"
+          with
+          [
+              _Ty=uint8_t,
+              _FwdIt=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<uint8_t>>>
+          ]
+          C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5299,22):
+          выполняется компиляция ссылки на экземпляр шаблон функции "void std::_Fill_memset<unsigned char*,_Ty>(_CtgIt,const _Ty,const size_t)"
+          with
+          [
+              _Ty=int,
+              _CtgIt=unsigned char *
+          ]
+  
+  Engine.cpp
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(1,9): warning C4005: WIN32_LEAN_AND_MEAN: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(1,9):
+      "WIN32_LEAN_AND_MEAN" ранее объявлен в командной строке
+  
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(2,9): warning C4005: _USE_MATH_DEFINES: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(2,9):
+      "_USE_MATH_DEFINES" ранее объявлен в командной строке
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(519,8): error C4430: отсутствует спецификатор типа - предполагается int. Примечание. C++ не поддерживает int по умолчанию [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(519,36): error C2146: синтаксическая ошибка: отсутствие ";" перед идентификатором "glad_glVertexAttribI1uiiv" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(523,8): error C4430: отсутствует спецификатор типа - предполагается int. Примечание. C++ не поддерживает int по умолчанию [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(523,36): error C2146: синтаксическая ошибка: отсутствие ";" перед идентификатором "glad_glVertexAttribI2uiiv" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(527,8): error C4430: отсутствует спецификатор типа - предполагается int. Примечание. C++ не поддерживает int по умолчанию [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(527,36): error C2146: синтаксическая ошибка: отсутствие ";" перед идентификатором "glad_glVertexAttribI3uiiv" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(559,8): error C4430: отсутствует спецификатор типа - предполагается int. Примечание. C++ не поддерживает int по умолчанию [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(559,29): error C2146: синтаксическая ошибка: отсутствие ";" перед идентификатором "glad_glWriteUInt32" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(560,8): error C4430: отсутствует спецификатор типа - предполагается int. Примечание. C++ не поддерживает int по умолчанию [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(560,28): error C2146: синтаксическая ошибка: отсутствие ";" перед идентификатором "glad_glReadUInt32" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(574,8): error C4430: отсутствует спецификатор типа - предполагается int. Примечание. C++ не поддерживает int по умолчанию [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(574,29): error C2146: синтаксическая ошибка: отсутствие ";" перед идентификатором "glad_glWriteUInt32" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(575,8): error C4430: отсутствует спецификатор типа - предполагается int. Примечание. C++ не поддерживает int по умолчанию [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(575,28): error C2146: синтаксическая ошибка: отсутствие ";" перед идентификатором "glad_glReadUInt32" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(654,1): error C2059: синтаксическая ошибка: } [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\glad\glad.h(654,1): error C2143: синтаксическая ошибка: отсутствие ";" перед "}" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\cstdint(20,1): error C2143: синтаксическая ошибка: отсутствие ";" перед "{" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\cstdint(20,1): error C2447: {: отсутствует заголовок функции (возможно, используется формальный список старого типа) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(52,9): error C3861: glGenVertexArrays: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(53,9): error C3861: glGenBuffers: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(55,9): error C3861: glBindVertexArray: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(56,9): error C3861: glBindBuffer: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(57,9): error C3861: glBufferData: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(61,9): error C3861: glEnableVertexAttribArray: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(65,9): error C3861: glEnableVertexAttribArray: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(67,9): error C3861: glBindBuffer: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(68,9): error C3861: glBindVertexArray: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(116,9): error C3861: glEnable: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(117,9): error C3861: glDepthFunc: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(126,9): error C3861: glClearColor: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(127,9): error C3861: glClear: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(135,9): error C3861: glBindVertexArray: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(139,9): error C3861: glDrawArrays: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(143,9): error C3861: glBindVertexArray: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(147,29): error C3861: glDeleteVertexArrays: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Renderer3D.hpp(148,29): error C3861: glDeleteBuffers: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(21,13): error C3861: glGetShaderiv: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(23,17): error C3861: glGetShaderInfoLog: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(28,13): error C3861: glGetProgramiv: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(30,17): error C3861: glGetProgramInfoLog: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(43,13): error C3861: glDeleteProgram: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(81,20): error C3861: glCreateShader: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(82,9): error C3861: glShaderSource: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(83,9): error C3861: glCompileShader: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(87,22): error C3861: glCreateShader: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(88,9): error C3861: glShaderSource: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(89,9): error C3861: glCompileShader: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(93,23): error C3861: glCreateProgram: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(94,9): error C3861: glAttachShader: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(95,9): error C3861: glAttachShader: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(96,9): error C3861: glLinkProgram: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(99,9): error C3861: glDeleteShader: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(100,9): error C3861: glDeleteShader: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(107,31): error C3861: glUseProgram: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(111,9): error C3861: glUseProgram: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(115,24): error C3861: glGetUniformLocation: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(116,29): error C3861: glUniform3f: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(120,24): error C3861: glGetUniformLocation: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\include\video\Shader.hpp(121,29): error C3861: glUniformMatrix4fv: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/Engine.cpp")
+  
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(39,84): error C2248: Centralia::MemoryManager::MemoryManager: невозможно обратиться к private член, объявленному в классе "Centralia::MemoryManager" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\include\core\MemoryManager.hpp(47,5):
+       см. объявление "Centralia::MemoryManager::MemoryManager"
+      I:\Game_Centralia_Dead_Lend\include\core\MemoryManager.hpp(30,7):
+       см. объявление "Centralia::MemoryManager"
+  
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(56,5): error C2679: бинарный "=": не найден оператор, принимающий правый операнд типа "Centralia::Renderer3D *" (или приемлемое преобразование отсутствует) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\memory(3476,17):
+      может быть "std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>::operator =(const std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &)"
+          I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(56,5):
+          "std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>::operator =(const std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &)": невозможно преобразовать аргумент 2 из "Centralia::Renderer3D *" в "const std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &"
+              I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(56,32):
+              Причина: невозможно преобразовать "Centralia::Renderer3D *" в "const std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>"
+              I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(56,32):
+              Конструктор для class "std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>" объявлен как "explicit"
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\memory(3362,30):
+      или       "std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>::operator =(std::nullptr_t) noexcept"
+          I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(56,5):
+          "std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>::operator =(std::nullptr_t) noexcept": невозможно преобразовать аргумент 2 из "Centralia::Renderer3D *" в "std::nullptr_t"
+              I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(56,32):
+              nullptr можно преобразовать только в тип указателя или дескриптора
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\memory(3413,30):
+      или       "std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>::operator =(std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &&) noexcept"
+          I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(56,32):
+          инициализация: невозможно преобразовать "Centralia::Renderer3D *" в "std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &&"
+              I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(56,32):
+              Причина: невозможно преобразовать "Centralia::Renderer3D *" в "std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>"
+              I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(56,32):
+              Конструктор для class "std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>" объявлен как "explicit"
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\memory(3406,30):
+      или       "std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>::operator =(std::unique_ptr<_Ux,_Dx> &&) noexcept"
+          I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(56,5):
+          'std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>> &std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>::operator =(std::unique_ptr<_Ux,_Dx> &&) noexcept': не удалось вывести аргумент шаблон для 'std::unique_ptr<_Ux,_Dx> &&' из 'Centralia::Renderer3D *'
+      I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(56,5):
+      при попытке сопоставить список аргументов "(std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>, Centralia::Renderer3D *)"
+  
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(72,5): error C2679: бинарный "=": не найден оператор, принимающий правый операнд типа "Centralia::Player *" (или приемлемое преобразование отсутствует) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\memory(3476,17):
+      может быть "std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>::operator =(const std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &)"
+          I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(72,5):
+          "std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>::operator =(const std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &)": невозможно преобразовать аргумент 2 из "Centralia::Player *" в "const std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &"
+              I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(72,31):
+              Причина: невозможно преобразовать "Centralia::Player *" в "const std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>"
+              I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(72,31):
+              Конструктор для class "std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>" объявлен как "explicit"
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\memory(3362,30):
+      или       "std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>::operator =(std::nullptr_t) noexcept"
+          I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(72,5):
+          "std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>::operator =(std::nullptr_t) noexcept": невозможно преобразовать аргумент 2 из "Centralia::Player *" в "std::nullptr_t"
+              I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(72,31):
+              nullptr можно преобразовать только в тип указателя или дескриптора
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\memory(3413,30):
+      или       "std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>::operator =(std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &&) noexcept"
+          I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(72,31):
+          инициализация: невозможно преобразовать "Centralia::Player *" в "std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &&"
+              I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(72,31):
+              Причина: невозможно преобразовать "Centralia::Player *" в "std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>"
+              I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(72,31):
+              Конструктор для class "std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>" объявлен как "explicit"
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\memory(3406,30):
+      или       "std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>::operator =(std::unique_ptr<_Ux,_Dx> &&) noexcept"
+          I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(72,5):
+          'std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>> &std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>::operator =(std::unique_ptr<_Ux,_Dx> &&) noexcept': не удалось вывести аргумент шаблон для 'std::unique_ptr<_Ux,_Dx> &&' из 'Centralia::Player *'
+      I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(72,5):
+      при попытке сопоставить список аргументов "(std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>, Centralia::Player *)"
+  
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(229,5): error C3861: glUseProgram: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(232,19): error C3861: glGetUniformLocation: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(234,9): error C3861: glUniformMatrix4fv: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(237,18): error C3861: glGetUniformLocation: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(239,9): error C3861: glUniform3f: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(243,22): error C3861: glGetUniformLocation: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(245,9): error C3861: glUniform1f: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(251,5): error C3861: glUseProgram: идентификатор не найден [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(261,33): error C2440: delete: невозможно преобразовать "std::unique_ptr<Centralia::Player,std::default_delete<Centralia::Player>>" в "void*" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(261,33):
+      Для выполнения данного преобразования нет доступного оператора преобразования, определенного пользователем, или вызов оператора невозможен
+  
+I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(262,30): error C2440: delete: невозможно преобразовать "std::unique_ptr<Centralia::Renderer3D,std::default_delete<Centralia::Renderer3D>>" в "void*" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\src\core\Engine.cpp(262,30):
+      Для выполнения данного преобразования нет доступного оператора преобразования, определенного пользователем, или вызов оператора невозможен
+  
+  LoginSystem.cpp
+I:\Game_Centralia_Dead_Lend\src\core\LoginSystem.cpp(1,9): warning C4005: WIN32_LEAN_AND_MEAN: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\src\core\LoginSystem.cpp(1,9):
+      "WIN32_LEAN_AND_MEAN" ранее объявлен в командной строке
+  
+I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9): warning C4005: _USE_MATH_DEFINES: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/LoginSystem.cpp")
+      I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9):
+      "_USE_MATH_DEFINES" ранее объявлен в командной строке
+  
+I:\Game_Centralia_Dead_Lend\src\core\LoginSystem.cpp(29,82): warning C4100: "password": неиспользованный параметр [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\LoginSystem.cpp(71,22): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\LoginSystem.cpp(73,22): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\LoginSystem.cpp(91,10): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\core\LoginSystem.cpp(126,23): warning C4189: race: локальная переменная инициализирована, но не использована [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244: =: преобразование "const _Ty" в "unsigned char", возможна потеря данных [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:         with [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:         [ [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:             _Ty=int [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:         ] [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/LoginSystem.cpp")
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24):
+      контекст создания экземпляра шаблона (сначала самый старый)
+          I:\Game_Centralia_Dead_Lend\include\core\MemoryManager.hpp(54,14):
+          выполняется компиляция ссылки на экземпляр шаблон функции "void std::fill<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,int>(const _FwdIt,const _FwdIt,const int &)"
+          with
+          [
+              _Ty=uint8_t,
+              _FwdIt=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<uint8_t>>>
+          ]
+  
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244: инициализация: преобразование "const _Ty" в "unsigned char", возможна потеря данных [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:         with [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:         [ [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:             _Ty=int [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:         ] [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/core/LoginSystem.cpp")
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37):
+      контекст создания экземпляра шаблона (сначала самый старый)
+          I:\Game_Centralia_Dead_Lend\include\core\MemoryManager.hpp(54,14):
+          выполняется компиляция ссылки на экземпляр шаблон функции "void std::fill<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,int>(const _FwdIt,const _FwdIt,const int &)"
+          with
+          [
+              _Ty=uint8_t,
+              _FwdIt=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<uint8_t>>>
+          ]
+          C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5299,22):
+          выполняется компиляция ссылки на экземпляр шаблон функции "void std::_Fill_memset<unsigned char*,_Ty>(_CtgIt,const _Ty,const size_t)"
+          with
+          [
+              _Ty=int,
+              _CtgIt=unsigned char *
+          ]
+  
+  ClassSystem.cpp
+I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9): warning C4005: _USE_MATH_DEFINES: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/gameplay/ClassSystem.cpp")
+      I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9):
+      "_USE_MATH_DEFINES" ранее объявлен в командной строке
+  
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244: =: преобразование "const _Ty" в "unsigned char", возможна потеря данных [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:         with [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:         [ [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:             _Ty=int [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24): warning C4244:         ] [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/gameplay/ClassSystem.cpp")
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5310,24):
+      контекст создания экземпляра шаблона (сначала самый старый)
+          I:\Game_Centralia_Dead_Lend\include\core\MemoryManager.hpp(54,14):
+          выполняется компиляция ссылки на экземпляр шаблон функции "void std::fill<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,int>(const _FwdIt,const _FwdIt,const int &)"
+          with
+          [
+              _Ty=uint8_t,
+              _FwdIt=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<uint8_t>>>
+          ]
+  
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244: инициализация: преобразование "const _Ty" в "unsigned char", возможна потеря данных [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:         with [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:         [ [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:             _Ty=int [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37): warning C4244:         ] [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/gameplay/ClassSystem.cpp")
+      C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5264,37):
+      контекст создания экземпляра шаблона (сначала самый старый)
+          I:\Game_Centralia_Dead_Lend\include\core\MemoryManager.hpp(54,14):
+          выполняется компиляция ссылки на экземпляр шаблон функции "void std::fill<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,int>(const _FwdIt,const _FwdIt,const int &)"
+          with
+          [
+              _Ty=uint8_t,
+              _FwdIt=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<uint8_t>>>
+          ]
+          C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(5299,22):
+          выполняется компиляция ссылки на экземпляр шаблон функции "void std::_Fill_memset<unsigned char*,_Ty>(_CtgIt,const _Ty,const size_t)"
+          with
+          [
+              _Ty=int,
+              _CtgIt=unsigned char *
+          ]
+  
+  CreatureAI.cpp
+I:\Game_Centralia_Dead_Lend\src\gameplay\CreatureAI.cpp(1,10): error C1083: Не удается открыть файл включение: gameplay/Creature.hpp: No such file or directory, [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  DialogueSystem.cpp
+I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9): warning C4005: _USE_MATH_DEFINES: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/gameplay/DialogueSystem.cpp")
+      I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9):
+      "_USE_MATH_DEFINES" ранее объявлен в командной строке
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\DialogueSystem.cpp(81,72): warning C4100: "player": неиспользованный параметр [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\DialogueSystem.cpp(104,61): warning C4100: "player": неиспользованный параметр [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\DialogueSystem.cpp(168,35): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\DialogueSystem.cpp(168,35): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  FactorySystem.cpp
+I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9): warning C4005: _USE_MATH_DEFINES: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/gameplay/FactorySystem.cpp")
+      I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9):
+      "_USE_MATH_DEFINES" ранее объявлен в командной строке
+  
+  ItemDatabase.cpp
+I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9): warning C4005: _USE_MATH_DEFINES: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/gameplay/ItemDatabase.cpp")
+      I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9):
+      "_USE_MATH_DEFINES" ранее объявлен в командной строке
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\ItemDatabase.cpp(66,25): error C2039: "id": не является членом "Centralia::UniverseItem". [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\include\gameplay\ModificationSystem.hpp(47,8):
+       см. объявление "Centralia::UniverseItem"
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\ItemDatabase.cpp(68,34): error C2039: "description": не является членом "Centralia::UniverseItem". [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\include\gameplay\ModificationSystem.hpp(47,8):
+       см. объявление "Centralia::UniverseItem"
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\ItemDatabase.cpp(70,29): error C2039: "weightUnit": не является членом "Centralia::UniverseItem". [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\include\gameplay\ModificationSystem.hpp(47,8):
+       см. объявление "Centralia::UniverseItem"
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\ItemDatabase.cpp(71,54): error C2039: "maxStackLimit": не является членом "Centralia::UniverseItem". [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\include\gameplay\ModificationSystem.hpp(47,8):
+       см. объявление "Centralia::UniverseItem"
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\ItemDatabase.cpp(84,24): error C2039: "id": не является членом "Centralia::UniverseItem". [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\include\gameplay\ModificationSystem.hpp(47,8):
+       см. объявление "Centralia::UniverseItem"
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\ItemDatabase.cpp(86,33): error C2039: "description": не является членом "Centralia::UniverseItem". [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\include\gameplay\ModificationSystem.hpp(47,8):
+       см. объявление "Centralia::UniverseItem"
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\ItemDatabase.cpp(88,28): error C2039: "weightUnit": не является членом "Centralia::UniverseItem". [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\include\gameplay\ModificationSystem.hpp(47,8):
+       см. объявление "Centralia::UniverseItem"
+  
+  MapSystem.cpp
+I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9): warning C4005: _USE_MATH_DEFINES: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/gameplay/MapSystem.cpp")
+      I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9):
+      "_USE_MATH_DEFINES" ранее объявлен в командной строке
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\MapSystem.cpp(128,32): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\MapSystem.cpp(128,32): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\MapSystem.cpp(134,29): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\MapSystem.cpp(134,29): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  ModificationSystem.cpp
+  Player.cpp
+I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9): warning C4005: _USE_MATH_DEFINES: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/gameplay/Player.cpp")
+      I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9):
+      "_USE_MATH_DEFINES" ранее объявлен в командной строке
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(40,74): warning C4100: "isCtrlPressed": неиспользованный параметр [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(40,56): warning C4100: "isSprinting": неиспользованный параметр [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(40,40): warning C4100: "deltaTime": неиспользованный параметр [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(108,31): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(108,31): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(109,34): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(109,34): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(112,35): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(112,35): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(113,38): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(113,38): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(152,27): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(152,27): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(153,27): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(153,27): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(156,31): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(156,31): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(160,31): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\Player.cpp(160,31): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  PowerArmorStateData.cpp
+  ProceduralMotion.cpp
+I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9): warning C4005: _USE_MATH_DEFINES: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/gameplay/ProceduralMotion.cpp")
+      I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9):
+      "_USE_MATH_DEFINES" ранее объявлен в командной строке
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\ProceduralMotion.cpp(7,26): error C2511: Centralia::ProceduralMotionManager::ProceduralMotionManager(Centralia::ChassisType): перегруженная функция-член не найдена в "Centralia::ProceduralMotionManager" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\include\gameplay\ProceduralMotion.hpp(26,7):
+       см. объявление "Centralia::ProceduralMotionManager"
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\ProceduralMotion.cpp(8,5): error C2352: "Centralia::ProceduralMotionManager::InitializeChassis": для вызова нестатической функции-члена требуется объект [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+      I:\Game_Centralia_Dead_Lend\include\gameplay\ProceduralMotion.hpp(49,10):
+       см. объявление "Centralia::ProceduralMotionManager::InitializeChassis"
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\ProceduralMotion.cpp(81,28): warning C4244: инициализация: преобразование "double" в "float", возможна потеря данных [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  WeaponSystem.cpp
+I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9): warning C4005: _USE_MATH_DEFINES: изменение макроопределения [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  (компиляция исходного файла "../src/gameplay/WeaponSystem.cpp")
+      I:\Game_Centralia_Dead_Lend\include\core\Math3D.hpp(2,9):
+      "_USE_MATH_DEFINES" ранее объявлен в командной строке
+  
+I:\Game_Centralia_Dead_Lend\src\gameplay\WeaponSystem.cpp(65,31): warning C4100: "deltaTime": неиспользованный параметр [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\WeaponSystem.cpp(103,40): warning C4100: "player": неиспользованный параметр [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\WeaponSystem.cpp(161,48): error C2589: (: недопустимая лексема справа от "::" [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+I:\Game_Centralia_Dead_Lend\src\gameplay\WeaponSystem.cpp(161,48): error C2059: синтаксическая ошибка: ) [I:\Game_Centralia_Dead_Lend\build-clean\Game_Centralia_Dead_Lend.vcxproj]
+  Создание кода...

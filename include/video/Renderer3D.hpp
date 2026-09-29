@@ -48,27 +48,28 @@ private:
     uint32_t m_cubeVAO = 0;
     uint32_t m_cubeVBO = 0;
 
-    inline void SetupCubeBuffers() noexcept {
-        glGenVertexArrays(1, &m_cubeVAO);
-        glGenBuffers(1, &m_cubeVBO);
+    class Renderer3D {
+private:
+    SDL_Window* m_window = nullptr;
+    SDL_GLContext m_glContext = nullptr;
+    int m_screenWidth;
+    int m_screenHeight;
+    uint32_t m_cubeVAO = 0;
+    uint32_t m_cubeVBO = 0;
 
-        glBindVertexArray(m_cubeVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, m_cubeVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerticesFlatArray), cubeVerticesFlatArray, GL_STATIC_DRAW);
+    void SetupCubeBuffers() noexcept;
 
-        // Позиции вершин (layout = 0)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
+public:
+    Renderer3D(int width = 1920, int height = 1080);
+    ~Renderer3D();
 
-        // Нормали полигонов (layout = 1)
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-        
-        Platform::Log("Renderer3D: Выделены VBO/VAO буферы видеопамяти GPU для 3D-мешей.");
-    }
+    bool Initialize(const char* windowTitle) noexcept;
+    void ClearScreen() noexcept;
+    void Present() noexcept;
+    void DrawTestCube(const Vector3D& position, float rotationY) noexcept;
+    void Shutdown() noexcept;
+    bool ShouldClose() noexcept;
+};
 
 public:
     inline Renderer3D(int width = 1920, int height = 1080) 

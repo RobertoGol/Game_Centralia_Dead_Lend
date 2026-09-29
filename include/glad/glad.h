@@ -10,6 +10,7 @@
 #endif
 
 #include <stddef.h>
+#include <stdint.h>
 
 // Базовые типы данных Khronos OpenGL Core (API-совместимость с Android NDK и MSVC)
 typedef unsigned int GLenum;

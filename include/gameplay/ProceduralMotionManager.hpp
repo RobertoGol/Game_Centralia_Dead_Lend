@@ -76,50 +76,36 @@ public:
         }
     }
 
-    inline void UpdateTitanMovement(const Vector3D& bodyPosition, const Vector3D& moveDirection, float deltaTime) noexcept {
-        if (m_legs.empty()) return;
+class ProceduralMotionManager {
+private:
+    ChassisType m_type;
+    std::vector<ProceduralLeg> m_legs;
+    float m_stepLength = 2.5f;
+    float m_stepHeight = 0.8f;
+    float m_stepSpeed = 4.0f;
+    float m_chassisRoll = 0.0f;
+    float m_chassisPitch = 0.0f;
 
-        float moveVelocity = moveDirection.Length();
-        bool isMovingDirectional = (moveVelocity > 0.01f);
+    ProceduralMotionManager() noexcept;
 
-        for (size_t i = 0; i < m_legs.size(); ++i) {
-            ProceduralLeg& leg = m_legs[i];
-            Vector3D worldHipPos = bodyPosition + leg.hipOffset;
+public:
+    ~ProceduralMotionManager() = default;
+    ProceduralMotionManager(const ProceduralMotionManager&) = delete;
+    ProceduralMotionManager& operator=(const ProceduralMotionManager&) = delete;
 
-            if (!leg.isMoving && isMovingDirectional) {
-                Vector3D idealTargetPos = worldHipPos + (moveDirection.Normalize() * m_stepLength);
-                Vector3D deltaVector = idealTargetPos - leg.currentFootPos;
-                
-                bool otherLegsAnchored = true;
-                for (size_t j = 0; j < m_legs.size(); ++j) {
-                    if (i != j && m_legs[j].isMoving && (j % 2 == (i % 2))) {
-                        otherLegsAnchored = false;
-                    }
-                }
-
-                if (deltaVector.Length() > m_stepLength * 0.5f && otherLegsAnchored) {
-                    leg.startFootPos = leg.currentFootPos; 
-                    leg.targetFootPos = idealTargetPos;
-                    leg.stepProgress = 0.0f;
-                    leg.isMoving = true;
-                }
-            }
-
-            if (leg.isMoving) {
-                leg.stepProgress += m_stepSpeed * deltaTime;
-                if (leg.stepProgress >= 1.0f) {
-                    leg.stepProgress = 1.0f;
-                    leg.currentFootPos = leg.targetFootPos;
-                    leg.startFootPos = leg.targetFootPos; 
-                    leg.isMoving = false;
-                } else {
-                    float heightArc = std::sin(leg.stepProgress * 3.14159265f) * m_stepHeight;
-                    Vector3D currentPlanePos = leg.startFootPos + (leg.targetFootPos - leg.startFootPos) * leg.stepProgress;
-                    leg.currentFootPos = Vector3D(currentPlanePos.x, currentPlanePos.y + heightArc, currentPlanePos.z);
-                }
-            }
-        }
+    static ProceduralMotionManager& GetInstance() noexcept {
+        static ProceduralMotionManager instance;
+        return instance;
     }
+
+    void InitializeChassis(ChassisType type) noexcept;
+    void UpdateTitanMovement(const Vector3D& bodyPosition, const Vector3D& moveDirection, float deltaTime) noexcept;
+
+    [[nodiscard]] float GetChassisRoll() const noexcept { return m_chassisRoll; }
+    [[nodiscard]] float GetChassisPitch() const noexcept { return m_chassisPitch; }
+    [[nodiscard]] const std::vector<ProceduralLeg>& GetLegs() const noexcept { return m_legs; }
+    [[nodiscard]] ChassisType GetChassisType() const noexcept { return m_type; }
+};
 
     [[nodiscard]] inline float GetChassisRoll() const noexcept { return m_chassisRoll; }
     [[nodiscard]] inline float GetChassisPitch() const noexcept { return m_chassisPitch; }

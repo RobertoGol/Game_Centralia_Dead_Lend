@@ -62,42 +62,27 @@ public:
     }
 
     // Логика Хоста (Сервера Centralia)
-    inline bool StartServer(uint16_t port) noexcept {
-        m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if (!IsValid()) {
-            Platform::Log("Network: Failed to create listening socket.");
-            return false;
-        }
+class NetworkSocket {
+private:
+    SocketType m_socket;
+    bool m_isListening;
 
-        // Позволяет повторно использовать порт сразу после перезапуска хоста игры
-        int opt = 1;
-#if defined(_WIN32)
-        setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&opt), sizeof(opt));
-#else
-        setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-#endif
+public:
+    NetworkSocket() noexcept;
+    ~NetworkSocket();
+    NetworkSocket(const NetworkSocket&) = delete;
+    NetworkSocket& operator=(const NetworkSocket&) = delete;
 
-        sockaddr_in serverAddr{};
-        serverAddr.sin_family = AF_INET;
-        serverAddr.sin_addr.s_addr = INADDR_ANY; // Слушаем любые входящие IP-подключения игроков
-        serverAddr.sin_port = htons(port);
-
-        if (bind(m_socket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR_VAL) {
-            Platform::Log("Network: Socket bind failed on port " + std::to_string(port));
-            Close();
-            return false;
-        }
-
-        if (listen(m_socket, SOMAXCONN) == SOCKET_ERROR_VAL) {
-            Platform::Log("Network: Socket listen failed.");
-            Close();
-            return false;
-        }
-
-        m_isListening = true;
-        Platform::Log("Network: Server hosted successfully on port " + std::to_string(port) + ". Waiting for players...");
-        return true;
-    }
+    static bool GlobalInit() noexcept;
+    static void GlobalCleanup() noexcept;
+    bool StartServer(uint16_t port) noexcept;
+    bool AcceptConnection(NetworkSocket& clientSocket) noexcept;
+    bool ConnectToServer(const std::string& ipAddress, uint16_t port) noexcept;
+    bool SendBytes(const std::vector<uint8_t>& data) noexcept;
+    bool ReceiveBytes(std::vector<uint8_t>& outData, size_t maxBytes) noexcept;
+    void Close() noexcept;
+    [[nodiscard]] bool IsValid() const noexcept { return m_socket != INVALID_SOCKET_VAL; }
+};
 
     inline bool AcceptConnection(NetworkSocket& clientSocket) noexcept {
         if (!m_isListening) return false;

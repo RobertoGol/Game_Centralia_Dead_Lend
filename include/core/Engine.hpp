@@ -1,7 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <vector>
-#include <chrono> // Для аппаратно-независимого подсчета дельты времени
+ #include <chrono> // Для аппаратно-независимого подсчета дельты времени
+#include <memory> // ИСПРАВЛЕНО: Добавлен заголовок для умных указателей
 #include "core/Math3D.hpp" // Now safely yields ActiveControlMode and EngineControlMode
 #include "core/MemoryManager.hpp"
 #include "core/InputController.hpp"
@@ -10,6 +11,7 @@
 namespace Centralia {
 class Player;
 class Renderer3D;
+class Shader; // ИСПРАВЛЕНО: Добавлено предварительное объявление класса
 
 // FIXED: Using standard type validation to bypass the enum collision loop completely
 #ifndef CENTRALIA_ENUMS_DECLARED
@@ -29,9 +31,10 @@ private:
     // Если твой Shader.hpp переведен в Header-Only, объявление остается прежним
     uint32_t        m_activeShaderID = 0; 
     
-    // Объявляем строго как указатели, чтобы cl.exe не ругался на оператор delete при очистке
-    Player*         m_localPlayer = nullptr;
-    Renderer3D*     m_renderer = nullptr;
+    // ИСПРАВЛЕНО: Переведено на безопасные умные указатели
+    std::unique_ptr<Player>     m_localPlayer;
+    std::unique_ptr<Renderer3D> m_renderer;
+    std::unique_ptr<Shader>     m_shader;
 
     // Тайминги для аппаратно-независимого счисления физики WASD
     std::chrono::high_resolution_clock::time_point m_lastFrameTime;

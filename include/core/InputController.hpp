@@ -47,26 +47,31 @@ public:
     InputController& operator=(const InputController&) = delete;
 
     // Первичный поиск контроллеров в Windows 10 / Linux
-    inline void Initialize() noexcept {
-        if (SDL_NumJoysticks() > 0) {
-            for (int i = 0; i < SDL_NumJoysticks(); ++i) {
-                if (SDL_IsGameController(i)) {
-                    m_gamepad = SDL_GameControllerOpen(i);
-                    if (m_gamepad) {
-                        m_currentType = ControllerType::Gamepad_Xbox_PS;
-                        Platform::Log("InputController: Hardware Gamepad detected [" + 
-                                      std::string(SDL_GameControllerName(m_gamepad)) + "]. Fallout 76 map active.");
-                        break;
-                    }
-                }
-            }
-        }
+    class InputController {
+    private:
+        SDL_GameController* m_gamepad = nullptr;
+        ControllerType m_currentType = ControllerType::KeyboardMouse;
+        GameplayActions m_actions;
+        float m_mouseSensitivity = 0.15f;
+        float m_gamepadSensitivity = 3.0f;
 
-        if (!m_gamepad) {
-            m_currentType = ControllerType::KeyboardMouse;
-            Platform::Log("InputController: No gamepads found. Mapping to Keyboard & Mouse (Fallout 76 bindings).");
-        }
-    }
+    public:
+        InputController() noexcept;
+        ~InputController();
+        InputController(const InputController&) = delete;
+        InputController& operator=(const InputController&) = delete;
+
+        void Initialize() noexcept;
+        void ClearFrameTriggers() noexcept;
+        void Update(SDL_Event& event) noexcept;
+        [[nodiscard]] Vector3D GetMovementVector() const noexcept;
+        void GetLookOffsets(float& outX, float& outY) const noexcept;
+        [[nodiscard]] bool IsSprintPressed() const noexcept;
+        void Shutdown() noexcept;
+
+        [[nodiscard]] const GameplayActions& GetActions() const noexcept { return m_actions; }
+        [[nodiscard]] ControllerType GetCurrentControllerType() const noexcept { return m_currentType; }
+    };
 
     // Сброс триггеров одиночных действий — ИСПРАВЛЕНО: Вызывается ОДИН раз за кадр из Engine::Update
     inline void ClearFrameTriggers() noexcept {

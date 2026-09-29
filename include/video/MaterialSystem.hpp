@@ -80,15 +80,25 @@ public:
         Platform::Log("MaterialSystem: Многоуровневые профили красок (ВАЗ, Титаны, Рад-Био) запечатаны в RAM.");
     }
 
-    inline void ApplyMaterialToShader(uint32_t materialId, Shader& activeShader) noexcept {
-        auto it = m_materials.find(materialId);
-        if (it == m_materials.end()) return;
-        const MaterialProperties& mat = it->second;
+class MaterialSystem {
+private:
+    std::unordered_map<uint32_t, MaterialProperties> m_materials;
+    MaterialSystem() noexcept;
 
-        // Передаем параметры попиксельного смешивания слоев в uniform-регистры видеокарты
-        activeShader.SetVec3("materialParams", mat.baseRoughness, mat.factoryPaintAlpha, mat.rustIntensity);
-        activeShader.SetVec3("materialGlow", mat.radGlowIntensity, 0.0f, 0.0f);
+public:
+    ~MaterialSystem() = default;
+    MaterialSystem(const MaterialSystem&) = delete;
+    MaterialSystem& operator=(const MaterialSystem&) = delete;
+
+    static MaterialSystem& GetInstance() {
+        static MaterialSystem instance;
+        return instance;
     }
+
+    void InitializeMaterialLibrary() noexcept;
+    void ApplyMaterialToShader(uint32_t materialId, Shader& activeShader) noexcept;
+    bool GetMaterialSpecs(uint32_t materialId, MaterialProperties& outProperties) const noexcept;
+};
 
     inline bool GetMaterialSpecs(uint32_t materialId, MaterialProperties& outProperties) const noexcept {
         auto it = m_materials.find(materialId);

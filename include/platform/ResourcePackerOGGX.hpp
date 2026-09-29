@@ -57,64 +57,29 @@ public:
     ResourcePackerOGGX() = default;
     ~ResourcePackerOGGX() = default;
 
-    inline static bool PackResources(const std::vector<std::string>& inputFiles, const std::string& outputPackPath) {
-        std::ofstream outArchive(outputPackPath, std::ios::binary);
-        if (!outArchive.is_open()) {
-            Platform::Log("[OGGX PACKER ERROR]: Не удалось создать архив: " + outputPackPath);
-            return false;
+class ResourcePackerOGGX {
+private:
+    constexpr static auto GenerateCRC32Table() noexcept {
+        std::array<uint32_t, 256> table{};
+        for (uint32_t i = 0; i < 256; ++i) {
+            uint32_t crc = i;
+            for (uint32_t j = 0; j < 8; ++j) {
+                if (crc & 1) crc = (crc >> 1) ^ 0xEDB88320;
+                else crc >>= 1;
+            }
+            table[i] = crc;
         }
-
-        OGGXHeader header{};
-        std::memcpy(header.magic, "OGGX", 4);
-        header.version = 1;
-        header.fileCount = static_cast<uint32_t>(inputFiles.size());
-        header.reservedBuffer = 0;
-        outArchive.write(reinterpret_cast<const char*>(&header), sizeof(OGGXHeader));
-
-        const uint64_t tableOffset = outArchive.tellp();
-        std::vector<OGGXFileEntry> fileEntries(inputFiles.size());
-        outArchive.write(reinterpret_cast<const char*>(fileEntries.data()), fileEntries.size() * sizeof(OGGXFileEntry));
-
-        uint64_t currentPayloadOffset = outArchive.tellp();
-
-        for (size_t i = 0; i < inputFiles.size(); ++i) {
-            std::ifstream fileSource(inputFiles[i], std::ios::binary | std::ios::ate);
-            if (!fileSource.is_open()) {
-                Platform::Log("[OGGX PACKER ERROR]: Нет файла ресурса: " + inputFiles[i]);
-                outArchive.close();
-                return false;
-            }
-
-            const uint64_t fileSize = fileSource.tellg();
-            fileSource.seekg(0, std::ios::beg);
-
-            std::vector<uint8_t> buffer(fileSize);
-            if (fileSize > 0) {
-                fileSource.read(reinterpret_cast<char*>(buffer.data()), fileSize);
-            }
-
-            OGGXFileEntry& entry = fileEntries[i];
-            std::memset(entry.filePath, 0, sizeof(entry.filePath));
-            std::strncpy(entry.filePath, inputFiles[i].c_str(), sizeof(entry.filePath) - 1);
-            entry.fileOffset = currentPayloadOffset;
-            entry.fileSize = fileSize;
-            entry.crc32Checksum = CalculateCRC32(buffer);
-
-            if (fileSize > 0) {
-                outArchive.write(reinterpret_cast<const char*>(buffer.data()), fileSize);
-            }
-
-            currentPayloadOffset = outArchive.tellp();
-            fileSource.close();
-        }
-
-        outArchive.seekp(tableOffset);
-        outArchive.write(reinterpret_cast<const char*>(fileEntries.data()), fileEntries.size() * sizeof(OGGXFileEntry));
-        outArchive.close();
-
-        Platform::Log("[OGGX PACKER]: Сжато ресурсов: " + std::to_string(inputFiles.size()) + " в контейнер " + outputPackPath);
-        return true;
+        return table;
     }
+    static uint32_t CalculateCRC32(const std::vector<uint8_t>& data) noexcept;
+
+public:
+    ResourcePackerOGGX() = default;
+    ~ResourcePackerOGGX() = default;
+
+    static bool PackResources(const std::vector<std::string>& inputFiles, const std::string& outputPackPath);
+    static bool ValidatePackIntegrity(const std::string& packPath);
+};
 
     inline static bool ValidatePackIntegrity(const std::string& packPath) {
         std::ifstream inArchive(packPath, std::ios::binary);

@@ -42,52 +42,58 @@ Engine::~Engine() { Stop(); }
 bool Engine::Start() {
     if (!Platform::Initialize()) return false;
 
-    // Фикс строки 26: Вызов переведен на валидный метод Initialize() согласно ItemDatabase.hpp [31]
+    // Фикс строки 26: Вызов переведен на валидный метод Initialize() согласно ItemDatabase.hpp  
     ItemDatabase::GetInstance().Initialize();
     CraftingManager::GetInstance().InitializeBlueprints();
 
     if (!NetworkSocket::GlobalInit()) return false;
     if (!m_memoryManager.Initialize(Platform::GetDeviceHWID())) return false;
 
-    // 1. ПОДГРУЗКА ВЫСОКОПРОИЗВОДИТЕЛЬНОЙ 22-БАЙТОВОЙ КАРТЫ [31]
-    MapSystem::GetInstance().LoadMapFromFile("test.map"); [31]
+    // 1. ПОДГРУЗКА ВЫСОКОПРОИЗВОДИТЕЛЬНОЙ 22-БАЙТОВОЙ КАРТЫ  
+    MapSystem::GetInstance().LoadMapFromFile("test.map");  
 
-    // Запуск 3D-экрана Windows 10/Linux [31]
-    m_renderer = new Renderer3D(1920, 1080); [31]
-    if (!m_renderer->Initialize("Game Centralia: Dead Lend (Programmable GPU Core Build)")) { [31]
+    // Запуск 3D-экрана Windows 10/Linux  
+    m_renderer = new Renderer3D(1920, 1080);  
+    if (!m_renderer->Initialize("Game Centralia: Dead Lend (Programmable GPU Core Build)")) {  
         return false;
     }
 
-    // Компиляция шейдеров многоуровневых красок на GPU [31]
-    Shader shaderCompiler;
-    if (!shaderCompiler.LoadFromFiles("shaders/base_3d.vert", "shaders/base_3d.frag")) { [31]
-        Platform::Log("Critical Error: GPU failed to compile core Centralia reflection shaders!"); [31]
+// Компиляция шейдеров многоуровневых красок на GPU 
+    m_shader = std::make_unique<Shader>();
+    if (!m_shader->LoadFromFiles("shaders/base_3d.vert", "shaders/base_3d.frag")) { 
+        Platform::Log("Critical Error: GPU failed to compile core Centralia reflection shaders!"); 
+        m_shader.reset();
         return false;
     }
-    m_activeShaderID = shaderCompiler.GetProgramID();
+    m_activeShaderID = m_shader->GetProgramID();
 
-    m_inputController.Initialize(); [31]
+    m_inputController.Initialize();  
 
-    m_localPlayer = new Player(777, "Vault_Survivor_76", 24); [31]
-    m_localPlayer->SetPosition(Vector3D(0.0f, 0.0f, 0.0f)); [31]
+    m_localPlayer = new Player(777, "Vault_Survivor_76", 24);  
+    m_localPlayer->SetPosition(Vector3D(0.0f, 0.0f, 0.0f));  
 
-    m_memoryManager.SetRegistryValue("player_alpha_pct", 100);  [31]
+    m_memoryManager.SetRegistryValue("player_alpha_pct", 100);   
 
     // Фиксируем стартовую точку времени для аппаратно-адаптивного таймера
     m_lastFrameTime = std::chrono::high_resolution_clock::now();
     
     m_isRunning = true;
-    Platform::Log("Engine: Core subsystems initialized. Programmable Hardware Pipeline linked."); [31]
+    Platform::Log("Engine: Core subsystems initialized. Programmable Hardware Pipeline linked.");  
     return true;
 }
 
 void Engine::HandleMouseMovement(float deltaX, float deltaY) {
-    if (!m_localPlayer) return; [31]
-    m_camera.FollowPlayer(m_localPlayer->GetPosition(), deltaX, deltaY); [31]
+    if (!m_localPlayer) return;  
+    m_camera.FollowPlayer(m_localPlayer->GetPosition(), deltaX, deltaY);  
 }
 
 void Engine::Update() {
-    if (!m_localPlayer) return; [31]
+    // ИСПРАВЛЕНО: Перехват закрытия окна
+    if (Platform::WindowShouldClose()) {
+        Stop();
+        return;
+    }
+    if (!m_localPlayer) return;  
 
     // Рассчитываем честную дельту времени (deltaTime) между тиками процессора
     auto currentFrameTime = std::chrono::high_resolution_clock::now();
@@ -97,106 +103,106 @@ void Engine::Update() {
     // Предохранитель от падения FPS (например, при зависании окна или брейкпоинте отладчика)
     if (deltaTime > 0.1f) deltaTime = 0.1f;
 
-    // 1. Опрос геймпада/мыши для вращения 3D-камеры вокруг гуманоида [31]
-    float gamepadLookX = 0.0f; [31]
-    float gamepadLookY = 0.0f; [31]
-    m_inputController.GetLookOffsets(gamepadLookX, gamepadLookY); [31]
-    if (gamepadLookX != 0.0f || gamepadLookY != 0.0f) { [31]
-        m_camera.FollowPlayer(m_localPlayer->GetPosition(), gamepadLookX, gamepadLookY); [31]
+    // 1. Опрос геймпада/мыши для вращения 3D-камеры вокруг гуманоида  
+    float gamepadLookX = 0.0f;  
+    float gamepadLookY = 0.0f;  
+    m_inputController.GetLookOffsets(gamepadLookX, gamepadLookY);  
+    if (gamepadLookX != 0.0f || gamepadLookY != 0.0f) {  
+        m_camera.FollowPlayer(m_localPlayer->GetPosition(), gamepadLookX, gamepadLookY);  
     }
 
-    const GameplayActions& actions = m_inputController.GetActions(); [31]
+    const GameplayActions& actions = m_inputController.GetActions();  
 
-    // 2. СИСТЕМА УПРАВЛЕНИЯ КЛАССАМИ (Админ-Хост против Обычного Пилота) [31]
-    if (m_memoryManager.GetRegistryValue("active_control_mode") == static_cast<int32_t>(EngineControlMode::Admin_Observer)) { [31]
-        m_camera.isAdminMode = true; [31]
+    // 2. СИСТЕМА УПРАВЛЕНИЯ КЛАССАМИ (Админ-Хост против Обычного Пилота)  
+    if (m_memoryManager.GetRegistryValue("active_control_mode") == static_cast<int32_t>(EngineControlMode::Admin_Observer)) {  
+        m_camera.isAdminMode = true;  
         
-        Vector3D inputDir = m_inputController.GetMovementVector(); [31]
+        Vector3D inputDir = m_inputController.GetMovementVector();  
         m_camera.MoveFreeCam(inputDir.z, inputDir.x, 0.0f, deltaTime); // ИСПРАВЛЕНО: Внедрена адаптивная дельта
         
-        static uint32_t adminLogTick = 0; [31]
-        if (adminLogTick++ % 300 == 0) { [31]
-            Platform::Log("[ADMIN HOST]: Свободный полет админ-камеры активен. Мониторинг P2P-пакетов."); [31]
+        static uint32_t adminLogTick = 0;  
+        if (adminLogTick++ % 300 == 0) {  
+            Platform::Log("[ADMIN HOST]: Свободный полет админ-камеры активен. Мониторинг P2P-пакетов.");  
         }
     } 
     else {
-        m_camera.isAdminMode = false;  [31]
+        m_camera.isAdminMode = false;   
         
-        Vector3D inputDir = m_inputController.GetMovementVector(); [31]
-        bool isMoving = (inputDir.Length() > 0.0f); [31]
-        Vector3D finalMovement(0.0f, 0.0f, 0.0f); [31]
+        Vector3D inputDir = m_inputController.GetMovementVector();  
+        bool isMoving = (inputDir.Length() > 0.0f);  
+        Vector3D finalMovement(0.0f, 0.0f, 0.0f);  
 
-        if (isMoving) { [31]
-            float currentSpeed = m_inputController.IsSprintPressed() ? 8.0f : 4.0f; [31]
-            float angleRad = m_camera.yaw * static_cast<float>(M_PI) / 180.0f; [31]
+        if (isMoving) {  
+            float currentSpeed = m_inputController.IsSprintPressed() ? 8.0f : 4.0f;  
+            float angleRad = m_camera.yaw * static_cast<float>(M_PI) / 180.0f;  
 
-            Vector3D cameraForward(std::sin(angleRad), 0.0f, std::cos(angleRad)); [31]
-            Vector3D cameraRight(std::cos(angleRad), 0.0f, -std::sin(angleRad)); [31]
+            Vector3D cameraForward(std::sin(angleRad), 0.0f, std::cos(angleRad));  
+            Vector3D cameraRight(std::cos(angleRad), 0.0f, -std::sin(angleRad));  
 
-            finalMovement = (cameraForward * inputDir.z) + (cameraRight * inputDir.x); [31]
+            finalMovement = (cameraForward * inputDir.z) + (cameraRight * inputDir.x);  
             
-            // ВЫЧИСЛЕНИЕ ВЕКТОРНОЙ КОЛЛИЗИИ СТЕН НА CPU С УЧЕТОМ ДЕЛЬТЫ ВРЕМЕНИ [31]
-            Vector3D predictedPosition = m_localPlayer->GetPosition() + (finalMovement.Normalize() * currentSpeed * deltaTime); [31]
+            // ВЫЧИСЛЕНИЕ ВЕКТОРНОЙ КОЛЛИЗИИ СТЕН НА CPU С УЧЕТОМ ДЕЛЬТЫ ВРЕМЕНИ  
+            Vector3D predictedPosition = m_localPlayer->GetPosition() + (finalMovement.Normalize() * currentSpeed * deltaTime);  
             
-            if (!MapSystem::GetInstance().CheckCollision(predictedPosition)) { [31]
-                m_localPlayer->Move(finalMovement, currentSpeed, deltaTime); [31]
+            if (!MapSystem::GetInstance().CheckCollision(predictedPosition)) {  
+                m_localPlayer->Move(finalMovement, currentSpeed, deltaTime);  
             } else {
-                finalMovement = Vector3D(0.0f, 0.0f, 0.0f);  [31]
+                finalMovement = Vector3D(0.0f, 0.0f, 0.0f);   
             }
             
-            m_localPlayer->SetRotation(-m_camera.yaw - 90.0f); [31]
+            m_localPlayer->SetRotation(-m_camera.yaw - 90.0f);  
         }
 
-        // Обсчет тиков дебаффов среды (Радиация, ЭМИ) на основе данных ячейки под ногами [31]
+        // Обсчет тиков дебаффов среды (Радиация, ЭМИ) на основе данных ячейки под ногами  
         // ИСПРАВЛЕНО: Строка 118 вылечена. Используем член класса m_classSystem вместо ежекадровой аллокации на стеке
-        MapSystem::GetInstance().UpdateMapEnvironment(deltaTime, *m_localPlayer, m_classSystem); [31]
+        MapSystem::GetInstance().UpdateMapEnvironment(deltaTime, *m_localPlayer, m_classSystem);  
 
-        // --- МАТЕМАТИЧЕСКИЙ ОБСЧЕТ ТИТАНА И ТЕХНИКИ (CPU) --- [31]
-        static Vector3D mockTitanPos(5.0f, 0.0f, 5.0f); [31]
-        if (finalMovement.Length() > 0.0f) { [31]
-            mockTitanPos = mockTitanPos + (finalMovement.Normalize() * 3.5f * deltaTime); [31]
+        // --- МАТЕМАТИЧЕСКИЙ ОБСЧЕТ ТИТАНА И ТЕХНИКИ (CPU) ---  
+        static Vector3D mockTitanPos(5.0f, 0.0f, 5.0f);  
+        if (finalMovement.Length() > 0.0f) {  
+            mockTitanPos = mockTitanPos + (finalMovement.Normalize() * 3.5f * deltaTime);  
         }
-        ProceduralMotionManager::GetInstance().UpdateTitanMovement(mockTitanPos, finalMovement, deltaTime); [31]
+        ProceduralMotionManager::GetInstance().UpdateTitanMovement(mockTitanPos, finalMovement, deltaTime);  
 
-        // Расчет коэффициента Ghost-инвиза приседания на Left Ctrl [31]
-        float targetAlpha = 1.0f;  [31]
-        if (actions.ghostMode || m_memoryManager.GetRegistryValue("player_sneaking") == 1) { [31]
-            m_memoryManager.SetRegistryValue("player_sneaking", 1); [31]
-            if (finalMovement.Length() > 0.0f && m_memoryManager.GetRegistryValue("perk_silent_move") == 0) { [31]
-                targetAlpha = 0.8f;  [31]
-                Platform::Log("Скрытность: [ВНИМАНИЕ] Движение демаскирует гуманоида!"); [31]
+        // Расчет коэффициента Ghost-инвиза приседания на Left Ctrl  
+        float targetAlpha = 1.0f;   
+        if (actions.ghostMode || m_memoryManager.GetRegistryValue("player_sneaking") == 1) {  
+            m_memoryManager.SetRegistryValue("player_sneaking", 1);  
+            if (finalMovement.Length() > 0.0f && m_memoryManager.GetRegistryValue("perk_silent_move") == 0) {  
+                targetAlpha = 0.8f;   
+                Platform::Log("Скрытность: [ВНИМАНИЕ] Движение демаскирует гуманоида!");  
             } else {
-                targetAlpha = 0.25f;  [31]
+                targetAlpha = 0.25f;   
             }
         }       
-        m_memoryManager.SetRegistryValue("player_alpha_pct", static_cast<int32_t>(targetAlpha * 100.0f)); [31]
+        m_memoryManager.SetRegistryValue("player_alpha_pct", static_cast<int32_t>(targetAlpha * 100.0f));  
     }
 
-    // 3. Обработка мгновенных экшенов Fallout 76 [31]
-    if (actions.jump) { [31]
-        Platform::Log("Engine Физика: Гуманоид совершил прыжок (Space / Кнопка А)."); [31]
+    // 3. Обработка мгновенных экшенов Fallout 76  
+    if (actions.jump) {  
+        Platform::Log("Engine Физика: Гуманоид совершил прыжок (Space / Кнопка А).");  
     }
     
-    if (actions.ghostMode) { [31]
-        Platform::Log("Engine Геймплей: Персонаж перешел в режим скрытности (GHOST SNEAK)."); [31]
+    if (actions.ghostMode) {  
+        Platform::Log("Engine Геймплей: Персонаж перешел в режим скрытности (GHOST SNEAK).");  
     }
 
-    if (actions.useHeal) { [31]
-        const auto& inventory = m_localPlayer->GetInventory(); [31]
-        bool healed = false; [31]
-        for (size_t i = 0; i < inventory.size(); ++i) { [31]
-            if (inventory[i].id == 301) {   [31]
-                m_localPlayer->UseItem(i); [31]
-                healed = true; [31]
+    if (actions.useHeal) {  
+        const auto& inventory = m_localPlayer->GetInventory();  
+        bool healed = false;  
+        for (size_t i = 0; i < inventory.size(); ++i) {  
+            if (inventory[i].id == 301) {    
+                m_localPlayer->UseItem(i);  
+                healed = true;  
                 break;
             }
         }
-        if (!healed) { [31]
-            Platform::Log("Геймплей: Нет стимуляторов в инвентаре!"); [31]
+        if (!healed) {  
+            Platform::Log("Геймплей: Нет стимуляторов в инвентаре!");  
         }
     }
 
-    // Обработка фонарика Пип-боя на Tab [31]
+    // Обработка фонарика Пип-боя на Tab  
     const uint8_t* currentKeyStates = SDL_GetKeyboardState(NULL);
     if (currentKeyStates[SDL_SCANCODE_TAB]) {
         static bool flashlightState = false;
@@ -205,21 +211,21 @@ void Engine::Update() {
         Platform::Log(flashlightState ? "Pip-Boy: Фонарик включен." : "Pip-Boy: Фонарик выключен.");
     }
 
-    m_localPlayer->UpdateSurvival(deltaTime); [31]
-    m_camera.FollowPlayer(m_localPlayer->GetPosition(), 0.0f, 0.0f); [31]
+    m_localPlayer->UpdateSurvival(deltaTime);  
+    m_camera.FollowPlayer(m_localPlayer->GetPosition(), 0.0f, 0.0f);  
 }
 
 void Engine::Render() {
-    if (!m_renderer || !m_localPlayer) return; [31]
+    if (!m_renderer || !m_localPlayer) return;  
 
-    m_renderer->ClearScreen(); [31]
+    m_renderer->ClearScreen();  
 
-    // ИСПРАВЛЕНО: Устаревший fixed-function конвейер (glMatrixMode, gluLookAt) вырезан под корень! [31]
+    // ИСПРАВЛЕНО: Устаревший fixed-function конвейер (glMatrixMode, gluLookAt) вырезан под корень!  
     // Вычисляем View-матрицу 4х4 на CPU с помощью тригонометрии
     float viewMatrix[16];
     ComputeFakeViewMatrix(m_camera.position, m_camera.target, viewMatrix);
 
-    // Активируем шейдерную программу на GPU [31]
+    // Активируем шейдерную программу на GPU  
     glUseProgram(m_activeShaderID);
 
     // Пробрасываем матрицу обзора и координаты камеры в uniform-регистры шейдера Modern OpenGL
@@ -236,7 +242,7 @@ void Engine::Render() {
     float shaderAlpha = static_cast<float>(m_memoryManager.GetRegistryValue("player_alpha_pct")) / 100.0f;
     int stealthLoc = glGetUniformLocation(m_activeShaderID, "stealthAlpha");
     if (stealthLoc != -1) {
-        glUniform3f(stealthLoc, shaderAlpha, 0.0f, 0.0f);
+        glUniform1f(stealthLoc, shaderAlpha); // ИСПРАВЛЕНО: Используется glUniform1f
     }
 
     // Вызываем аппаратный рендеринг куба из памяти видеокарты
@@ -255,10 +261,9 @@ void Engine::Stop() {
     if (m_localPlayer) { delete m_localPlayer; m_localPlayer = nullptr; }
     if (m_renderer) { delete m_renderer; m_renderer = nullptr; }
 
-    if (m_activeShaderID != 0) {
-        glDeleteProgram(m_activeShaderID);
-        m_activeShaderID = 0;
-    }
+    // ИСПРАВЛЕНО: Корректное уничтожение шейдера до контекста OpenGL
+    m_activeShaderID = 0;
+    m_shader.reset();
 
     NetworkSocket::GlobalCleanup();
     Platform::Log("Engine: 3D тригонометрический контекст выгружен.");

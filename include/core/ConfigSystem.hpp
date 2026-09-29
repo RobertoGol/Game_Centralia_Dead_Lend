@@ -13,17 +13,25 @@ class ConfigSystem {
 private:
     std::unordered_map<std::string, std::string> m_settings;
     
-    inline std::vector<uint8_t> PackToBinaryStream() const noexcept {
-        std::vector<uint8_t> stream;
-        stream.push_back('C'); stream.push_back('F'); stream.push_back('G'); stream.push_back('X');
-        
-        NetworkSerializer::WriteUInt32(stream, static_cast<uint32_t>(m_settings.size()));
-        for (const auto& [key, value] : m_settings) {
-            NetworkSerializer::WriteString(stream, key);
-            NetworkSerializer::WriteString(stream, value);
-        }
-        return stream;
-    }
+class ConfigSystem {
+private:
+    std::unordered_map<std::string, std::string> m_settings;
+    std::vector<uint8_t> PackToBinaryStream() const noexcept;
+    bool UnpackFromBinaryStream(const std::vector<uint8_t>& stream) noexcept;
+
+public:
+    ConfigSystem() = default;
+    ~ConfigSystem() = default;
+    ConfigSystem(const ConfigSystem&) = delete;
+    ConfigSystem& operator=(const ConfigSystem&) = delete;
+
+    void SetString(const std::string& key, const std::string& value);
+    void SetInt(const std::string& key, int value);
+    std::string GetString(const std::string& key, const std::string& defaultVal = "");
+    int GetInt(const std::string& key, int defaultVal = 0);
+    bool SaveToFile(const std::string& filename) noexcept;
+    bool LoadFromFile(const std::string& filename) noexcept;
+};
 
     inline bool UnpackFromBinaryStream(const std::vector<uint8_t>& stream) noexcept {
         if (stream.size() < 8) return false;

@@ -1,0 +1,10 @@
+^I:\GAME_CENTRALIA_DEAD_LEND\BUILD-CLEAN\CMAKEFILES\48E24E380538132F18CADF991560A166\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SI:/Game_Centralia_Dead_Lend -BI:/Game_Centralia_Dead_Lend/build-clean --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file I:/Game_Centralia_Dead_Lend/build-clean/Game_Centralia_Dead_Lend.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

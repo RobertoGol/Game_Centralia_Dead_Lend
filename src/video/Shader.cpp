@@ -127,7 +127,7 @@ bool Shader::CheckCompileErrors(uint32_t shaderId, const std::string& type) {
     } else {
         glGetProgramiv(shaderId, GL_LINK_STATUS, &success);
         if (!success) {
-            glGetProgramInfoLog(snapshot_log, 1024, NULL, infoLog); // Безопасное логирование линкера
+            glGetProgramInfoLog(shaderId, 1024, nullptr, infoLog); // ИСПРАВЛЕНО: snapshot_log заменен на shaderId
             Platform::Log("GPU LINKING ERROR of type: " + type + "\n" + std::string(infoLog));
             return false;
         }

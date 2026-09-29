@@ -33,16 +33,32 @@ private:
     std::unordered_map<std::string, int32_t> m_runtimeRegistry; // Быстрый реестр игровых стейтов
     std::string m_encryptionKey;
 
-    inline void ApplyCipher(std::vector<uint8_t>& data) noexcept {
-        // Потоковый крипто-алгоритм (XOR модификация с динамическим смещением по ключу)
-        // Гарантирует одинаковую работу и переносимость бинарных сейвов между Arch, Win10 и Android
-        size_t keyLength = m_encryptionKey.length();
-        if (keyLength == 0) return;
-        
-        for (size_t i = 0; i < data.size(); ++i) {
-            data[i] ^= static_cast<uint8_t>(m_encryptionKey[i % keyLength] ^ (i & 0xFF));
-        }
+    class MemoryManager {
+private:
+    std::vector<uint8_t> m_ghostRamBuffer;
+    std::unordered_map<std::string, int32_t> m_runtimeRegistry;
+    std::string m_encryptionKey;
+
+    void ApplyCipher(std::vector<uint8_t>& data) noexcept;
+    MemoryManager(size_t poolSize = 1024 * 1024) noexcept;
+
+public:
+    ~MemoryManager();
+    MemoryManager(const MemoryManager&) = delete;
+    MemoryManager& operator=(const MemoryManager&) = delete;
+
+    static MemoryManager& GetInstance() noexcept {
+        static MemoryManager instance;
+        return instance;
     }
+
+    bool Initialize(const std::string& deviceHwid) noexcept;
+    bool SaveEncryptedFile(const std::string& filepath, const std::vector<uint8_t>& rawData) noexcept;
+    bool LoadDecryptedFile(const std::string& filepath, std::vector<uint8_t>& outData) noexcept;
+    void SetRegistryValue(const std::string& key, int32_t value) noexcept;
+    [[nodiscard]] int32_t GetRegistryValue(const std::string& key) const noexcept;
+    void ExecuteDecisionScript(const std::vector<Instruction>& bytecode) noexcept;
+};
 
     inline MemoryManager(size_t poolSize = 1024 * 1024) noexcept {
         m_ghostRamBuffer.resize(poolSize, 0x00);
