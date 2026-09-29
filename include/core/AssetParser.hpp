@@ -46,10 +46,7 @@ public:
     /**
      * @brief Утилита для будущего разжатия фреймов .oggx в память Ghost-RAM
      */
-    bool DecompressOggxFrame(const std::vector<uint8_t>& packedStream, std::vector<uint8_t>& outRawBytes)  ;{
-        // Архитектурный шлюз под будущее распаковывание гигабайты моделей на лету
-        return true;
-    };
+    bool DecompressOggxFrame(const std::vector<uint8_t>& packedStream, std::vector<uint8_t>& outRawBytes);
 };
 
 } // namespace Centralia
