@@ -1,18 +1,22 @@
 #pragma once
-#define _USE_MATH_DEFINES 
-#include <cmath>          
-#include <cstdint>        
+#include <cmath>
+#include <cstdint>
+#include "platform/Platform.hpp"
 
 namespace Centralia {
 
-enum class ActiveControlMode : int32_t {
-    Standard_Player = 0,
-    Admin_Observer  = 1
-};
+struct Vector2D {
+    float x = 0.0f;
+    float y = 0.0f;
 
-enum class EngineControlMode : int32_t {
-    Standard_Player = 0,
-    Admin_Observer  = 1
+    constexpr Vector2D() noexcept = default;
+    constexpr Vector2D(float px, float py) noexcept : x(px), y(py) {}
+
+    [[nodiscard]] float Length() const noexcept { return std::sqrt(x * x + y * y); }
+    [[nodiscard]] Vector2D Normalized() const noexcept {
+        float len = Length();
+        return (len > 0.0f) ? Vector2D(x / len, y / len) : Vector2D(0.0f, 0.0f);
+    }
 };
 
 struct Vector3D {
@@ -20,84 +24,50 @@ struct Vector3D {
     float y = 0.0f;
     float z = 0.0f;
 
-    inline Vector3D()   = default;
-    inline Vector3D(float _x, float _y, float _z)   : x(_x), y(_y), z(_z) {};
+    constexpr Vector3D() noexcept = default;
+    constexpr Vector3D(float px, float py, float pz) noexcept : x(px), y(py), z(pz) {}
 
-    inline Vector3D operator+(const Vector3D& other) const   { 
-        return { x + other.x, y + other.y, z + other.z }; 
-    };
+    [[nodiscard]] float Length() const noexcept { return std::sqrt(x * x + y * y + z * z); }
+    [[nodiscard]] float LengthSquared() const noexcept { return x * x + y * y + z * z; }
     
-    inline Vector3D operator-(const Vector3D& other) const   { 
-        return { x - other.x, y - other.y, z - other.z }; 
-    };
-    
-    inline Vector3D operator*(float scalar) const   { 
-        return { x * scalar, y * scalar, z * scalar }; 
-    };
-    
-    [[nodiscard]] inline Vector3D Cross(const Vector3D& other) const   {
-        return {
-            y * other.z - z * other.y,
-            z * other.x - x * other.z,
-            x * other.y - y * other.x
-        };
-    };
-
-    [[nodiscard]] inline float Dot(const Vector3D& other) const   {
-        return x * other.x + y * other.y + z * other.z;
-    };
-    
-    [[nodiscard]] inline float Length() const   { 
-        return std::sqrt(x * x + y * y + z * z); 
-    };
-    
-    [[nodiscard]] inline Vector3D Normalize() const   {
+    [[nodiscard]] Vector3D Normalized() const noexcept {
         float len = Length();
-        if (len > 0.0f) return { x / len, y / len, z / len };
-        return { 0.0f, 0.0f, 0.0f };
-    };
+        return (len > 0.0f) ? Vector3D(x / len, y / len, z / len) : Vector3D(0.0f, 0.0f, 0.0f);
+    }
+
+    [[nodiscard]] static float Dot(const Vector3D& a, const Vector3D& b) noexcept {
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+    }
+
+    [[nodiscard]] static Vector3D Cross(const Vector3D& a, const Vector3D& b) noexcept {
+        return Vector3D(
+            a.y * b.z - a.z * b.y,
+            a.z * b.x - a.x * b.z,
+            a.x * b.y - a.y * b.x
+        );
+    }
+
+    Vector3D& operator+=(const Vector3D& o) noexcept { x += o.x; y += o.y; z += o.z; return *this; }
+    Vector3D& operator-=(const Vector3D& o) noexcept { x -= o.x; y -= o.y; z -= o.z; return *this; }
+    Vector3D& operator*=(float scalar) noexcept { x *= scalar; y *= scalar; z *= scalar; return *this; }
 };
 
-class Camera3D {
-public:
-    Vector3D position;        
-    Vector3D target;          
-    float pitch = 0.0f;  
-    float yaw = -90.0f;  
-    float distanceToPlayer = 5.0f; 
-    bool  isAdminMode = false; 
-    float flySpeed = 15.0f;    
+inline Vector3D operator+(Vector3D a, const Vector3D& b) noexcept { return a += b; }
+inline Vector3D operator-(Vector3D a, const Vector3D& b) noexcept { return a -= b; }
+inline Vector3D operator*(Vector3D a, float scalar) noexcept { return a *= scalar; }
+inline Vector3D operator*(float scalar, Vector3D a) noexcept { return a *= scalar; }
 
-    inline Camera3D()   : position(0.0f, 5.0f, -5.0f), target(0.0f, 0.0f, 0.0f) {};
-
-    inline void FollowPlayer(const Vector3D& playerPos, float mouseXOffset, float mouseYOffset)   {
-        if (isAdminMode) return;
-
-        yaw += mouseXOffset;
-        pitch += mouseYOffset;
-
-        if (pitch > 89.0f) pitch = 89.0f;
-        if (pitch < -89.0f) pitch = -89.0f;
-
-        float pitchRad = pitch * static_cast<float>(M_PI) / 180.0f;
-        float yawRad = yaw * static_cast<float>(M_PI) / 180.0f;
-
-        position.x = playerPos.x - distanceToPlayer * std::cos(pitchRad) * std::sin(yawRad);
-        position.y = playerPos.y + distanceToPlayer * std::sin(pitchRad) + 1.5f; 
-        position.z = playerPos.z - distanceToPlayer * std::cos(pitchRad) * std::cos(yawRad);
-        
-        target = playerPos;
+struct Matrix4x4 {
+    float m[4][4] = {
+        {1.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f}
     };
 
-    inline void MoveFreeCam(float forward, float right, float up, float deltaTime)   {
-        if (!isAdminMode) return;
-        
-        position.x += right * flySpeed * deltaTime;
-        position.y += up * flySpeed * deltaTime;
-        position.z += forward * flySpeed * deltaTime;
-        
-        target = position + Vector3D(0.0f, 0.0f, 1.0f); 
-    };
+    [[nodiscard]] static Matrix4x4 Identity() noexcept {
+        return Matrix4x4{};
+    }
 };
 
 } // namespace Centralia

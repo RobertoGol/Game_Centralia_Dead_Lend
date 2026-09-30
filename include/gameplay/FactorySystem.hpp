@@ -1,71 +1,41 @@
 #pragma once
-#include "core/Math3D.hpp"
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <cstdint>
+#include "platform/Platform.hpp"
 
 namespace Centralia {
 
-// Опережающие объявления классов выжившего и его специализации
-class Player;
-class ClassSystem;
-
-// Категории строительства в стиле оригинального интерфейса Fallout 76
-enum class BuildCategory : uint8_t {
-    Doors_Walls,     // Двери и Стены
-    Manufacturing,   // Изготовление (Заводы Arknights)
-    Turrets_Traps,   // Турели и ловушки
-    Defense,         // Оборона
-    Generators,      // Генераторы (Энергосеть)
-    Power_Connectors,// Разъемы питания
-    Lighting         // Освещение
-};
-
-struct FactoryStructure {
-    uint32_t id;
-    std::string name;
-    BuildCategory category;
-    Vector3D position;
-    
-    // Энергетический баланс (из механики генераторов Fallout 76)
-    int32_t powerProduction = 0; 
-    int32_t powerConsumption = 0;
-
-    // Механика пассивного крафта ресурсов (Arknights: Endfield)
-    uint32_t outputResourceId = 0;   
-    float productionIntervalSec = 5.0f; 
-    float productionTimer = 0.0f;
-    uint32_t amountPerTick = 1;
+struct ProductionNode {
+    uint32_t factoryId;
+    uint32_t activeRecipeId;
+    float productionProgress;
+    bool isPowered;
 };
 
 class FactorySystem {
 private:
-    std::vector<FactoryStructure> m_placedStructures;
-    int32_t m_totalPowerGenerated = 0;
-    int32_t m_totalPowerConsumed = 0;
-    
-    // Шкала бюджета базы на CPU (как шкала "Бюджет" на твоем скриншоте)
-    float m_buildBudget = 0.0f;
-    const float m_maxBudget = 100.0f;
+    std::unordered_map<uint32_t, ProductionNode> m_factories;
 
-    void RecalculatePowerGrid();
+    FactorySystem() noexcept;
 
 public:
-    FactorySystem() = default;
     ~FactorySystem() = default;
 
-    // Разместить объект на карте
-    bool PlaceStructure(uint32_t structureId, const Vector3D& position);
+    FactorySystem(const FactorySystem&) = delete;
+    FactorySystem& operator=(const FactorySystem&) = delete;
 
-    // Фоновый ежекадровый обсчет работы заводов и энергосети на CPU
-    void UpdateFactoriesTick(float deltaTime, Player& player, const ClassSystem& classSystem);
+    static FactorySystem& GetInstance() noexcept {
+        static FactorySystem instance;
+        return instance;
+    }
 
-    [[nodiscard]] int32_t GetCurrentPowerOutput() const   { return m_totalPowerGenerated - m_totalPowerConsumed; };
-    [[nodiscard]] float GetBudgetPercentage() const   { return (m_buildBudget / m_maxBudget) * 100.0f; };
-    [[nodiscard]] const std::vector<FactoryStructure>& GetPlacedStructures() const   { return m_placedStructures; };
+    void RegisterFactory(uint32_t factoryId);
+    void StartProduction(uint32_t factoryId, uint32_t recipeId);
+    void Update(float deltaTime);
+
+    [[nodiscard]] bool GetFactoryStatus(uint32_t factoryId, ProductionNode& outNode) const noexcept;
 };
-
-// Псевдоним для интеграции в CraftingManager
-using FactoryEngineContext = FactorySystem;
 
 } // namespace Centralia

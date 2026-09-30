@@ -1,166 +1,229 @@
-#include "core/AssetParser.hpp"
-#include "platform/Platform.hpp"
+#include "AssetParser.hpp"
 #include <fstream>
-#include <sstream>
-#include <cmath>
+#include <iostream>
 #include <algorithm>
+#include <cstring>
+#include <zlib.h> // Если используется сжатие блоков BA2
 
 namespace Centralia {
 
-// Внутренняя вспомогательная утилита для очистки строк от мусорных пробелов и переносов строк
-static std::string TrimWhitespace(const std::string& str) noexcept {
-    if (str.empty()) return str;
-    size_t first = str.find_first_not_of(" \t\r\n");
-    if (first == std::string::npos) return "";
-    size_t last = str.find_last_not_of(" \t\r\n");
-    return str.substr(first, (last - first + 1));
+AssetParser::AssetParser() 
+    : m_isLoaded(false), m_archiveVersion(0), m_totalFiles(0), m_headerOffset(0) {
 }
 
-bool AssetParser::LoadModFromDisk(
-    const std::string& category, 
-    const std::string& modName, 
-    VehicleModification& outMod,
-    std::vector<uint8_t>& outTextureBytes,
-    std::vector<Vertex3D_GPU>& outMeshVertices) 
-{
-    // Строим иерархию путей строго по твоей схеме: Data/Ingame/mods/[категория]/[название]/
-    std::string basePath = Platform::GetSaveDirectoryPath() + "Data/Ingame/mods/" + category + "/" + modName + "/";
+AssetParser::~AssetParser() {
+    CloseArchive();
+}
+
+bool AssetParser::OpenArchive(const std::string& filePath) {
+    std::lock_guard<std::mutex> lock(m_parserMutex);
     
-    std::string configPath  = basePath + "config.txt";
-    std::string texturePath = basePath + "texture.bmp"; // Текстура и краски (.col)
-    std::string meshPath    = basePath + "mesh.obj";    // 3D-сетка тяжелого Титана/Танка
+    CloseArchive();
+    m_archivePath = filePath;
 
-    // ----------------================================================--------
-    // 1. ЧТЕНИЕ И СБОРКА ТЕКСТУРЫ (.BMP / .COL)
-    // ----------------================================================--------
-    std::ifstream textureFile(texturePath, std::ios::binary | std::ios::ate);
-    if (!textureFile.is_open()) {
-        Platform::Log("[ASSET PARSER WARNING]: Текстура мода не найдена, используем сталь по умолчанию: " + texturePath);
-    } else {
-        std::streamsize size = textureFile.tellg();
-        textureFile.seekg(0, std::ios::beg);
-        outTextureBytes.resize(static_cast<size_t>(size));
-        textureFile.read(reinterpret_cast<char*>(outTextureBytes.data()), size);
-        textureFile.close();
-    }
-
-    // ----------------================================================--------
-    // 2. ЧТЕНИЕ И ПАРСИНГ ГЕОМЕТРИИ 3D-СЕТКИ (.OBJ) НА CPU
-    // ------------------------------------------------------------------------
-    std::ifstream meshFile(meshPath);
-    if (!meshFile.is_open()) {
-        Platform::Log("[ASSET PARSER ERROR]: Критическая ошибка! 3D-сетка меша отсутствует: " + meshPath);
+    std::ifstream file(filePath, std::ios::binary | std::ios::ate);
+    if (!file.is_open()) {
+        std::cerr << "[AssetParser] Error: Failed to open archive file: " << filePath << "\n";
         return false;
     }
 
-    std::vector<float> temporaryPositions;
-    std::vector<float> temporaryNormals;
-    std::string meshLine;
+    std::streamsize fileSize = file.tellg();
+    file.seekg(0, std::ios::beg);
 
-    while (std::getline(meshFile, meshLine)) {
-        // Парсим координаты вершин (v X Y Z)
-        if (meshLine.rfind("v ", 0) == 0) {
-            std::stringstream ss(meshLine.substr(2));
-            float x, y, z;
-            if (ss >> x >> y >> z) {
-                temporaryPositions.push_back(x);
-                temporaryPositions.push_back(y);
-                temporaryPositions.push_back(z);
-            }
-        }
-        // Парсим нормали для зеркальных отражений (vn NX NY NZ)
-        else if (meshLine.rfind("vn ", 0) == 0) {
-            std::stringstream ss(meshLine.substr(3));
-            float nx, ny, nz;
-            if (ss >> nx >> ny >> nz) {
-                temporaryNormals.push_back(nx);
-                temporaryNormals.push_back(ny);
-                temporaryNormals.push_back(nz);
-            }
-        }
-        // Строим полигоны граней (f v1/vt1/vn1 v2/vt2/vn2 ...)
-        else if (meshLine.rfind("f ", 0) == 0) {
-            std::stringstream ss(meshLine.substr(2));
-            std::string vertexBlock;
-            
-            // В рамках упрощенного OBJ-парсера для Windows 10 собираем треугольники
-            while (ss >> vertexBlock) {
-                std::size_t firstSlash = vertexBlock.find('/');
-                std::size_t lastSlash = vertexBlock.rfind('/');
-                
-                if (firstSlash == std::string::npos) continue; // Защита от кривой разметки
-                
-                uint32_t vIdx = std::stoul(vertexBlock.substr(0, firstSlash)) - 1;
-                uint32_t nIdx = 0;
-                
-                // ИСПРАВЛЕНО: Жесткий предохранитель от выхода за границы вектора (Ошибки SIGSEGV / Краха CPU)
-                if ((vIdx * 3 + 2) >= temporaryPositions.size()) {
-                    continue; 
-                }
-
-                Vertex3D_GPU gpuVertex{};
-                gpuVertex.x = temporaryPositions[vIdx * 3];
-                gpuVertex.y = temporaryPositions[vIdx * 3 + 1];
-                gpuVertex.z = temporaryPositions[vIdx * 3 + 2];
-
-                if (lastSlash != std::string::npos && lastSlash != firstSlash) {
-                    nIdx = std::stoul(vertexBlock.substr(lastSlash + 1)) - 1;
-                    
-                    // Валидация индексов нормалей перед чтением из ОЗУ
-                    if ((nIdx * 3 + 2) < temporaryNormals.size()) {
-                        gpuVertex.nx = temporaryNormals[nIdx * 3];
-                        gpuVertex.ny = temporaryNormals[nIdx * 3 + 1];
-                        gpuVertex.nz = temporaryNormals[nIdx * 3 + 2];
-                    } else {
-                        gpuVertex.nx = 0.0f; gpuVertex.ny = 1.0f; gpuVertex.nz = 0.0f;
-                    }
-                } else {
-                    // Если нормалей в файле нет, проц забивает авто-заглушку, направленную вверх
-                    gpuVertex.nx = 0.0f; gpuVertex.ny = 1.0f; gpuVertex.nz = 0.0f;
-                }
-                outMeshVertices.push_back(gpuVertex);
-            }
-        }
-    }
-    meshFile.close();
-
-    // ----------------================================================--------
-    // 3. ЧТЕНИЕ КОНФИГУРАЦИОННОГО ФАЙЛА ХАРАКТЕРИСТИК (.TXT / .CFG)
-    // ------------------------------------------------------------------------
-    std::ifstream configFile(configPath);
-    if (!configFile.is_open()) {
-        Platform::Log("[ASSET PARSER ERROR]: Конфиг мода уничтожен или отсутствует: " + configPath);
+    if (fileSize < 16) {
+        std::cerr << "[AssetParser] Error: File is too small to be a valid BA2 archive: " << filePath << "\n";
+        file.close();
         return false;
     }
 
-    std::string configFileBufferLine;
-    while (std::getline(configFile, configFileBufferLine)) {
-        std::size_t delimiter = configFileBufferLine.find('=');
-        if (delimiter != std::string::npos) {
-            // ИСПРАВЛЕНО: Ключ и значение очищаются от мусорных пробелов до знака равенства
-            std::string key = TrimWhitespace(configFileBufferLine.substr(0, delimiter));
-            std::string value = TrimWhitespace(configFileBufferLine.substr(delimiter + 1));
-            
-            if (key == "id") outMod.id = std::stoul(value);
-            else if (key == "name") outMod.name = value;
-            else if (key == "health") outMod.health = std::stof(value);
-            else if (key == "armor") outMod.armorValue = std::stof(value);
-            else if (key == "passability") outMod.terrainPassability = std::stof(value);
-            else if (key == "weight") outMod.weightAdded = std::stof(value);
-            else if (key == "speed_mult") outMod.speedMultiplier = std::stof(value);
-        }
+    // 1. Чтение общего заголовка архива (BTDX формат)
+    char magic[4] = {0};
+    file.read(magic, 4);
+    if (std::string(magic, 4) != "BTDX") {
+        std::cerr << "[AssetParser] Error: Invalid archive magic signature (expected 'BTDX').\n";
+        file.close();
+        return false;
     }
-    configFile.close();
 
-    Platform::Log("[ASSET PARSER]: Ресурс '" + outMod.name + "' успешно собран процессором. Выделено " + 
-                  std::to_string(outMeshVertices.size()) + " вершин в буфер GPU. Ошибки Out-of-Bounds устранены.");
+    file.read(reinterpret_cast<char*>(&m_archiveVersion), sizeof(m_archiveVersion));
+    
+    char archiveType[4] = {0};
+    file.read(archiveType, 4); // 'GNRL' (общие файлы) или 'DX10' (текстуры)
+
+    file.read(reinterpret_cast<char*>(&m_totalFiles), sizeof(m_totalFiles));
+    file.read(reinterpret_cast<char*>(&m_headerOffset), sizeof(m_headerOffset));
+
+    std::cout << "[AssetParser] Info: Opening archive version " << m_archiveVersion 
+              << ", Type: " << std::string(archiveType, 4) 
+              << ", Total files: " << m_totalFiles << "\n";
+
+    // 2. Чтение таблицы файлов (File Table Headers)
+    file.seekg(static_cast<std::streamoff>(m_headerOffset), std::ios::beg);
+    
+    m_entries.clear();
+    m_entries.reserve(m_totalFiles);
+
+    for (uint32_t i = 0; i < m_totalFiles; ++i) {
+        AssetEntry entry;
+        
+        // Чтение структуры файла в зависимости от типа архива
+        if (std::string(archiveType, 4) == "GNRL") {
+            file.read(reinterpret_cast<char*>(&entry.fileHash), sizeof(entry.fileHash));
+            
+            char ext[4] = {0};
+            file.read(ext, 4);
+            entry.extension = std::string(ext, 4);
+
+            file.read(reinterpret_cast<char*>(&entry.flags), sizeof(entry.flags));
+            file.read(reinterpret_cast<char*>(&entry.offset), sizeof(entry.offset));
+            file.read(reinterpret_cast<char*>(&entry.packedSize), sizeof(entry.packedSize));
+            file.read(reinterpret_cast<char*>(&entry.unpackedSize), sizeof(entry.unpackedSize));
+            
+            uint16_t dummyFooter = 0;
+            file.read(reinterpret_cast<char*>(&dummyFooter), sizeof(dummyFooter));
+        } else {
+            // Упрощенный парсинг для текстурных архивов DX10
+            file.read(reinterpret_cast<char*>(&entry.fileHash), sizeof(entry.fileHash));
+            
+            char ext[4] = {0};
+            file.read(ext, 4);
+            entry.extension = std::string(ext, 4);
+
+            file.read(reinterpret_cast<char*>(&entry.flags), sizeof(entry.flags));
+            file.read(reinterpret_cast<char*>(&entry.offset), sizeof(entry.offset));
+            file.read(reinterpret_cast<char*>(&entry.packedSize), sizeof(entry.packedSize));
+            file.read(reinterpret_cast<char*>(&entry.unpackedSize), sizeof(entry.unpackedSize));
+            
+            // Текстурные архивы имеют дополнительные поля мипмапов
+            uint32_t extraTexInfo = 0;
+            file.read(reinterpret_cast<char*>(&extraTexInfo), sizeof(extraTexInfo));
+        }
+
+        entry.entryIndex = i;
+        m_entries.push_back(entry);
+    }
+
+    file.close();
+    m_isLoaded = true;
+    std::cout << "[AssetParser] Success: Successfully parsed " << m_entries.size() << " asset entries.\n";
     return true;
 }
 
-bool AssetParser::DecompressOggxFrame(const std::vector<uint8_t>& packedStream, std::vector<uint8_t>& outRawBytes) {
-    // Архитектурный шлюз под будущее сжатие фреймов.
-    // Процессор будет читать биты аналогично ogg-страницам, распаковывая гигабайты моделей на лету.
+bool AssetParser::ExtractAsset(uint32_t fileHash, std::vector<uint8_t>& outData) const {
+    std::lock_guard<std::mutex> lock(m_parserMutex);
+    
+    if (!m_isLoaded) {
+        std::cerr << "[AssetParser] Warning: Attempted to extract asset from an unloaded archive.\n";
+        return false;
+    }
+
+    const AssetEntry* targetEntry = nullptr;
+    for (const auto& entry : m_entries) {
+        if (entry.fileHash == fileHash) {
+            targetEntry = &entry;
+            break;
+        }
+    }
+
+    if (!targetEntry) {
+        std::cerr << "[AssetParser] Warning: Asset hash 0x" << std::hex << fileHash << " not found in archive.\n";
+        return false;
+    }
+
+    std::ifstream file(m_archivePath, std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "[AssetParser] Error: Failed to reopen archive for asset extraction: " << m_archivePath << "\n";
+        return false;
+    }
+
+    file.seekg(static_cast<std::streamoff>(targetEntry->offset), std::ios::beg);
+
+    // Если данные упакованы с использованием чанков или сжатия zlib
+    if (targetEntry->packedSize > 0 && targetEntry->packedSize != targetEntry->unpackedSize) {
+        std::vector<uint8_t> compressedBuffer(targetEntry->packedSize);
+        file.read(reinterpret_cast<char*>(compressedBuffer.data()), targetEntry->packedSize);
+        file.close();
+
+        outData.resize(targetEntry->unpackedSize);
+        uLongf destLen = targetEntry->unpackedSize;
+        
+        int res = uncompress(outData.data(), &destLen, compressedBuffer.data(), targetEntry->packedSize);
+        if (res != Z_OK) {
+            std::cerr << "[AssetParser] Error: Zlib decompression failed with error code: " << res << "\n";
+            return false;
+        }
+    } else {
+        // Данные хранятся в распакованном или прямом виде
+        outData.resize(targetEntry->unpackedSize > 0 ? targetEntry->unpackedSize : targetEntry->packedSize);
+        uint32_t bytesToRead = (targetEntry->unpackedSize > 0) ? targetEntry->unpackedSize : targetEntry->packedSize;
+        
+        file.read(reinterpret_cast<char*>(outData.data()), bytesToRead);
+        file.close();
+    }
+
     return true;
+}
+
+bool AssetParser::ExtractAssetByName(const std::string& assetName, std::vector<uint8_t>& outData) const {
+    uint32_t computedHash = ComputeBethesdaHash(assetName);
+    return ExtractAsset(computedHash, outData);
+}
+
+uint32_t AssetParser::ComputeBethesdaHash(const std::string& path) const {
+    // Стандартный алгоритм хэширования путей файлов Bethesda (.ba2)
+    uint32_t h1 = 0;
+    uint32_t h2 = 0;
+    uint32_t h3 = 0;
+
+    std::string lowerPath = path;
+    std::transform(lowerPath.begin(), lowerPath.end(), lowerPath.begin(), ::tolower);
+    // Заменяем слеши на обратные для консистентности хэша
+    std::replace(lowerPath.begin(), lowerPath.end(), '/', '\\');
+
+    size_t len = lowerPath.length();
+    if (len > 0) {
+        size_t mid = len / 2;
+        for (size_t i = 0; i < mid; ++i) {
+            h1 = (h1 * 0x1000193) ^ static_cast<uint8_t>(lowerPath[i]);
+        }
+        for (size_t i = mid; i < len; ++i) {
+            h2 = (h2 * 0x1000193) ^ static_cast<uint8_t>(lowerPath[i]);
+        }
+    }
+
+    h3 = static_cast<uint32_t>(len);
+    return (h1 ^ h3) + h2;
+}
+
+bool AssetParser::FileExists(uint32_t fileHash) const {
+    std::lock_guard<std::mutex> lock(m_parserMutex);
+    for (const auto& entry : m_entries) {
+        if (entry.fileHash == fileHash) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<std::string> AssetParser::GetLoadedExtensionsList() const {
+    std::lock_guard<std::mutex> lock(m_parserMutex);
+    std::vector<std::string> extensions;
+    for (const auto& entry : m_entries) {
+        if (std::find(extensions.begin(), extensions.end(), entry.extension) == extensions.end()) {
+            extensions.push_back(entry.extension);
+        }
+    }
+    return extensions;
+}
+
+void AssetParser::CloseArchive() noexcept {
+    std::lock_guard<std::mutex> lock(m_parserMutex);
+    m_entries.clear();
+    m_archivePath.clear();
+    m_isLoaded = false;
+    m_archiveVersion = 0;
+    m_totalFiles = 0;
+    m_headerOffset = 0;
 }
 
 } // namespace Centralia

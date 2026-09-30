@@ -1,187 +1,58 @@
 #pragma once
-#include "core/Math3D.hpp"
-#include "platform/Platform.hpp" // Наш мастер-переключатель кодов клавиш
-#include <SDL.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <cstdint>
-#include <cmath>
+#include "platform/Platform.hpp"
 
 namespace Centralia {
 
-// Перечисление поддерживаемых типов игровых манипуляторов
-enum class ControllerType : uint8_t {
+enum class InputDeviceType : uint8_t {
     KeyboardMouse,
-    Gamepad_Xbox_PS,
-    VR_AR_HandTracker
+    Gamepad,
+    SteeringWheel,
+    Trackball,
+    FingerTrackingSensor,     // Датчики движений пальцев / перчатки
+    Sensor,                   // Общие сенсоры (гироскопы, акселерометры, тач-панели)
+    PSPStyleController,       // Портативные контроллеры в стиле PSP
+    GenericChineseController, // Китайские ноунейм-геймпады и кросс-платформенные клоны
+    CustomTelemetryDevice     // Произвольные самоделки (COM-порт / сырой поток)
 };
 
-// Структура, агрегирующая все бинды действий из Fallout 76
-struct GameplayActions {
-    bool jump       = false; // Space / Кнопка A (Xbox)
-    bool useAction  = false; // E / Кнопка X (Xbox) - обыск, открытие дверей
-    bool reload     = false; // R / Кнопка X (Xbox) - перезарядка оружия
-    bool useHeal    = false; // H / Крестовина (D-Pad) - быстрое лечение аптечкой
-    bool ghostMode  = false; // Left Ctrl / Нажатие правого стика - скрытность
+struct DeviceConnectionConfig {
+    uint32_t deviceId;
+    InputDeviceType type;
+    std::string portOrPath;
+    bool isConnected = false;
 };
 
 class InputController {
 private:
-    SDL_GameController* m_gamepad = nullptr;
-    ControllerType m_currentType = ControllerType::KeyboardMouse;
-    GameplayActions m_actions;
+    std::unordered_map<uint32_t, DeviceConnectionConfig> m_connectedDevices;
+    std::unordered_map<std::string, float> m_axisStates;
+    std::unordered_map<std::string, bool> m_buttonStates;
 
-    // Внутренние переменные сглаживания мыши / VR-трекера
-    float m_mouseSensitivity = 0.15f;
-    float m_gamepadSensitivity = 3.0f;
+    InputController() noexcept = default;
 
 public:
-    inline InputController()   {}
-    
-    inline ~InputController() {
-        Shutdown();
-    }
+    ~InputController() = default;
 
-    // Запрет копирования контроллера ввода во избежание утечки системных дескрипторов
     InputController(const InputController&) = delete;
     InputController& operator=(const InputController&) = delete;
 
-    // Первичный поиск контроллеров в Windows 10 / Linux
-    class InputController {
-    private:
-        SDL_GameController* m_gamepad = nullptr;
-        ControllerType m_currentType = ControllerType::KeyboardMouse;
-        GameplayActions m_actions;
-        float m_mouseSensitivity = 0.15f;
-        float m_gamepadSensitivity = 3.0f;
-
-    public:
-        InputController()  ;
-        ~InputController();
-        InputController(const InputController&) = delete;
-        InputController& operator=(const InputController&) = delete;
-
-        void Initialize()  ;
-        void ClearFrameTriggers()  ;
-        void Update(SDL_Event& event)  ;
-        [[nodiscard]] Vector3D GetMovementVector() const  ;
-        void GetLookOffsets(float& outX, float& outY) const  ;
-        [[nodiscard]] bool IsSprintPressed() const  ;
-        void Shutdown()  ;
-
-        [[nodiscard]] const GameplayActions& GetActions() const   { return m_actions; };
-        [[nodiscard]] ControllerType GetCurrentControllerType() const   { return m_currentType; };
-    };
-
-    // Сброс триггеров одиночных действий — ИСПРАВЛЕНО: Вызывается ОДИН раз за кадр из Engine::Update
-    inline void ClearFrameTriggers()   {
-        m_actions.jump = false;
-        m_actions.useAction = false;
-        m_actions.reload = false;
-        m_actions.useHeal = false;
-        m_actions.ghostMode = false;
-    };
-    
-    // Опрос аппаратного состояния конкретного события SDL
-    inline void Update(SDL_Event& event)   {
-        // Проверяем, не переключил ли пользователь устройство на лету
-        if (event.type == SDL_CONTROLLERDEVICEADDED && !m_gamepad) {
-            Initialize();
-        };
-        if (event.type == SDL_CONTROLLERDEVICEREMOVED) {
-            Shutdown();
-            m_currentType = ControllerType::KeyboardMouse;
-        };
-
-        // 1. ПОЛУЧЕНИЕ СИГНАЛОВ ОТ ГЕЙМПАДА (Xbox / PS / Консольный режим)
-        if (m_currentType == ControllerType::Gamepad_Xbox_PS && m_gamepad) {
-            if (event.type == SDL_CONTROLLERBUTTONDOWN) {
-                if (event.cbutton.button == SDL_CONTROLLER_BUTTON_A) m_actions.jump = true;         
-                if (event.cbutton.button == SDL_CONTROLLER_BUTTON_Y) m_actions.jump = true;         
-                if (event.cbutton.button == SDL_CONTROLLER_BUTTON_X) m_actions.reload = true;       
-                if (event.cbutton.button == SDL_CONTROLLER_BUTTON_B) m_actions.useAction = true;    
-                if (event.cbutton.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK) m_actions.ghostMode = true; 
-                if (event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP) m_actions.useHeal = true;   
-            };
-            return; 
-        };
-
-        // 2. РЕЗЕРВНЫЙ СЛОЙ OPENXR / VR РУК
-        if (m_currentType == ControllerType::VR_AR_HandTracker) {
-            return;
-        };
-
-        // 3. ПОЛУЧЕНИЕ СИГНАЛОВ ОТ КЛАВИАТУРЫ (Edge-triggered клики)
-        if (event.type == SDL_KEYDOWN) {
-            switch (event.key.keysym.scancode) {
-                case SDL_SCANCODE_SPACE:  m_actions.jump = true;       break; 
-                case SDL_SCANCODE_E:      m_actions.useAction = true;  break; 
-                case SDL_SCANCODE_R:      m_actions.reload = true;     break; 
-                case SDL_SCANCODE_H:      m_actions.useHeal = true;    break; 
-                case SDL_SCANCODE_LCTRL:  m_actions.ghostMode = true;  break; 
-                default: break;
-            };
-        };
-    };
-
-    // Возвращает нормализованный вектор движения WASD / Стика / VR (-1.0f до 1.0f)
-    inline Vector3D GetMovementVector() const   {
-        Vector3D direction(0.0f, 0.0f, 0.0f);
-
-        if (m_currentType == ControllerType::Gamepad_Xbox_PS && m_gamepad) {
-            int16_t rawX = SDL_GameControllerGetAxis(m_gamepad, SDL_CONTROLLER_AXIS_LEFTX);
-            int16_t rawY = SDL_GameControllerGetAxis(m_gamepad, SDL_CONTROLLER_AXIS_LEFTY);
-
-            // Мёртвая зона аналогового стика геймпада (защита от дрифта осей)
-            if (std::abs(rawX) > 4200) direction.x = static_cast<float>(rawX) / 32767.0f;
-            if (std::abs(rawY) > 4200) direction.z = static_cast<float>(-rawY) / 32767.0f; 
-            return direction;
-        };
-
-        // Чтение клавиатуры WASD через прямое сканирование ОЗУ
-        const uint8_t* state = SDL_GetKeyboardState(NULL);
-        if (state[SDL_SCANCODE_W]) direction.z += 1.0f; 
-        if (state[SDL_SCANCODE_S]) direction.z -= 1.0f; 
-        if (state[SDL_SCANCODE_A]) direction.x -= 1.0f; 
-        if (state[SDL_SCANCODE_D]) direction.x += 1.0f; 
-
-        return direction;
-    };
-    
-    // Извлекает дельту смещения обзора (мышь / правый стик геймпада)
-    inline void GetLookOffsets(float& outX, float& outY) const   {
-        outX = 0.0f;
-        outY = 0.0f;
-
-        if (m_currentType == ControllerType::Gamepad_Xbox_PS && m_gamepad) {
-            int16_t axisX = SDL_GameControllerGetAxis(m_gamepad, SDL_CONTROLLER_AXIS_RIGHTX);
-            int16_t axisY = SDL_GameControllerGetAxis(m_gamepad, SDL_CONTROLLER_AXIS_RIGHTY);
-
-            if (std::abs(axisX) > 4000) outX = (static_cast<float>(axisX) / 32767.0f) * m_gamepadSensitivity;
-            if (std::abs(axisY) > 4000) outY = (static_cast<float>(-axisY) / 32767.0f) * m_gamepadSensitivity;
-        }
+    static InputController& GetInstance() noexcept {
+        static InputController instance;
+        return instance;
     }
 
-    // Проверка зажатия модификатора бега (Left Shift / Нажатие левого стика)
-    inline bool IsSprintPressed() const   {
-        if (m_currentType == ControllerType::Gamepad_Xbox_PS && m_gamepad) {
-            return SDL_GameControllerGetButton(m_gamepad, SDL_CONTROLLER_BUTTON_LEFTSTICK) == 1;
-        };
-        
-        const uint8_t* state = SDL_GetKeyboardState(NULL);
-        return state[SDL_SCANCODE_LSHIFT] == 1;
-    };
+    bool ConnectDevice(uint32_t deviceId, InputDeviceType type, const std::string& portOrPath) noexcept;
+    bool DisconnectDevice(uint32_t deviceId) noexcept;
+    void PollAllDevices() noexcept;
 
-    inline void Shutdown()   {
-        if (m_gamepad) {
-            SDL_GameControllerClose(m_gamepad);
-            m_gamepad = nullptr;
-        };
-    };
-
-    // Геттер для мгновенных триггерных действий (прыжки, обыск лута)
-    [[nodiscard]] const GameplayActions& GetActions() const   { return m_actions; }
-    [[nodiscard]] ControllerType GetCurrentControllerType() const   { return m_currentType; }
+    [[nodiscard]] float GetAxis(const std::string& axisName) const noexcept;
+    [[nodiscard]] bool IsButtonPressed(const std::string& buttonName) const noexcept;
+    [[nodiscard]] bool IsDeviceConnected(uint32_t deviceId) noexcept;
+    [[nodiscard]] size_t GetActiveDevicesCount() const noexcept { return m_connectedDevices.size(); }
 };
 
 } // namespace Centralia

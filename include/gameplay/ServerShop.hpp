@@ -1,43 +1,45 @@
 #pragma once
-#include "core/NetworkSocket.hpp"
 #include <string>
+#include <vector>
+#include <unordered_map>
 #include <cstdint>
+#include "platform/Platform.hpp"
 
 namespace Centralia {
 
+struct ShopOffer {
+    uint32_t offerId;
+    uint32_t itemId;
+    uint32_t price;
+    uint32_t stockCount;
+    bool isAvailable;
+};
+
 class ServerShop {
 private:
-    NetworkSocket m_shopSocket;
-    bool m_shopOnline = false;
-    
-    // ИСПРАВЛЕНО: Октет 966 урезан до валидного 96, чтобы inet_pton не вешал движок
-    std::string m_shopServerIp = "35.289.97.96"; 
-    uint16_t m_shopPort = 443;
+    std::unordered_map<uint32_t, ShopOffer> m_catalog;
 
-    ServerShop() = default; // Приватный конструктор синглтона
+    ServerShop() noexcept {
+        InitializeDefaultCatalog();
+    }
 
 public:
     ~ServerShop() = default;
 
-    // Запрет копирования синглтона
     ServerShop(const ServerShop&) = delete;
     ServerShop& operator=(const ServerShop&) = delete;
 
-    static ServerShop& GetInstance() {
+    static ServerShop& GetInstance() noexcept {
         static ServerShop instance;
         return instance;
     }
 
-    // Фоновая попытка зацепиться за сервер магазина
-    void ConnectToSupportServer();
+    void InitializeDefaultCatalog() noexcept;
+    bool BuyItem(uint32_t offerId, uint32_t& playerCurrency) noexcept;
+    bool SellItem(uint32_t itemId, uint32_t& playerCurrency) noexcept;
 
-    // Проверка статуса: мультиплеер работает всегда, магазин — только если есть сеть
-    [[nodiscard]] bool IsShopOnline() const noexcept { return m_shopOnline; };
-
-    // Покупка базовых ресурсов поддержки серверов хоста (Дерево, Железо, Энергия)
-    bool RequestResourcePurchase(uint32_t resourceId, uint32_t quantity);
-    
-    void DisconnectShop();
+    [[nodiscard]] const ShopOffer* GetOffer(uint32_t offerId) const noexcept;
+    [[nodiscard]] const std::unordered_map<uint32_t, ShopOffer>& GetCatalog() const noexcept { return m_catalog; }
 };
 
 } // namespace Centralia

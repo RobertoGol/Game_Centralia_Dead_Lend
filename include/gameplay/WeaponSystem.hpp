@@ -2,61 +2,51 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include "core/Math3D.hpp"
+#include "platform/Platform.hpp"
 
 namespace Centralia {
 
-// Опережающее объявление игрока защищает баллистический узел от циклических петель хэдеров
-class Player;
-
-// Типы магазинов оружия и тяжелых пушек Титанов/Танков
-enum class MagazineType : uint8_t {
-    Magazine_Clip,         // Классический магазинный (коробка/диск)
-    Single_Shot,           // Однопатронный (каждый раз ручной досыл)
-    Powder_Single_Shot,    // Порошково-однопатронный (требует порох + снаряд)
-    Revolver_Cylinder      // Револьверный барабан (попатронная зарядка)
+enum class WeaponType : uint8_t {
+    Pistol,
+    Rifle,
+    Shotgun,
+    EnergyRifle,
+    HeavyPlasma
 };
 
-struct WeaponSpecs {
-    uint32_t id;
-    std::string name;
-    MagazineType magType;
-    
-    uint32_t requiredAmmoId;     // ID типа патронов из инвентаря
-    uint16_t currentAmmoInClip;  // Сколько патронов в пушке прямо сейчас
-    uint16_t clipMaxCapacity;    // Емкость барабана/магазина
-    
-    float baseDamage;            // Базовый урон снаряда
-    float fireRateRpm;           // Скорострельность в минуту
-    float verticalRecoil;        // Сила отдачи (увод 3D-камеры вверх)
-    float reloadTimeSec;         // Время полной перезарядки (или одной каморы)
-    
-    bool isReloading = false;
-    float reloadProgressTimer = 0.0f;
+struct WeaponStats {
+    uint32_t weaponId;
+    std::string weaponName;
+    WeaponType type;
+    float damage;
+    float fireRate;
+    uint32_t currentAmmo;
+    uint32_t maxMagazineSize;
+    bool isReloading;
 };
 
-class WeaponSystem {
+class WeaponsSystem {
 private:
-    WeaponSpecs m_activeWeapon;
-    float m_recoilAccumulator = 0.0f; // Текущий сдвиг камеры от отдачи
+    std::vector<WeaponStats> m_inventoryWeapons;
+    uint32_t m_activeWeaponIndex;
+    bool m_isAiming;
 
 public:
-    WeaponSystem();
-    ~WeaponSystem() = default;
+    WeaponsSystem();
+    ~WeaponsSystem() = default;
 
-    // Загрузка ТТХ выбранной пушки гуманоида или Титана
+    WeaponsSystem(const WeaponsSystem&) = delete;
+    WeaponsSystem& operator=(const WeaponsSystem&) = delete;
+
     void EquipWeapon(uint32_t weaponId);
+    bool FireActiveWeapon();
+    void ReloadActiveWeapon();
+    void Update(float deltaTime);
 
-    // Логика выстрела (вызывается на ЛКМ или триггер геймпада)
-    // Возвращает true, если выстрел произошел
-    bool Fire(float deltaTime, float playerMovementSpeed, float& outCameraRecoilY);
-
-    // Старт перезарядки на кнопку 'R' или кнопку Х геймпада Xbox
-    void StartReload(Player& player);
-
-    // Обновление таймеров автоматики оружия на CPU (вызывается в Engine::Update)
-    void UpdateWeaponTick(float deltaTime, Player& player);
-
-    [[nodiscard]] const WeaponSpecs& GetActiveWeaponSpecs() const noexcept { return m_activeWeapon; };
+    [[nodiscard]] const WeaponStats* GetActiveWeapon() const noexcept;
+    [[nodiscard]] bool IsAiming() const noexcept { return m_isAiming; }
+    void SetAiming(bool aiming) noexcept { m_isAiming = aiming; }
 };
 
 } // namespace Centralia

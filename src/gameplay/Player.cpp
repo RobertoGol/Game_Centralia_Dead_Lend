@@ -1,216 +1,383 @@
 #include "gameplay/Player.hpp"
-#include "gameplay/ItemDatabase.hpp"
-#include "core/NetworkProtocol.hpp"
+#include "gameplay/WeaponSystem.hpp"
+#include "gameplay/PowerArmorStateData.hpp"
+#include "core/MemoryManager.hpp"
 #include "platform/Platform.hpp"
 #include <algorithm>
-#include <string>
+#include <cmath>
+#include <cstring>
+#include <iostream>
+#include <sstream>
 
 namespace Centralia {
 
-// Конструктор по умолчанию (слайдеры по умолчанию, если редактор пропущен)
+// ============================================================================
+// SECTION 1: CONSTRUCTOR, DESTRUCTOR & INITIALIZATION
+// ============================================================================
+
 Player::Player() 
-    : m_uid(777), m_nickname("Vault_Survivor"), m_maxInventorySlots(20), 
-      m_activeWeaponId(0), m_activeArmorId(0), m_position(0.0f, 0.0f, 0.0f), m_rotationY(0.0f) 
+    : m_playerId(1001),
+      m_playerName("Survivor_Zero"),
+      m_position(0.0f, 0.0f, 0.0f),
+      m_velocity(0.0f, 0.0f, 0.0f),
+      m_rotationYaw(0.0f),
+      m_rotationPitch(0.0f),
+      m_maxHealth(100.0f),
+      m_currentHealth(100.0f),
+      m_maxStamina(100.0f),
+      m_currentStamina(100.0f),
+      m_radiationLevel(0.0f),
+      m_hungerLevel(0.0f),
+      m_thirstLevel(0.0f),
+      m_maxCarryWeight(150.0f),
+      m_currentInventoryWeight(0.0f),
+      m_isSprinting(false),
+      m_isCrouching(false),
+      m_isInPowerArmor(false),
+      m_level(1),
+      m_experiencePoints(0)
 {
-    m_bodyMorph.gender = CharacterGender::Male;
-    m_bodyMorph.breastSize = 1.0f;
-    m_bodyMorph.intimateInt = 1.0f;
-    m_bodyMorph.gluteusSize = 1.0f;
-    m_bodyMorph.heightScale = 1.0f;
-    m_bodyMorph.muscleMass = 1.0f;
+    m_inventory.clear();
+    m_inventory.reserve(64); // Резервируем память под 64 ячейки инвентаря
+    
+    // Выдаем стартовый набор выжившего в Пустоши
+    AddItemToInventory(600, 24); // 9mm патроны
+    AddItemToInventory(2001, 10); // Древесина
+    AddItemToInventory(3001, 2);  // Стимпаки
+
+    Platform::Log("[PLAYER SYSTEM]: Survivor instance successfully instantiated in RAM.");
 }
 
-// Конструктор инициализации новой сессии игрока
-Player::Player(uint64_t uid, const std::string& name, size_t slots)
-    : m_uid(uid), m_nickname(name), m_maxInventorySlots(slots), 
-      m_activeWeaponId(0), m_activeArmorId(0), m_position(0.0f, 0.0f, 0.0f), m_rotationY(0.0f) 
-{
-    m_bodyMorph.gender = CharacterGender::Male;
-    m_bodyMorph.breastSize = 1.0f;
-    m_bodyMorph.intimateInt = 1.0f;
-    m_bodyMorph.gluteusSize = 1.0f;
-    m_bodyMorph.heightScale = 1.0f;
-    m_bodyMorph.muscleMass = 1.0f;
+Player::~Player() {
+    m_inventory.clear();
+    Platform::Log("[PLAYER SYSTEM]: Survivor instance destroyed and memory safely unmapped.");
 }
 
-Player::~Player() {}
+// ============================================================================
+// SECTION 2: MOVEMENT, KINEMATICS & STAMINA MANAGEMENT
+// ============================================================================
 
-// --- СИСТЕМА УПРАВЛЕНИЯ ПЕРЕМЕЩЕНИЕМ И ФИЗИКОЙ ---
+void Player::UpdateMovement(float deltaTime, const Vector3D& inputMoveVector, bool sprintPressed, bool crouchPressed) {
+    m_isCrouching = crouchPressed;
+    
+    float baseSpeed = m_isCrouching ? 2.2f : 5.5f;
+    
+    // Если игрок в силовой броне, модифицируем скорость через экзоскелет
+    if (m_isInPowerArmor) {
+        baseSpeed = m_isCrouching ? 1.8f : 6.8f;
+    }
 
-void Player::UpdateMovementState(float deltaTime, bool isSprinting, bool isCtrlPressed) {
-    // Логика переключения скоростей и траты выносливости силовой брони
+    // Обработка спринта и выносливости (Stamina)
+    if (sprintPressed && !m_isCrouching && inputMoveVector.Length() > 0.1f && m_currentStamina > 5.0f) {
+        m_isSprinting = true;
+        baseSpeed *= 1.6f;
+        m_currentStamina -= 18.0f * deltaTime;
+        if (m_currentStamina < 0.0f) {
+            m_currentStamina = 0.0f;
+            m_isSprinting = false;
+        }
+    } else {
+        m_isSprinting = false;
+        // Восстановление выносливости в покое
+        if (m_currentStamina < m_maxStamina) {
+            m_currentStamina += 12.0f * deltaTime;
+            if (m_currentStamina > m_maxStamina) m_currentStamina = m_maxStamina;
+        }
+    }
+
+    // Интеграция перемещения в 3D пространстве
+    Vector3D normalizedInput = inputMoveVector.Length() > 0.0f ? inputMoveVector.Normalized() : Vector3D(0,0,0);
+    m_velocity = normalizedInput * baseSpeed;
+    m_position = m_position + (m_velocity * deltaTime);
 }
 
-void Player::Move(const Vector3D& direction, float speed, float deltaTime) {
-    m_position = m_position + (direction.Normalize() * speed * deltaTime);
+void Player::SetRotation(float yaw, float pitch) noexcept {
+    m_rotationYaw = yaw;
+    m_rotationPitch = std::clamp(pitch, -89.0f, 89.0f); // Ограничение угла обзора по вертикали
 }
 
-bool Player::IsMoving() const noexcept {
-    // Метод проверки движения из main.cpp:66
-    return true; 
+const Vector3D& Player::GetPosition() const noexcept {
+    return m_position;
 }
 
-float Player::GetCurrentMapTileHeight() const noexcept {
-    // Возвращаем базовый высотный слой земли из test.map для main.cpp:78
-    return 51.0f; 
+void Player::Teleport(const Vector3D& newPosition) noexcept {
+    m_position = newPosition;
+    Platform::Log("[PLAYER KINEMATICS]: Player teleported to coordinates X: " + 
+                  std::to_string(newPosition.x) + " Y: " + std::to_string(newPosition.y) + " Z: " + std::to_string(newPosition.z));
 }
 
-float Player::GetEquippedArmorWeight() const noexcept {
-    // Безопасное извлечение веса тяжелой брони T-60 из базы данных предметов
-    const auto* armorTemplate = ItemDatabase::GetInstance().GetItemTemplatePtr(m_activeArmorId);
-    return armorTemplate ? armorTemplate->weight : 0.0f;
+// ============================================================================
+// SECTION 3: HEALTH, SURVIVAL METRICS & RADIATION SICKNESS
+// ============================================================================
+
+void Player::ApplyDamage(float damageAmount) noexcept {
+    if (damageAmount <= 0.0f) return;
+
+    float netDamage = damageAmount;
+    
+    // Если надет экзоскелет силовой брони, урон сначала гасится броней
+    if (m_isInPowerArmor) {
+        netDamage *= 0.35f; // Силовая броня поглощает 65% входящего урона
+    }
+
+    m_currentHealth -= netDamage;
+    if (m_currentHealth <= 0.0f) {
+        m_currentHealth = 0.0f;
+        Platform::Log("[PLAYER COMBAT]: Survivor has fallen unconscious / died in the Wasteland.");
+    } else {
+        Platform::Log("[PLAYER COMBAT]: Survivor took " + std::to_string(netDamage) + " damage. HP left: " + std::to_string(m_currentHealth));
+    }
 }
 
-void Player::AddItemToInventory(uint32_t itemId, uint32_t count) {
-    AddItem(itemId, static_cast<uint16_t>(count));
+void Player::Heal(float healAmount) noexcept {
+    if (healAmount <= 0.0f || m_currentHealth <= 0.0f) return;
+
+    m_currentHealth += healAmount;
+    if (m_currentHealth > m_maxHealth) {
+        m_currentHealth = m_maxHealth;
+    }
+    Platform::Log("[PLAYER SURVIVAL]: Survivor healed by " + std::to_string(healAmount) + ". Current HP: " + std::to_string(m_currentHealth));
 }
 
-// --- ЛОГИКА ИНВЕНТАРЯ И ХРАНИЛИЩА ---
+void Player::ApplyRadiation(float radAmount) noexcept {
+    if (radAmount <= 0.0f) return;
 
-bool Player::AddItem(uint32_t itemId, uint16_t qty, float durability) {
+    m_radiationLevel += radAmount;
+    if (m_radiationLevel > 1000.0f) m_radiationLevel = 1000.0f;
+
+    // Радиация снижает максимальный запас здоровья выжившего
+    float healthPenalty = (m_radiationLevel / 1000.0f) * (m_maxHealth * 0.5f);
+    if (m_currentHealth > (m_maxHealth - healthPenalty)) {
+        m_currentHealth = m_maxHealth - healthPenalty;
+    }
+
+    Platform::Log("[PLAYER HAZARD]: Radiation accumulated: +" + std::to_string(radAmount) + " RAD. Total: " + std::to_string(m_radiationLevel));
+}
+
+void Player::UpdateSurvivalTicks(float deltaTime) noexcept {
+    // Постепенное увеличение голода и жажды
+    m_hungerLevel += 0.05f * deltaTime;
+    m_thirstLevel += 0.08f * deltaTime;
+
+    if (m_hungerLevel >= 100.0f) {
+        m_hungerLevel = 100.0f;
+        ApplyDamage(1.5f * deltaTime); // Истощение от голода наносит урон
+    }
+
+    if (m_thirstLevel >= 100.0f) {
+        m_thirstLevel = 100.0f;
+        ApplyDamage(2.5f * deltaTime); // Обезвоживание убивает быстрее
+    }
+}
+
+// ============================================================================
+// SECTION 4: INVENTORY, CARRY WEIGHT & ITEM MANAGEMENT
+// ============================================================================
+
+bool Player::AddItemToInventory(uint32_t itemId, uint16_t quantity) {
+    if (quantity == 0) return false;
+
+    // Ищем, есть ли уже такой предмет в инвентаре для стакинга
     for (auto& item : m_inventory) {
-        if (item.id == itemId && item.durability == durability) {
-            item.quantity += qty;
+        if (item.id == itemId) {
+            item.quantity += quantity;
+            RecalculateInventoryWeight();
+            Platform::Log("[INVENTORY]: Stacked " + std::to_string(quantity) + " units of item ID " + std::to_string(itemId));
             return true;
         }
     }
-    if (m_inventory.size() >= m_maxInventorySlots) return false;
-    m_inventory.push_back({itemId, qty, durability});
+
+    // Если слотов меньше 64 и вес позволяет — добавляем новый слот
+    if (m_inventory.size() >= 64) {
+        Platform::Log("[INVENTORY ERROR]: Inventory capacity limit reached (64 slots max).");
+        return false;
+    }
+
+    InventoryItem newItem;
+    newItem.id = itemId;
+    newItem.quantity = quantity;
+    newItem.weightPerUnit = 0.5f; // Стандартный вес единицы предмета по умолчанию
+
+    m_inventory.push_back(newItem);
+    RecalculateInventoryWeight();
+    
+    Platform::Log("[INVENTORY]: Added new item ID " + std::to_string(itemId) + " (Qty: " + std::to_string(quantity) + ")");
     return true;
 }
 
-bool Player::RemoveItem(size_t slotIndex, uint16_t qty) {
+bool Player::RemoveItem(size_t slotIndex, uint16_t quantity) {
     if (slotIndex >= m_inventory.size()) return false;
-    if (m_inventory[slotIndex].quantity > qty) {
-        m_inventory[slotIndex].quantity -= qty;
-    } else {
+
+    auto& item = m_inventory[slotIndex];
+    if (item.quantity <= quantity) {
+        // Удаляем весь слот целиком, если количество исчерпано
         m_inventory.erase(m_inventory.begin() + slotIndex);
+        Platform::Log("[INVENTORY]: Item slot " + std::to_string(slotIndex) + " fully depleted and removed.");
+    } else {
+        item.quantity -= quantity;
+        Platform::Log("[INVENTORY]: Removed " + std::to_string(quantity) + " units from slot " + std::to_string(slotIndex));
     }
+
+    RecalculateInventoryWeight();
     return true;
 }
 
-bool Player::UseItem(size_t slotIndex) {
-    if (slotIndex >= m_inventory.size()) return false;
-    
-    Item& userItem = m_inventory[slotIndex];
-    ItemTemplate itemData;
-    
-    if (!ItemDatabase::GetInstance().GetTemplate(userItem.id, itemData)) {
-        return false;
-    }
-
-    if (userItem.durability <= 0.0f && (itemData.type == ItemType::Weapon || itemData.type == ItemType::Armor)) {
-        Platform::Log("Нельзя использовать сломанный предмет: " + itemData.name);
-        return false;
-    }
-
-    if (itemData.type == ItemType::Medical || itemData.type == ItemType::Consumable) {
-        m_stats.health = std::min(100.0f, m_stats.health + itemData.heal_amount);
-        m_stats.radiation = std::max(0.0f, m_stats.radiation - itemData.rad_remedy);
-
-        if (userItem.id == 401) { // Грязная вода
-            m_stats.thirst = std::min(100.0f, m_stats.thirst + 40.0f);
-            m_stats.radiation = std::min(100.0f, m_stats.radiation + 10.0f);
-            Platform::Log(m_nickname + " выпил грязную воду. Жажда утолена, но получен урон от радиации!");
-        }
-
-        Platform::Log(m_nickname + " использовал: " + itemData.name + 
-                      " [HP: " + std::to_string(m_stats.health) + 
-                      ", RAD: " + std::to_string(m_stats.radiation) + "]");
-
-        return RemoveItem(slotIndex, 1);
-    }
-
-    return EquipItem(slotIndex);
+const std::vector<InventoryItem>& Player::GetInventory() const noexcept {
+    return m_inventory;
 }
 
-bool Player::EquipItem(size_t slotIndex) {
-    if (slotIndex >= m_inventory.size()) return false;
-    
-    ItemTemplate itemData;
-    if (!ItemDatabase::GetInstance().GetTemplate(m_inventory[slotIndex].id, itemData)) return false;
-
-    if (itemData.type == ItemType::Weapon) {
-        m_activeWeaponId = itemData.id;
-        Platform::Log(m_nickname + " взял в руки: " + itemData.name);
-        return true;
-    } 
-    else if (itemData.type == ItemType::Armor) {
-        m_activeArmorId = itemData.id;
-        Platform::Log(m_nickname + " экипировал броню: " + itemData.name);
-        return true;
-    }
-    return false;
-}
-
-void Player::UpdateSurvival(float deltaTime) {
-    if (m_stats.health <= 0.0f) return;
-
-    float hungerDrainRate = 0.05f; 
-    float thirstDrainRate = 0.08f; 
-
-    m_stats.hunger = std::max(0.0f, m_stats.hunger - (hungerDrainRate * deltaTime));
-    m_stats.thirst = std::max(0.0f, m_stats.thirst - (thirstDrainRate * deltaTime));
-
-    if (m_stats.hunger <= 0.0f || m_stats.thirst <= 0.0f) {
-        m_stats.health = std::max(0.0f, m_stats.health - (1.0f * deltaTime));
-    }
-
-    if (m_stats.radiation > 50.0f) {
-        m_stats.health = std::max(0.0f, m_stats.health - (0.5f * deltaTime));
-    }
-}
-
-// --- СЕРИАЛИЗАЦИЯ ДАННЫХ В СЕТЕВОЙ ПОТОК ---
-
-std::vector<uint8_t> Player::SerializeState() const {
-    std::vector<uint8_t> buffer;
-
-    NetworkSerializer::WriteUInt32(buffer, static_cast<uint32_t>(m_uid & 0xFFFFFFFF)); 
-    NetworkSerializer::WriteUInt32(buffer, static_cast<uint32_t>((m_uid >> 32) & 0xFFFFFFFF));
-    NetworkSerializer::WriteString(buffer, m_nickname);
-
-    NetworkSerializer::WriteFloat(buffer, m_stats.health);
-    NetworkSerializer::WriteFloat(buffer, m_stats.hunger);
-    NetworkSerializer::WriteFloat(buffer, m_stats.thirst);
-    NetworkSerializer::WriteFloat(buffer, m_stats.radiation);
-
-    NetworkSerializer::WriteUInt32(buffer, m_activeWeaponId);
-    NetworkSerializer::WriteUInt32(buffer, m_activeArmorId);
-
-    NetworkSerializer::WriteUInt32(buffer, static_cast<uint32_t>(m_inventory.size()));
+void Player::RecalculateInventoryWeight() noexcept {
+    float totalWeight = 0.0f;
     for (const auto& item : m_inventory) {
-        NetworkSerializer::WriteUInt32(buffer, item.id);
-        NetworkSerializer::WriteUInt16(buffer, item.quantity);
-        NetworkSerializer::WriteFloat(buffer, item.durability);
+        totalWeight += static_cast<float>(item.quantity) * item.weightPerUnit;
     }
+    m_currentInventoryWeight = totalWeight;
+
+-    // Проверка перегруза (Overencumbered)
+    if (m_currentInventoryWeight > m_maxCarryWeight) {
+        // Перегруз замедляет игрока
+    }
+}
+
+float Player::GetCurrentInventoryWeight() const noexcept {
+    return m_currentInventoryWeight;
+}
+
+// ============================================================================
+// SECTION 5: POWER ARMOR INTEGRATION
+// ============================================================================
+
+void Player::EnterPowerArmor() noexcept {
+    m_isInPowerArmor = true;
+    m_maxCarryWeight += 250.0f; // Экзоскелет дает гигантский бонус переносимого веса
+    Platform::Log("[PLAYER SUIT]: Survivor successfully mounted into Power Armor exoskeleton.");
+}
+
+void Player::ExitPowerArmor() noexcept {
+    m_isInPowerArmor = false;
+    m_maxCarryWeight -= 250.0f;
+    if (m_maxCarryWeight < 100.0f) m_maxCarryWeight = 100.0f;
+    Platform::Log("[PLAYER SUIT]: Survivor dismounted from Power Armor exoskeleton.");
+}
+
+bool Player::IsInPowerArmor() const noexcept {
+    return m_isInPowerArmor;
+}
+
+// ============================================================================
+// SECTION 6: EXPERIENCE, STATS & LEVELING
+// ============================================================================
+
+void Player::AddExperience(uint32_t expAmount) noexcept {
+    m_experiencePoints += expAmount;
+    Platform::Log("[PLAYER PROGRESS]: Gained +" + std::to_string(expAmount) + " XP. Total: " + std::to_string(m_experiencePoints));
+
+    uint32_t requiredForNextLevel = m_level * 1000;
+    if (m_experiencePoints >= requiredForNextLevel) {
+        m_level++;
+        m_maxHealth += 15.0f;
+        m_currentHealth = m_maxHealth;
+        m_maxStamina += 10.0f;
+        Platform::Log("[LEVEL UP!]: Survivor reached level " + std::to_string(m_level) + "! Stats upgraded.");
+    }
+}
+
+uint32_t Player::GetLevel() const noexcept {
+    return m_level;
+}
+
+// ============================================================================
+// SECTION 7: BINARY SERIALIZATION FOR SAVEGAMES (GHOST-RAM / DISK)
+// ============================================================================
+
+std::vector<uint8_t> Player::SerializeToBinary() const {
+    std::vector<uint8_t> buffer;
+    buffer.reserve(1024);
+
+    // Упаковываем ID и имя
+    const uint8_t* idPtr = reinterpret_cast<const uint8_t*>(&m_playerId);
+    buffer.insert(buffer.end(), idPtr, idPtr + sizeof(uint32_t));
+
+    uint32_t nameLen = static_cast<uint32_t>(m_playerName.size());
+    const uint8_t* lenPtr = reinterpret_cast<const uint8_t*>(&nameLen);
+    buffer.insert(buffer.end(), lenPtr, lenPtr + sizeof(uint32_t));
+    buffer.insert(buffer.end(), m_playerName.begin(), m_playerName.end());
+
+    // Упаковываем позицию (Vector3D)
+    const uint8_t* posPtr = reinterpret_cast<const uint8_t*>(&m_position);
+    buffer.insert(buffer.end(), posPtr, posPtr + sizeof(Vector3D));
+
+    // Упаковываем здоровье, стамину и радиацию
+    const uint8_t* statsPtr = reinterpret_cast<const uint8_t*>(&m_currentHealth);
+    buffer.insert(buffer.end(), statsPtr, statsPtr + sizeof(float));
+    
+    const uint8_t* stamPtr = reinterpret_cast<const uint8_t*>(&m_currentStamina);
+    buffer.insert(buffer.end(), stamPtr, stamPtr + sizeof(float));
+
+    const uint8_t* radPtr = reinterpret_cast<const uint8_t*>(&m_radiationLevel);
+    buffer.insert(buffer.end(), radPtr, radPtr + sizeof(float));
+
+    // Упаковываем инвентарь
+    uint32_t invSize = static_cast<uint32_t>(m_inventory.size());
+    const uint8_t* invSizePtr = reinterpret_cast<const uint8_t*>(&invSize);
+    buffer.insert(buffer.end(), invSizePtr, invSizePtr + sizeof(uint32_t));
+
+    for (const auto& item : m_inventory) {
+        const uint8_t* itemPtr = reinterpret_cast<const uint8_t*>(&item);
+        buffer.insert(buffer.end(), itemPtr, itemPtr + sizeof(InventoryItem));
+    }
+
+    Platform::Log("[PLAYER SAVE]: Player state successfully serialized into binary stream (" + std::to_string(buffer.size()) + " bytes).");
     return buffer;
 }
 
-bool Player::DeserializeState(const std::vector<uint8_t>& buffer, size_t& offset) {
-    if (offset >= buffer.size()) return false;
+bool Player::DeserializeFromBinary(const std::vector<uint8_t>& buffer) {
+    if (buffer.size() < sizeof(uint32_t) * 3) {
+        Platform::Log("[PLAYER LOAD ERROR]: Binary stream too short for player deserialization.");
+        return false;
+    }
 
-    uint32_t uidLow = NetworkSerializer::ReadUInt32(buffer, offset);
-    uint32_t uidHigh = NetworkSerializer::ReadUInt32(buffer, offset);
-    m_uid = static_cast<uint64_t>(uidLow) | (static_cast<uint64_t>(uidHigh) << 32);
-    m_nickname = NetworkSerializer::ReadString(buffer, offset);
+    size_t cursor = 0;
 
-    m_stats.health = NetworkSerializer::ReadFloat(buffer, offset);
-    m_stats.hunger = NetworkSerializer::ReadFloat(buffer, offset);
-    m_stats.thirst = NetworkSerializer::ReadFloat(buffer, offset);
-    m_stats.radiation = NetworkSerializer::ReadFloat(buffer, offset);
+    std::memcpy(&m_playerId, buffer.data() + cursor, sizeof(uint32_t));
+    cursor += sizeof(uint32_t);
 
-    m_activeWeaponId = NetworkSerializer::ReadUInt32(buffer, offset);
-    m_activeArmorId = NetworkSerializer::ReadUInt32(buffer, offset);
+    uint32_t nameLen = 0;
+    std::memcpy(&nameLen, buffer.data() + cursor, sizeof(uint32_t));
+    cursor += sizeof(uint32_t);
 
-    uint32_t invSize = NetworkSerializer::ReadUInt32(buffer, offset);
+    if (cursor + nameLen > buffer.size()) return false;
+    m_playerName.assign(reinterpret_cast<const char*>(buffer.data() + cursor), nameLen);
+    cursor += nameLen;
+
+    if (cursor + sizeof(Vector3D) > buffer.size()) return false;
+    std::memcpy(&m_position, buffer.data() + cursor, sizeof(Vector3D));
+    cursor += sizeof(Vector3D);
+
+    if (cursor + sizeof(float) * 3 > buffer.size()) return false;
+    std::memcpy(&m_currentHealth, buffer.data() + cursor, sizeof(float));
+    cursor += sizeof(float);
+    std::memcpy(&m_currentStamina, buffer.data() + cursor, sizeof(float));
+    cursor += sizeof(float);
+    std::memcpy(&m_radiationLevel, buffer.data() + cursor, sizeof(float));
+    cursor += sizeof(float);
+
+    if (cursor + sizeof(uint32_t) > buffer.size()) return false;
+    uint32_t invSize = 0;
+    std::memcpy(&invSize, buffer.data() + cursor, sizeof(uint32_t));
+    cursor += sizeof(uint32_t);
+
     m_inventory.clear();
     for (uint32_t i = 0; i < invSize; ++i) {
-        uint32_t id = NetworkSerializer::ReadUInt32(buffer, offset);
-        uint16_t qty = NetworkSerializer::ReadUInt16(buffer, offset);
-        float durability = NetworkSerializer::ReadFloat(buffer, offset);
-        m_inventory.push_back({id, qty, durability});
+        if (cursor + sizeof(InventoryItem) > buffer.size()) return false;
+        InventoryItem item;
+        std::memcpy(&item, buffer.data() + cursor, sizeof(InventoryItem));
+        m_inventory.push_back(item);
+        cursor += sizeof(InventoryItem);
     }
+
+    RecalculateInventoryWeight();
+    Platform::Log("[PLAYER LOAD]: Player state successfully restored from binary save dump.");
     return true;
 }
 

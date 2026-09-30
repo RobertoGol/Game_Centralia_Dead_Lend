@@ -1,36 +1,47 @@
 #pragma once
 #include "core/Math3D.hpp"
-#include "gameplay/ModificationSystem.hpp" // Наследует функционал ModdableEntity
-#include <vector>
+#include "platform/Platform.hpp"
 #include <cstdint>
+#include <vector>
 
 namespace Centralia {
 
-class VehiclePhysics : public ModdableEntity {
-private:
-    std::vector<VehicleModification> m_wheels;
-    float m_chassisHealth = 500.0f;
-    bool m_isHeavyTracked = false;
+struct WheelInfo {
+    Vector3D localPosition;
+    float suspensionLength = 0.6f;
+    float springStrength = 25000.0f;
+    float damperRate = 4000.0f;
+    bool isGrounded = false;
+    float currentCompression = 0.0f;
+};
 
-    // Внутренние параметры для генерации тряски камеры процессором
-    float m_cameraShakeIntensity = 0.0f;
+class VehiclePhysics {
+private:
+    Vector3D m_position;
+    Vector3D m_velocity;
+    Vector3D m_rotation; 
+    std::vector<WheelInfo> m_wheels;
+    
+    float m_mass = 1800.0f;
+    float m_enginePower = 350.0f;
+    float m_maxSpeed = 120.0f;
+    float m_steeringAngle = 0.0f;
 
 public:
-    VehiclePhysics(bool isTracked = false);
-    virtual ~VehiclePhysics() override = default;
+    VehiclePhysics();
+    ~VehiclePhysics() = default;
 
-    // Инициализация 4 колес или 2 гусеничных траков тяжелой техники со скриншотов
-    void SetupChassis(const VehicleModification& baseModTemplate);
+    VehiclePhysics(const VehiclePhysics&) = delete;
+    VehiclePhysics& operator=(const VehiclePhysics&) = delete;
 
-    // Симуляция попадания пули/снаряда в конкретное колесо (из механики расчлененки LDoE)
-    void TakeDamageToWheel(size_t wheelIndex, float damageAmount);
+    void InitializeVehicle(float mass, float power);
+    void UpdatePhysics(float deltaTime, float throttleInput, float steeringInput, float brakeInput);
 
-    // Ежекадровый обсчет физики давления, сцепления с почвой и крена на CPU
-    void SimulatePhysics(float deltaTime, const Vector3D& moveInput, Vector3D& outVelocity);
-
-    // Геттеры для связи с системами шейдеров и 3D-камеры
-    [[nodiscard]] float GetCameraShake() const noexcept { return m_cameraShakeIntensity; };
-    [[nodiscard]] const std::vector<VehicleModification>& GetWheels() const noexcept { return m_wheels; };
+    [[nodiscard]] const Vector3D& GetPosition() const noexcept { return m_position; }
+    [[nodiscard]] const Vector3D& GetVelocity() const noexcept { return m_velocity; }
+    [[nodiscard]] float GetCurrentSpeedometerKmh() const noexcept;
+    
+    void SetPosition(const Vector3D& pos) noexcept { m_position = pos; }
 };
 
 } // namespace Centralia

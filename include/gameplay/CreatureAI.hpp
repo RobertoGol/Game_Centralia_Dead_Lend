@@ -1,66 +1,41 @@
 #pragma once
 #include "core/Math3D.hpp"
+#include "platform/Platform.hpp"
 #include <string>
-#include <vector>
-#include <unordered_map>
 #include <cstdint>
 
 namespace Centralia {
 
-// Опережающее объявление менеджера памяти для тиков ИИ
-class MemoryManager;
-
-// Группы видов существ со своими уникальными законами физики урона
-enum class CreatureSpecies : uint8_t {
-    Humanoid_Organic, // Люди, Эльфы, Дварфы
-    Mechanical_Mecha, // Роботы, тяжелые Титаны, Танки
-    Mutant_Behemoth,  // Огромные монстры (как Бегемот на гифке)
-    Rad_Ghoul         // Радиоактивные гули Пустоши
+enum class CreatureState : uint8_t {
+    Idle,
+    Patrol,
+    Alert,
+    Combat_Attack,
+    Flee,
+    Dead
 };
 
-// Зоны поражения / Компоненты анатомии существ
-enum class AnatomyPart : uint8_t {
-    Head_Sensor,       // Голова человека / Сенсорный блок робота
-    Torso_Chassis,     // Корпус / Броня техники
-    Left_Leg_Hydraulic,// Левая нога / Привод шасси
-    Right_Leg_Hydraulic,// Правая нога / Привод шасси
-    Weapon_System_Link // Оружие в руках / Заплечное орудие робота
-};
-
-struct AnatomyComponent {
-    std::string partName;
-    float health = 100.0f;
-    float maxHealth = 100.0f;
-    bool isSeveredOrDestroyed = false; // Отсечено / полностью уничтожено
-};
-
-class Creature {
+class CreatureAI {
 private:
-    uint32_t m_id;
-    std::string m_name;
-    CreatureSpecies m_species;
-    Vector3D m_position;
-    
-    std::unordered_map<AnatomyPart, AnatomyComponent> m_anatomyProfile;
-    float m_totalHealth = 100.0f;
-    bool m_isEnraged = false; // Состояние ярости для монстров
+    uint32_t m_creatureId;
+    CreatureState m_currentState;
+    float m_detectionRadius;
+    float m_health;
+    Vector3D m_currentPosition;
 
 public:
-    Creature(uint32_t id, const std::string& name, CreatureSpecies species);
-    ~Creature() = default;
+    CreatureAI(uint32_t id, float detectionRadius, float maxHealth);
+    ~CreatureAI() = default;
 
-    // Главный метод распределения урона в зависимости от вида существа
-    void ApplyComponentDamage(AnatomyPart part, float rawDamage);
+    CreatureAI(const CreatureAI&) = delete;
+    CreatureAI& operator=(const CreatureAI&) = delete;
 
-    // Обновление состояния ИИ на CPU (вызывается в Engine::Update)
-    void UpdateAiTick(float deltaTime, const Vector3D& playerPos, MemoryManager& memory);
+    void UpdateAI(float deltaTime, const Vector3D& playerPosition);
+    void TakeDamage(float amount);
 
-    // Геттеры и сеттеры состояний сущности
-    [[nodiscard]] CreatureSpecies GetSpecies() const   { return m_species; };
-    [[nodiscard]] const Vector3D& GetPosition() const   { return m_position; };
-    void SetPosition(const Vector3D& pos)   { m_position = pos; };
-    [[nodiscard]] float GetTotalHealth() const   { return m_totalHealth; };
-    [[nodiscard]] bool IsEnraged() const   { return m_isEnraged; };
+    [[nodiscard]] CreatureState GetCurrentState() const noexcept { return m_currentState; }
+    [[nodiscard]] float GetHealth() const noexcept { return m_health; }
+    [[nodiscard]] bool IsDead() const noexcept { return m_currentState == CreatureState::Dead; }
 };
 
 } // namespace Centralia

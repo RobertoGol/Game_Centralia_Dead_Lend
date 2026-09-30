@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <cstdint>
-#include "core/Math3D.hpp" // Раскрывает базовые энумы без циклов
+#include "core/Math3D.hpp"
 
 namespace Centralia {
 
@@ -19,11 +19,10 @@ enum class TitanClass : uint8_t {
     Ronin_Stryder     
 };
 
-// Расширяем режимы контроля: добавляем скрытый админский хост-класс
 enum class EntityControlMode : uint8_t {
     Pilot_Humanoid,   
     Titan_Vehicle,
-    Admin_Observer     // СКРЫТЫЙ КЛАСС: Админ-Модератор (Консольный Фиксатор)
+    Admin_Observer     
 };
 
 struct ClassAttributes {
@@ -31,7 +30,6 @@ struct ClassAttributes {
     float energyRegenRate = 1.0f;
     float factoryCraftSpeedMultiplier = 1.0f;
     
-    // Админские привилегии
     bool hasGodMode = false;
     bool revealFogOfWar = false;
 };
@@ -48,7 +46,7 @@ private:
     uint64_t m_masterAdminHwidHash = 0x8C5A3F11B29DEE77;
 
 public:
-    ClassSystem()  ; // Конструктор объявлен явно для инициализации enum
+    ClassSystem();
 
     void SetHumanClass(HumanClass hClass);
     void SetTitanClass(TitanClass tClass);
@@ -56,11 +54,11 @@ public:
     bool AuthenticateAndActivateAdmin(const std::string& currentDeviceHwid);
     void ToggleControlMode(EntityControlMode mode);
 
-    ActiveControlMode GetControlMode() const   { return m_sessionControlMode; };
-    EngineControlMode GetEngineControlMode() const  ; 
-    HumanClass GetHumanClass() const   { return m_humanClass; };
-    TitanClass GetTitanClass() const   { return m_titanClass; };
-    const ClassAttributes& GetAttributes() const   { return m_currentAttributes; };
+    [[nodiscard]] ActiveControlMode GetControlMode() const noexcept { return m_sessionControlMode; }
+    [[nodiscard]] EngineControlMode GetEngineControlMode() const noexcept { return m_engineControlMode; }
+    [[nodiscard]] HumanClass GetHumanClass() const noexcept { return m_humanClass; }
+    [[nodiscard]] TitanClass GetTitanClass() const noexcept { return m_titanClass; }
+    [[nodiscard]] const ClassAttributes& GetAttributes() const noexcept { return m_currentAttributes; }
 };
 
-}; // namespace Centralia
+} // namespace Centralia

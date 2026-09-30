@@ -1,64 +1,44 @@
 #pragma once
+#include <string>
+#include <vector>
+#include <unordered_map>
 #include <cstdint>
-#include <array>
+#include "platform/Platform.hpp"
 
 namespace Centralia {
 
-// Опережающие объявления классов — защищают от циклической зависимости и ошибок C2061/C2027
-class FactorySystem;
-class Player;
-class ItemDatabase;
-
-#pragma pack(push, 1)
-// Плотная структура рецепта крафта по чертежу (State of Decay 2)
-struct BlueprintRecord {
-    uint32_t     blueprintId;
-    uint32_t     targetItemId;          // ID предмета, который скрафтим (из ItemDatabase)
-    uint32_t     requiredItemCount;     // Сколько штук получим на выходе
-    
-    // Ресурсы, необходимые для сборки (тратятся из FactorySystem)
-    float        requiredIronScrap;     // Требуемый металлолом
-    float        requiredTechMods;      // Требуемые компоненты электроники
-    uint32_t     requiredToolId;        // ID инструмента в инвентаре (0, если не нужен)
+struct CraftingRecipe {
+    uint32_t recipeId;
+    std::string resultItemName;
+    uint32_t outputQuantity;
+    std::unordered_map<uint32_t, uint32_t> requiredIngredients; // itemId -> quantity
+    float craftingTimeSeconds;
 };
-#pragma pack(pop)
 
 class CraftingManager {
 private:
-    static constexpr size_t MAX_BLUEPRINTS = 128;
-    std::array<BlueprintRecord, MAX_BLUEPRINTS> m_blueprintRegistry;
-    uint32_t m_blueprintCount;
+    std::unordered_map<uint32_t, CraftingRecipe> m_recipes;
 
-    CraftingManager() noexcept; // Приватный конструктор синглтона
+    CraftingManager() noexcept {
+        RegisterDefaultRecipes();
+    }
 
 public:
     ~CraftingManager() = default;
 
-    // Запрещаем копирование синглтона
     CraftingManager(const CraftingManager&) = delete;
     CraftingManager& operator=(const CraftingManager&) = delete;
 
-    static CraftingManager& GetInstance() {
+    static CraftingManager& GetInstance() noexcept {
         static CraftingManager instance;
         return instance;
     }
 
-    /**
-     * @brief Инициализация чертежей крафта (пушки Titanfall, пластины T-60, медицина).
-     */
-    void InitializeBlueprints() noexcept;
+    void RegisterDefaultRecipes() noexcept;
+    bool CanCraft(uint32_t recipeId, const std::unordered_map<uint32_t, uint32_t>& playerInventory) const noexcept;
+    bool CraftItem(uint32_t recipeId, std::unordered_map<uint32_t, uint32_t>& playerInventory) noexcept;
 
-    /**
-     * @brief Проверка возможности крафта и сборка предмета по чертежу.
-     * @param blueprintId - ID выбранного чертежа
-     * @param player - Ссылка на игрока для проверки инвентаря и выдачи лута
-     * @param factoryContext - Твоя фабричная энергосистема для списания ресурсов
-     * @param itemDb - Ссылка на базу предметов для валидации ТТХ
-     */
-    bool TryExecuteCraft(uint32_t blueprintId, Player& player, FactorySystem& factoryContext, const ItemDatabase& itemDb) noexcept;
-    
-    // Быстрый поиск рецепта по ID
-    [[nodiscard]] const BlueprintRecord* GetBlueprint(uint32_t blueprintId) const noexcept;
+    [[nodiscard]] const CraftingRecipe* GetRecipe(uint32_t recipeId) const noexcept;
 };
 
 } // namespace Centralia

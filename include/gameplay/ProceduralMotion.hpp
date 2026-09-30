@@ -1,58 +1,34 @@
 #pragma once
 #include "core/Math3D.hpp"
+#include "platform/Platform.hpp"
 #include <vector>
 #include <cstdint>
 
 namespace Centralia {
 
-// Типы шасси для всей будущей техники и роботов Централии
-enum class ChassisType : uint8_t {
-    Titan_4_Legged,   // Наш текущий четвероногий Титан
-    Titan_Bipedal,    // Гуманоидный робот / Экзоскелет
-    Crawler_Multileg, // Ползущая многоногая платформа
-    Tracked_Tank      // Гусеничный танк / Бронетехника
+struct IKChainNode {
+    Vector3D position;
+    float length;
+    float currentAngle;
 };
 
-// Структура отдельной механической ноги с поддержкой Инверсной Кинематики (IK)
-struct ProceduralLeg {
-    Vector3D hipOffset;       // Точка крепления сустава к корпусу Титана
-    Vector3D currentFootPos;   // Текущая позиция ступни на земле в 3D мире
-    Vector3D targetFootPos;    // Целевая точка, куда нога планирует наступить
-    
-    float stepProgress = 1.0f; // Отрезок шага от 0.0f (подъем) до 1.0f (наступил)
-    bool isMoving = false;     // Находится ли нога в воздухе прямо сейчас
-};
-
-class ProceduralMotionManager {
+class ProceduralMotion {
 private:
-    ChassisType m_type;
-    std::vector<ProceduralLeg> m_legs;
-    float m_stepLength = 2.5f;   // Длина шага огромного Титана
-    float m_stepHeight = 0.8f;   // Насколько высоко Титан поднимает ногу над грунтом
-    float m_stepSpeed = 4.0f;    // Скорость анимации переноса суставов
-
-    ProceduralMotionManager();   // Приватный конструктор синглтона
+    std::vector<IKChainNode> m_nodes;
+    float m_totalReach;
 
 public:
-    ~ProceduralMotionManager() = default;
+    ProceduralMotion();
+    ~ProceduralMotion() = default;
 
-    // Запрет копирования
-    ProceduralMotionManager(const ProceduralMotionManager&) = delete;
-    ProceduralMotionManager& operator=(const ProceduralMotionManager&) = delete;
+    ProceduralMotion(const ProceduralMotion&) = delete;
+    ProceduralMotion& operator=(const ProceduralMotion&) = delete;
 
-    static ProceduralMotionManager& GetInstance() {
-        static ProceduralMotionManager instance;
-        return instance;
-    }
+    void AddNode(const Vector3D& pos, float length);
+    bool SolveIK(const Vector3D& targetPosition);
 
-    // Инициализация структуры суставов для 4-х ногого Титана
-    void InitializeChassis(ChassisType type);
-
-    // Главный математический обсчет походки на CPU (вызывается каждый кадр в Update)
-    void UpdateTitanMovement(const Vector3D& bodyPosition, const Vector3D& moveDirection, float deltaTime);
-
-    [[nodiscard]] const std::vector<ProceduralLeg>& GetLegs() const noexcept { return m_legs; };
-    [[nodiscard]] ChassisType GetChassisType() const noexcept { return m_type; };
+    [[nodiscard]] const std::vector<IKChainNode>& GetNodes() const noexcept { return m_nodes; }
+    [[nodiscard]] float GetTotalReach() const noexcept { return m_totalReach; }
 };
 
 } // namespace Centralia
