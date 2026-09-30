@@ -1,373 +1,720 @@
-#include "gameplay/PowerArmorStateData.hpp"
-#include "core/MemoryManager.hpp"
+#include "gameplay/PowerArmorSystem.hpp"
+#include "gameplay/Player.hpp"
+#include "gameplay/MapSystem.hpp"
+#include "gameplay/ItemDatabase.hpp"
+#include "video/Renderer3D.hpp"
 #include "platform/Platform.hpp"
-#include <cstring>
-#include <algorithm>
-#include <string>
-#include <vector>
-#include <cmath>
+#include "core/MemoryManager.hpp"
+#include "core/InputController.hpp"
+
 #include <iostream>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <unordered_map>
+#include <cstring>
+#include <fstream>
 
-namespace Centralia_Project_Passport {
+namespace Centralia {
 
 // ============================================================================
-// SECTION 1: CONSTRUCTORS, DESTRUCTORS & STATE RESET MECHANICS
+// SECTION 1: CONSTANTS, ENUMS & BALANCING TWEAKS
 // ============================================================================
 
-PowerArmorEngineContext::PowerArmorEngineContext() noexcept 
-    : m_totalRuntimeSeconds(0.0),
-      m_servoOverloadActive(false),
-      m_internalTemperature(36.5f),
-      m_radiationShieldingEfficiency(1.0f),
-      m_jetpackActive(false),
-      m_jetpackFuel(100.0f),
-      m_nightVisionEnabled(false),
-      m_diagnosticErrorCount(0)
-{
-    ResetToDefault();
-    Platform::Log("[POWER ARMOR SYSTEM CONSTRUCTOR]: Advanced T-60 / X-01 exoskeleton context allocated with full diagnostic telemetry.");
-}
+namespace PAConfig {
+    constexpr uint32_t PA_SAVE_MAGIC = 0x50575241; // "PWRA"
+    constexpr uint32_t PA_SAVE_VERSION = 2;
 
-PowerArmorEngineContext::~PowerArmorEngineContext() noexcept {
-    ShutdownExoskeleton();
-}
-
-void PowerArmorEngineContext::ResetToDefault() noexcept {
-    std::memset(&m_State, 0, sizeof(PowerArmorStateData));
+    // Расход энергии Ядерного Блока (Fusion Core) в условных единицах (Емкость 100.0)
+    constexpr float DRAIN_RATE_IDLE = 0.005f;       // В секунду
+    constexpr float DRAIN_RATE_WALK = 0.02f;        // В секунду
+    constexpr float DRAIN_RATE_SPRINT = 0.15f;      // В секунду
+    constexpr float DRAIN_RATE_JETPACK = 2.5f;      // В секунду
+    constexpr float DRAIN_COST_JUMP = 0.5f;         // За один прыжок
+    constexpr float DRAIN_COST_MELEE_HEAVY = 1.0f;  // За силовой удар
     
-    m_State.fusionCoreCharge    = 100.0f;
-    m_State.coreDrainModifier   = 1.0f; 
-    m_State.isCoreDepleted      = 0;
-    m_State.padding             = 0;
-
-    // Инициализация покомпонентной прочности 6 узлов силовой брони (T-60 Specification)
-    for (size_t i = 0; i < 6; ++i) {
-        ArmorComponent& comp = m_State.components[i];
-        comp.maxDurability = 400.0f;
-        comp.durability    = 400.0f;
-        comp.isBroken      = 0;
-        
-        switch (static_cast<ArmorComponentID>(i)) {
-            case ArmorComponentID::Torso:
-                comp.damageResistance = 95.0f;
-                comp.radiationResistance = 60.0f;
-                break;
-            case ArmorComponentID::Helmet:
-                comp.damageResistance = 65.0f;
-                comp.radiationResistance = 35.0f;
-                break;
-            case ArmorComponentID::LeftArm:
-            case ArmorComponentID::RightArm:
-                comp.damageResistance = 50.0f;
-                comp.radiationResistance = 25.0f;
-                break;
-            case ArmorComponentID::LeftLeg:
-            case ArmorComponentID::RightLeg:
-                comp.damageResistance = 60.0f;
-                comp.radiationResistance = 30.0f;
-                break;
-        }
-    }
-
-    m_totalRuntimeSeconds = 0.0;
-    m_servoOverloadActive = false;
-    m_internalTemperature = 37.0f;
-    m_radiationShieldingEfficiency = 1.0f;
-    m_jetpackActive = false;
-    m_jetpackFuel = 100.0f;
-    m_nightVisionEnabled = false;
-    m_diagnosticErrorCount = 0;
-
-    Platform::Log("[POWER ARMOR RESET]: Exoskeleton telemetry and diagnostic registers successfully reverted to factory-fresh baseline.");
+    // Физика
+    constexpr float MASS_MULTIPLIER = 4.5f;         // Броня весит в 4.5 раза больше человека
+    constexpr float FALL_DAMAGE_MULTIPLIER = 0.0f;  // Полный иммунитет к урону от падения
+    constexpr float HEAVY_LANDING_VELOCITY = -15.0f;// Вертикальная скорость для активации ударной волны
+    constexpr float CARRY_WEIGHT_BONUS = 200.0f;    // Бонус к переносимому весу
 }
 
-void PowerArmorEngineContext::ShutdownExoskeleton() noexcept {
-    std::memset(&m_State, 0, sizeof(PowerArmorStateData));
-    m_jetpackActive = false;
-    m_nightVisionEnabled = false;
-    Platform::Log("[POWER ARMOR SHUTDOWN]: Hydraulic pressure vented completely. Servo-motors powered down safely. Telemetry unmapped.");
-}
+enum class PAPieceSlot {
+    Helmet,
+    Torso,
+    LeftArm,
+    RightArm,
+    LeftLeg,
+    RightLeg,
+    Count
+};
+
+enum class PAAnimationState {
+    None,
+    EnteringOpenAnimation,
+    EnteringStepIn,
+    EnteringCloseAnimation,
+    ExitingOpenAnimation,
+    ExitingStepOut,
+    ExitingCloseAnimation
+};
 
 // ============================================================================
-// SECTION 2: POWER GRID, FUSION CORE DRAIN, AND SERVO-ACTUATORS
+// SECTION 2: DATA STRUCTURES (FRAMES, CORES & PIECES)
 // ============================================================================
 
-void PowerArmorEngineContext::ProcessPowerGridTick(float deltaTime, bool isShiftPressed, float& outLinearVelocity) noexcept {
-    m_totalRuntimeSeconds += static_cast<double>(deltaTime);
+struct ArmorPieceData {
+    uint32_t itemId;           // ID предмета из ItemDatabase
+    float currentHealth;       // Текущая прочность
+    float maxHealth;           // Максимальная прочность
+    float armorRatingPhys;     // Защита от баллистики
+    float armorRatingEnergy;   // Защита от лазеров
+    float armorRatingRad;      // Защита от радиации
+    bool isBroken;             // Деталь разрушена (статы = 0, не рендерится)
+    uint32_t colorPaintId;     // ID покраски (Хот-Род, Братство Стали, Анклав)
+};
 
-    if (m_State.isCoreDepleted) {
-        outLinearVelocity *= 0.2f;
-        m_servoOverloadActive = false;
-        m_jetpackActive = false;
-        m_nightVisionEnabled = false;
-        return;
-    }
+struct FusionCoreData {
+    uint32_t inventoryId;      // Уникальный ID предмета в инвентаре
+    float remainingCharge;     // 0.0f - 100.0f
+};
 
-    float drainRate = CONST_IDLE_DRAIN;
-
-    // Дополнительное энергопотребление при ночном видении
-    if (m_nightVisionEnabled) {
-        drainRate += 0.05f;
-    }
-
-    // Реактивные ускорители (Jetpack)
-    if (m_jetpackActive && m_jetpackFuel > 0.0f) {
-        drainRate += 1.8f;
-        m_jetpackFuel -= 15.0f * deltaTime;
-        if (m_jetpackFuel <= 0.0f) {
-            m_jetpackFuel = 0.0f;
-            m_jetpackActive = false;
-            Platform::Log("[JETPACK WARNING]: Thruster fuel depleted! Forced descent initiated.");
-        }
-    } else {
-        // Медленное восстановление топлива в покое на земле
-        if (m_jetpackFuel < 100.0f) {
-            m_jetpackFuel += 5.0f * deltaTime;
-            if (m_jetpackFuel > 100.0f) m_jetpackFuel = 100.0f;
-        }
-    }
-
-    if (isShiftPressed && outLinearVelocity > 0.1f) {
-        drainRate += CONST_SPRINT_DRAIN;
-        outLinearVelocity *= 1.7f; 
-        
-        m_internalTemperature += 0.6f * deltaTime;
-        if (m_internalTemperature > 90.0f) {
-            m_servoOverloadActive = true;
-            m_diagnosticErrorCount++;
-            Platform::Log("[POWER ARMOR THERMAL WARNING [ERR-04]]: Reactor core overheating critically! Servo efficiency throttled.");
-        }
-    } else {
-        if (m_internalTemperature > 37.0f) {
-            m_internalTemperature -= 1.0f * deltaTime;
-            if (m_internalTemperature <= 37.0f) {
-                m_internalTemperature = 37.0f;
-                m_servoOverloadActive = false;
-            }
-        }
-    }
-
-    float finalDrainFactor = drainRate * m_State.coreDrainModifier;
-    if (m_servoOverloadActive) {
-        finalDrainFactor *= 1.5f; 
-    }
-
-    m_State.fusionCoreCharge -= finalDrainFactor * deltaTime;
-
-    if (m_State.fusionCoreCharge <= 0.0f) {
-        m_State.fusionCoreCharge = 0.0f;
-        m_State.isCoreDepleted   = 1;
-        outLinearVelocity       *= 0.2f;
-        m_jetpackActive          = false;
-        m_nightVisionEnabled     = false;
-        Platform::Log("[POWER ARMOR FATAL [ERR-99]]: Fusion core absolute energy exhaustion. Hydraulics completely locked!");
-    }
-}
-
-void PowerArmorEngineContext::RegisterHeavyCombatAction() noexcept {
-    if (m_State.isCoreDepleted) return;
-
-    m_State.fusionCoreCharge -= CONST_ACTION_DRAIN;
-    m_internalTemperature += 1.5f; 
-
-    if (m_State.fusionCoreCharge <= 0.0f) {
-        m_State.fusionCoreCharge = 0.0f;
-        m_State.isCoreDepleted   = 1;
-        Platform::Log("[POWER ARMOR WARNING]: High-intensity combat load completely drained fusion cell reserves.");
-    }
-}
-
-void PowerArmorEngineContext::HotSwapFusionCore() noexcept {
-    m_State.fusionCoreCharge = 100.0f;
-    m_State.isCoreDepleted   = 0;
-    m_internalTemperature = 39.0f;
-    m_servoOverloadActive = false;
-    m_diagnosticErrorCount = 0;
-    Platform::Log("[POWER ARMOR CORE SWAP]: Spent fusion cell ejected. Fresh 100% nuclear core locked in place. Systems nominal.");
-}
-
-// ============================================================================
-// SECTION 3: ADVANCED COMPONENT DAMAGE, ARMOR MITIGATION & WEAR
-// ============================================================================
-
-void PowerArmorEngineContext::ComputeComponentDamage(ArmorComponentID targetComp, float& ioDamage) noexcept {
-    uint8_t index = static_cast<uint8_t>(targetComp);
-    if (index >= 6) return;
-
-    ArmorComponent& comp = m_State.components[index];
-
-    if (comp.isBroken) {
-        return; // Уничтоженная пластина пропускает урон напрямую оператору
-    }
-
-    float mitigation = comp.damageResistance;
-    if (mitigation > ioDamage * 0.90f) {
-        mitigation = ioDamage * 0.90f; 
-    }
-
-    ioDamage -= mitigation;
+struct PowerArmorFrame {
+    uint32_t frameInstanceId;
+    Vector3D worldPosition;
+    float yawRotation;
     
-    float wearFactor = mitigation * 0.4f;
-    comp.durability -= wearFactor;
-
-    if (comp.durability <= 0.0f) {
-        comp.durability = 0.0f;
-        comp.isBroken   = 1;
-        m_diagnosticErrorCount++;
-        Platform::Log("[POWER ARMOR PLATE SHATTERED]: Armor segment ID [" + std::to_string(index) + "] structural failure!");
-    }
-}
-
-void PowerArmorEngineContext::RepairComponent(ArmorComponentID targetComp, float repairAmount) noexcept {
-    uint8_t index = static_cast<uint8_t>(targetComp);
-    if (index >= 6) return;
-
-    ArmorComponent& comp = m_State.components[index];
-    comp.durability += repairAmount;
+    bool isOccupied;
+    uint32_t occupantEntityId; // ID Игрока или NPC
     
-    if (comp.durability > comp.maxDurability) {
-        comp.durability = comp.maxDurability;
-    }
+    FusionCoreData activeCore;
+    ArmorPieceData pieces[static_cast<int>(PAPieceSlot::Count)];
 
-    if (comp.durability > 0.0f && comp.isBroken) {
-        comp.isBroken = 0;
-        if (m_diagnosticErrorCount > 0) m_diagnosticErrorCount--;
-    }
+    // Модификации эндоскелета
+    bool hasJetpack;
+    bool hasTargetingHUD;
+    bool hasMedicPump;
+    bool hasTeslaCoils;
+};
 
-    Platform::Log("[POWER ARMOR FIELD REPAIR]: Component [" + std::to_string(index) + "] field welded. Durability restored to: " + std::to_string(comp.durability));
+// ============================================================================
+// SECTION 3: SYSTEM IMPLEMENTATION & SINGLETON STATE
+// ============================================================================
+
+struct PowerArmorSystemImpl {
+    uint32_t nextFrameId = 5000;
+    std::unordered_map<uint32_t, PowerArmorFrame> spawnedFrames;
+
+    // Состояние игрока
+    bool isPlayerInArmor = false;
+    uint32_t currentPlayerFrameId = 0;
+    
+    PAAnimationState currentAnimState = PAAnimationState::None;
+    float animTimer = 0.0f;
+    float headlampBattery = 100.0f;
+    bool isHeadlampOn = false;
+
+    // Телеметрия для HUD
+    float hudVelocityY = 0.0f;
+    float previousYPos = 0.0f;
+
+    Player* playerRef = nullptr;
+};
+
+PowerArmorSystem* PowerArmorSystem::s_instance = nullptr;
+
+PowerArmorSystem::PowerArmorSystem() : m_pImpl(new PowerArmorSystemImpl()) {
+    if (s_instance) {
+        Platform::Log("[POWER ARMOR FATAL]: Двойная инициализация системы!");
+        std::terminate();
+    }
+    s_instance = this;
+    Platform::Log("[POWER ARMOR SYSTEM]: Подсистема управления силовой броней загружена.");
+}
+
+PowerArmorSystem::~PowerArmorSystem() {
+    m_pImpl->spawnedFrames.clear();
+    delete m_pImpl;
+    s_instance = nullptr;
+    Platform::Log("[POWER ARMOR SYSTEM]: Память подсистемы освобождена.");
+}
+
+PowerArmorSystem& PowerArmorSystem::GetInstance() {
+    if (!s_instance) std::terminate();
+    return *s_instance;
+}
+
+void PowerArmorSystem::BindPlayer(Player* player) {
+    m_pImpl->playerRef = player;
 }
 
 // ============================================================================
-// SECTION 4: JETPACK, NIGHT VISION AND HUD TELEMETRY CONTROLS
+// SECTION 4: FRAME GENERATION & PIECE MANAGEMENT
 // ============================================================================
 
-void PowerArmorEngineContext::ToggleJetpack(bool enable) noexcept {
-    if (m_State.isCoreDepleted) {
-        m_jetpackActive = false;
-        return;
+uint32_t PowerArmorSystem::SpawnFrame(const Vector3D& position, float yaw) {
+    uint32_t id = m_pImpl->nextFrameId++;
+    
+    PowerArmorFrame frame;
+    frame.frameInstanceId = id;
+    frame.worldPosition = position;
+    frame.yawRotation = yaw;
+    frame.isOccupied = false;
+    frame.occupantEntityId = 0;
+    
+    frame.activeCore = {0, 0.0f}; // По умолчанию без ядра
+    frame.hasJetpack = false;
+    frame.hasTargetingHUD = false;
+    frame.hasMedicPump = false;
+    frame.hasTeslaCoils = false;
+
+    for (int i = 0; i < static_cast<int>(PAPieceSlot::Count); ++i) {
+        frame.pieces[i].itemId = 0;
+        frame.pieces[i].isBroken = true;
     }
-    m_jetpackActive = enable;
-    Platform::Log(enable ? "[JETPACK]: Thrust vector control engaged." : "[JETPACK]: Thrusters disengaged.");
+
+    m_pImpl->spawnedFrames[id] = frame;
+    Platform::Log("[POWER ARMOR]: Новый пустой эндоскелет размещен. ID: " + std::to_string(id));
+    
+    return id;
 }
 
-void PowerArmorEngineContext::ToggleNightVision(bool enable) noexcept {
-    if (m_State.isCoreDepleted) {
-        m_nightVisionEnabled = false;
-        return;
-    }
-    m_nightVisionEnabled = enable;
-    Platform::Log(enable ? "[OPTICS]: HUD tactical night-vision online." : "[OPTICS]: Tactical night-vision offline.");
-}
+bool PowerArmorSystem::AttachArmorPiece(uint32_t frameId, PAPieceSlot slot, uint32_t itemId) {
+    auto it = m_pImpl->spawnedFrames.find(frameId);
+    if (it == m_pImpl->spawnedFrames.end()) return false;
 
-// ============================================================================
-// SECTION 5: TELEMETRY, CARRY WEIGHT, AND STATUS QUERY API
-// ============================================================================
+    PowerArmorFrame& frame = it->second;
+    const ItemRecord* record = ItemDatabase::GetInstance().GetItemRecord(itemId);
+    
+    if (!record || record->type != ItemType::Armor) return false;
 
-float PowerArmorEngineContext::GetTotalDamageResistance() const noexcept {
-    float totalDr = 0.0f;
-    for (size_t i = 0; i < 6; ++i) {
-        if (!m_State.components[i].isBroken) {
-            totalDr += m_State.components[i].damageResistance * (m_State.components[i].durability / m_State.components[i].maxDurability);
-        }
-    }
-    return totalDr;
-}
+    ArmorPieceData newPiece;
+    newPiece.itemId = itemId;
+    newPiece.maxHealth = record->maxDurability;
+    newPiece.currentHealth = record->maxDurability;
+    newPiece.armorRatingPhys = record->armor.dr;
+    newPiece.armorRatingEnergy = record->armor.er;
+    newPiece.armorRatingRad = record->armor.rr;
+    newPiece.isBroken = false;
+    newPiece.colorPaintId = 0; // Standard rusted look
 
-float PowerArmorEngineContext::GetTotalRadiationResistance() const noexcept {
-    float totalRad = 0.0f;
-    for (size_t i = 0; i < 6; ++i) {
-        if (!m_State.components[i].isBroken) {
-            totalRad += m_State.components[i].radiationResistance;
-        }
-    }
-    return totalRad * m_radiationShieldingEfficiency;
-}
-
-float PowerArmorEngineContext::GetCarryWeightBonus() const noexcept {
-    if (m_State.isCoreDepleted) {
-        return 30.0f; 
-    }
-    return 300.0f; // Увеличенный бонус грузоподъемности экзоскелета
-}
-
-bool PowerArmorEngineContext::IsOperational() const noexcept {
-    return !m_State.isCoreDepleted;
-}
-
-uint32_t PowerArmorEngineContext::GetDiagnosticErrorCount() const noexcept {
-    return m_diagnosticErrorCount;
-}
-
-// ============================================================================
-// SECTION 6: BINARY SERIALIZATION FOR SAVEGAMES (GHOST-RAM / DISK)
-// ============================================================================
-
-std::vector<uint8_t> PowerArmorEngineContext::SerializeToBinary() const {
-    std::vector<uint8_t> stream;
-    stream.reserve(sizeof(PowerArmorStateData) + 32);
-
-    // Упаковываем заряд батареи
-    const uint8_t* chargePtr = reinterpret_cast<const uint8_t*>(&m_State.fusionCoreCharge);
-    stream.insert(stream.end(), chargePtr, chargePtr + sizeof(float));
-
-    // Упаковываем флаги истощения
-    stream.push_back(m_State.isCoreDepleted);
-    stream.push_back(m_State.padding);
-
-    // Упаковываем множитель
-    const uint8_t* modPtr = reinterpret_cast<const uint8_t*>(&m_State.coreDrainModifier);
-    stream.insert(stream.end(), modPtr, modPtr + sizeof(float));
-
-    // Упаковываем все 6 компонентов брони
-    for (size_t i = 0; i < 6; ++i) {
-        const ArmorComponent& comp = m_State.components[i];
-        const uint8_t* compPtr = reinterpret_cast<const uint8_t*>(&comp);
-        stream.insert(stream.end(), compPtr, compPtr + sizeof(ArmorComponent));
-    }
-
-    // Дополнительные параметры телеметрии для сохранения
-    const uint8_t* fuelPtr = reinterpret_cast<const uint8_t*>(&m_jetpackFuel);
-    stream.insert(stream.end(), fuelPtr, fuelPtr + sizeof(float));
-
-    const uint8_t* tempPtr = reinterpret_cast<const uint8_t*>(&m_internalTemperature);
-    stream.insert(stream.end(), tempPtr, tempPtr + sizeof(float));
-
-    return stream;
-}
-
-bool PowerArmorEngineContext::DeserializeFromBinary(const std::vector<uint8_t>& stream) {
-    if (stream.size() < sizeof(PowerArmorStateData)) {
-        Platform::Log("[POWER ARMOR ERROR]: Corrupted binary save stream for exoskeleton context.");
-        return false;
-    }
-
-    size_t offset = 0;
-    std::memcpy(&m_State.fusionCoreCharge, stream.data() + offset, sizeof(float));
-    offset += sizeof(float);
-
-    m_State.isCoreDepleted = stream[offset++];
-    m_State.padding = stream[offset++];
-
-    std::memcpy(&m_State.coreDrainModifier, stream.data() + offset, sizeof(float));
-    offset += sizeof(float);
-
-    for (size_t i = 0; i < 6; ++i) {
-        std::memcpy(&m_State.components[i], stream.data() + offset, sizeof(ArmorComponent));
-        offset += sizeof(ArmorComponent);
-    }
-
-    if (offset + sizeof(float) <= stream.size()) {
-        std::memcpy(&m_jetpackFuel, stream.data() + offset, sizeof(float));
-        offset += sizeof(float);
-    }
-
-    if (offset + sizeof(float) <= stream.size()) {
-        std::memcpy(&m_internalTemperature, stream.data() + offset, sizeof(float));
-        offset += sizeof(float);
-    }
-
-    Platform::Log("[POWER ARMOR LOAD]: Exoskeleton telemetry and sub-modules successfully restored from binary dump.");
+    frame.pieces[static_cast<int>(slot)] = newPiece;
+    Platform::Log("[POWER ARMOR]: На эндоскелет ID " + std::to_string(frameId) + " установлена бронеплита " + record->name);
+    
     return true;
 }
 
-} // namespace Centralia_Project_Passport
+bool PowerArmorSystem::InsertFusionCore(uint32_t frameId, uint32_t coreItemId, float chargePercent) {
+    auto it = m_pImpl->spawnedFrames.find(frameId);
+    if (it == m_pImpl->spawnedFrames.end()) return false;
+
+    it->second.activeCore.inventoryId = coreItemId;
+    it->second.activeCore.remainingCharge = std::clamp(chargePercent, 0.0f, 100.0f);
+    
+    Platform::Log("[POWER ARMOR]: Ядерный блок установлен. Уровень заряда: " + std::to_string(chargePercent) + "%");
+    return true;
+}
+
+// ============================================================================
+// SECTION 5: ENTER / EXIT STATE MACHINE (ANIMATION TIMINGS)
+// ============================================================================
+
+bool PowerArmorSystem::InitiateEnterArmor(uint32_t frameId) {
+    if (m_pImpl->isPlayerInArmor || m_pImpl->currentAnimState != PAAnimationState::None) {
+        return false;
+    }
+
+    auto it = m_pImpl->spawnedFrames.find(frameId);
+    if (it == m_pImpl->spawnedFrames.end()) return false;
+
+    PowerArmorFrame& frame = it->second;
+
+    if (frame.isOccupied) {
+        Platform::Log("[POWER ARMOR REJECT]: Броня уже занята другим персонажем.");
+        return false;
+    }
+
+    if (frame.activeCore.remainingCharge <= 0.0f) {
+        // Если ядра нет, запускаем анимацию вставки ядра сзади
+        Platform::Log("[POWER ARMOR]: Нет энергии. Требуется вставить Ядерный Блок.");
+        // Player checks inventory for core... (simplified here)
+        return false;
+    }
+
+    // Запуск секвенции посадки (Блокировка управления)
+    InputController::GetInstance().SetMouseCapture(false);
+    // CameraSystem::MoveToThirdPersonView(frame.worldPosition - Vector3D(0, 0, 3));
+    
+    m_pImpl->currentPlayerFrameId = frameId;
+    m_pImpl->currentAnimState = PAAnimationState::EnteringOpenAnimation;
+    m_pImpl->animTimer = 0.0f;
+    frame.isOccupied = true;
+    frame.occupantEntityId = m_pImpl->playerRef->GetEntityId();
+
+    // AudioSystem::PlaySound3D("sounds/pa_open_hatch.wav", frame.worldPosition);
+    Platform::Log("[POWER ARMOR SEQUENCER]: Запуск кинематографической посадки в броню...");
+
+    return true;
+}
+
+bool PowerArmorSystem::InitiateExitArmor() {
+    if (!m_pImpl->isPlayerInArmor || m_pImpl->currentAnimState != PAAnimationState::None) {
+        return false;
+    }
+
+    // Проверка, достаточно ли места сзади для выхода
+    // RaycastHit hit;
+    // if (PhysicsWorld::Raycast(m_pImpl->playerRef->GetPosition(), -m_pImpl->playerRef->GetForward(), 1.5f, hit)) {
+    //     Platform::Log("[POWER ARMOR REJECT]: Недостаточно места для выхода (стена сзади).");
+    //     return false;
+    // }
+
+    m_pImpl->currentAnimState = PAAnimationState::ExitingOpenAnimation;
+    m_pImpl->animTimer = 0.0f;
+
+    // AudioSystem::PlaySound3D("sounds/pa_release_valves.wav", m_pImpl->playerRef->GetPosition());
+    Platform::Log("[POWER ARMOR SEQUENCER]: Запуск гидравлического открытия для выхода.");
+
+    return true;
+}
+
+void PowerArmorSystem::ProcessAnimationState(float dt) {
+    if (m_pImpl->currentAnimState == PAAnimationState::None) return;
+
+    m_pImpl->animTimer += dt;
+
+    switch (m_pImpl->currentAnimState) {
+        
+        // --- ENTERING SEQUENCE ---
+        case PAAnimationState::EnteringOpenAnimation:
+            if (m_pImpl->animTimer > 1.2f) {
+                m_pImpl->currentAnimState = PAAnimationState::EnteringStepIn;
+                m_pImpl->animTimer = 0.0f;
+                // AudioSystem::PlaySound3D("sounds/pa_step_in.wav", m_pImpl->playerRef->GetPosition());
+            }
+            break;
+
+        case PAAnimationState::EnteringStepIn:
+            if (m_pImpl->animTimer > 0.8f) {
+                m_pImpl->currentAnimState = PAAnimationState::EnteringCloseAnimation;
+                m_pImpl->animTimer = 0.0f;
+                // AudioSystem::PlaySound3D("sounds/pa_close_hatch.wav", m_pImpl->playerRef->GetPosition());
+            }
+            break;
+
+        case PAAnimationState::EnteringCloseAnimation:
+            if (m_pImpl->animTimer > 1.5f) {
+                // ПОЛНАЯ ПЕРЕДАЧА УПРАВЛЕНИЯ БРОНЕ
+                m_pImpl->isPlayerInArmor = true;
+                m_pImpl->currentAnimState = PAAnimationState::None;
+                
+                InputController::GetInstance().SetMouseCapture(true);
+                // CameraSystem::MoveToFirstPersonView(true); // True = PA HUD Overlay
+                // AudioSystem::PlaySound2D("sounds/pa_hud_boot.wav"); // Звук загрузки CRT интерфейса
+                
+                ApplyPowerArmorPhysicsModifiers(true);
+                Platform::Log("[POWER ARMOR SYSTEM]: Управление передано. Системы жизнеобеспечения онлайн.");
+            }
+            break;
+
+        // --- EXITING SEQUENCE ---
+        case PAAnimationState::ExitingOpenAnimation:
+            if (m_pImpl->animTimer > 1.2f) {
+                m_pImpl->currentAnimState = PAAnimationState::ExitingStepOut;
+                m_pImpl->animTimer = 0.0f;
+                // AudioSystem::PlaySound3D("sounds/pa_step_out.wav", m_pImpl->playerRef->GetPosition());
+            }
+            break;
+
+        case PAAnimationState::ExitingStepOut:
+            if (m_pImpl->animTimer > 0.8f) {
+                m_pImpl->currentAnimState = PAAnimationState::ExitingCloseAnimation;
+                m_pImpl->animTimer = 0.0f;
+                
+                // Перемещение игрока чуть назад
+                // Vector3D ejectPos = m_pImpl->playerRef->GetPosition() - (m_pImpl->playerRef->GetForward() * 1.5f);
+                // m_pImpl->playerRef->SetPosition(ejectPos);
+            }
+            break;
+
+        case PAAnimationState::ExitingCloseAnimation:
+            if (m_pImpl->animTimer > 1.0f) {
+                m_pImpl->isPlayerInArmor = false;
+                m_pImpl->currentAnimState = PAAnimationState::None;
+                
+                PowerArmorFrame& frame = m_pImpl->spawnedFrames[m_pImpl->currentPlayerFrameId];
+                frame.isOccupied = false;
+                frame.occupantEntityId = 0;
+                // frame.worldPosition = m_pImpl->playerRef->GetPosition() + (m_pImpl->playerRef->GetForward() * 1.5f);
+                
+                m_pImpl->currentPlayerFrameId = 0;
+                
+                // CameraSystem::MoveToFirstPersonView(false);
+                ApplyPowerArmorPhysicsModifiers(false);
+                
+                Platform::Log("[POWER ARMOR SYSTEM]: Выход из брони завершен. Эндоскелет оставлен в мире.");
+            }
+            break;
+            
+        default: break;
+    }
+}
+
+// ============================================================================
+// SECTION 6: PHYSICS OVERRIDES & HUD TELEMETRY
+// ============================================================================
+
+void PowerArmorSystem::ApplyPowerArmorPhysicsModifiers(bool isEntering) {
+    if (!m_pImpl->playerRef) return;
+
+    if (isEntering) {
+        // Установка статов: Броня делает Силу равной 11 (или +Бонус)
+        // m_pImpl->playerRef->SetOverrideStrength(11);
+        
+        // Увеличение массы для физического движка
+        // PhysicsWorld::SetEntityMass(m_pImpl->playerRef->GetEntityId(), 85.0f * PAConfig::MASS_MULTIPLIER);
+        
+        // Иммунитет к урону от падения
+        // m_pImpl->playerRef->SetFallDamageMultiplier(PAConfig::FALL_DAMAGE_MULTIPLIER);
+
+        Platform::Log("[POWER ARMOR PHYSICS]: Активирована гидравлика. Иммунитет к падениям включен.");
+    } else {
+        // Возврат статов человека
+        // m_pImpl->playerRef->RemoveOverrideStrength();
+        // PhysicsWorld::SetEntityMass(m_pImpl->playerRef->GetEntityId(), 85.0f);
+        // m_pImpl->playerRef->SetFallDamageMultiplier(1.0f);
+        
+        Platform::Log("[POWER ARMOR PHYSICS]: Гидравлика отключена. Возврат к человеческой физике.");
+    }
+}
+
+void PowerArmorSystem::CheckHeavyLanding() {
+    if (!m_pImpl->isPlayerInArmor || !m_pImpl->playerRef) return;
+
+    // Расчет скорости приземления (разница высот за кадр)
+    float currentY = m_pImpl->playerRef->GetPosition().y;
+    m_pImpl->hudVelocityY = currentY - m_pImpl->previousYPos;
+    m_pImpl->previousYPos = currentY;
+
+    // Если персонаж стоял на земле после быстрого падения
+    // bool isGrounded = m_pImpl->playerRef->IsGrounded();
+    bool isGrounded = true; // Заглушка
+
+    if (isGrounded && m_pImpl->hudVelocityY < (PAConfig::HEAVY_LANDING_VELOCITY * 0.016f)) { // 0.016f = deltaTime
+        Platform::Log("[SUPERHERO LANDING]: Жесткое приземление! Генерация ударной волны...");
+        
+        // Screen Shake
+        // CameraSystem::TriggerScreenShake(0.5f, 0.8f);
+
+        // Звук удара металла о землю
+        // AudioSystem::PlaySound3D("sounds/pa_heavy_land.wav", m_pImpl->playerRef->GetPosition());
+
+        // Нанесение AoE урона врагам в радиусе
+        float damageRadius = 5.0f;
+        float aoeDamage = std::abs(m_pImpl->hudVelocityY) * 50.0f; // Урон скейлится от высоты падения
+        
+        // std::vector<Entity*> enemies = SpatialGrid::FindEnemiesInRange(m_pImpl->playerRef->GetPosition(), damageRadius);
+        // for (auto* enemy : enemies) {
+        //     DamageSystem::ApplyDamage(enemy->GetId(), aoeDamage);
+        //     PhysicsWorld::ApplyImpulse(enemy->GetId(), (enemy->GetPosition() - m_pImpl->playerRef->GetPosition()).Normalized() * 500.0f); // Отбрасывание
+        // }
+
+        // Оглушение игрока на полсекунды (анимация подъема с колена)
+        // m_pImpl->playerRef->Stun(0.5f);
+    }
+}
+
+// ============================================================================
+// SECTION 7: ENERGY DRAIN & FUSION CORE DEPLETION
+// ============================================================================
+
+void PowerArmorSystem::UpdateFusionCoreDrain(float dt) {
+    if (!m_pImpl->isPlayerInArmor || m_pImpl->currentAnimState != PAAnimationState::None) return;
+
+    PowerArmorFrame& frame = m_pImpl->spawnedFrames[m_pImpl->currentPlayerFrameId];
+    FusionCoreData& core = frame.activeCore;
+
+    if (core.remainingCharge <= 0.0f) {
+        // Батарея пуста. Попытка автозамены
+        if (!AutoReplaceFusionCore()) {
+            // Энергия закончилась! Штраф к скорости 90%, отключение V.A.T.S.
+            // m_pImpl->playerRef->SetSpeedMultiplier(0.1f);
+            // CameraSystem::SetHUDWarning("FUSION CORE DEPLETED");
+            return;
+        }
+    }
+
+    // m_pImpl->playerRef->SetSpeedMultiplier(1.0f); // Возврат нормальной скорости
+
+    float drainAmount = PAConfig::DRAIN_RATE_IDLE * dt;
+
+    // Определение текущего состояния движения игрока (Бег, Шаг, Джетпак)
+    // bool isSprinting = m_pImpl->playerRef->IsSprinting();
+    // bool isJetpackActive = InputController::GetInstance().IsActionDown("Jump") && !m_pImpl->playerRef->IsGrounded();
+    bool isSprinting = false;
+    bool isJetpackActive = false;
+
+    if (isJetpackActive && frame.hasJetpack) {
+        drainAmount += PAConfig::DRAIN_RATE_JETPACK * dt;
+        // ParticleSystem::Emit("JetpackThrust", m_pImpl->playerRef->GetPosition());
+    } else if (isSprinting) {
+        drainAmount += PAConfig::DRAIN_RATE_SPRINT * dt;
+    } else {
+        // Проверка на ходьбу
+        // if (m_pImpl->playerRef->GetVelocity().LengthSquared() > 0.1f) {
+        //     drainAmount += PAConfig::DRAIN_RATE_WALK * dt;
+        // }
+    }
+
+    // Расход энергии на фонарик
+    if (m_pImpl->isHeadlampOn) {
+        drainAmount += 0.05f * dt;
+    }
+
+    core.remainingCharge -= drainAmount;
+
+    // Обработка сингл-экшенов (Прыжок) - вызывается внешним ивентом, но здесь для примера
+    // if (m_pImpl->playerRef->JustJumped()) core.remainingCharge -= PAConfig::DRAIN_COST_JUMP;
+}
+
+bool PowerArmorSystem::AutoReplaceFusionCore() {
+    Platform::Log("[FUSION CORE]: Попытка автоматической замены ядерного блока...");
+    
+    // Поиск ядерного блока в инвентаре игрока
+    // const auto& inventory = m_pImpl->playerRef->GetInventory();
+    // for (size_t i = 0; i < inventory.size(); ++i) {
+    //     if (inventory[i].itemId == 603) { // 603 = ID Ядерного блока
+    //         PowerArmorFrame& frame = m_pImpl->spawnedFrames[m_pImpl->currentPlayerFrameId];
+    //         frame.activeCore.remainingCharge = 100.0f;
+    //         m_pImpl->playerRef->RemoveItem(i, 1);
+    //         
+    //         AudioSystem::PlaySound2D("sounds/pa_core_insert.wav");
+    //         Platform::Log("[FUSION CORE]: Блок заменен успешно. Заряд 100%.");
+    //         return true;
+    //     }
+    // }
+    
+    Platform::Log("[FUSION CORE WARNING]: Ядерные блоки не найдены в инвентаре!");
+    return false;
+}
+
+// ============================================================================
+// SECTION 8: LOCALIZED DAMAGE & ARMOR DEGRADATION
+// ============================================================================
+
+void PowerArmorSystem::ApplyLocalizedDamage(PAPieceSlot targetSlot, float damageAmount) {
+    if (!m_pImpl->isPlayerInArmor) return;
+
+    PowerArmorFrame& frame = m_pImpl->spawnedFrames[m_pImpl->currentPlayerFrameId];
+    ArmorPieceData& piece = frame.pieces[static_cast<int>(targetSlot)];
+
+    if (piece.isBroken || piece.itemId == 0) {
+        // Урон проходит напрямую по игроку (броня пробита)
+        // m_pImpl->playerRef->ApplyDamage(damageAmount);
+        Platform::Log("[POWER ARMOR PENETRATION]: Броня разрушена на этом участке. Игрок получает прямой урон!");
+        return;
+    }
+
+    // Поглощение урона физикой брони
+    // float mitigatedDamage = ItemDatabase::GetInstance().CalculateArmorReduction(piece.itemId, damageAmount, 0.0f);
+    float mitigatedDamage = damageAmount * 0.3f; // Заглушка
+
+    // Отнимаем прочность самой детали
+    piece.currentHealth -= damageAmount * 2.0f; // Броня ломается быстрее, чем игрок
+
+    if (piece.currentHealth <= 0.0f) {
+        piece.currentHealth = 0.0f;
+        piece.isBroken = true;
+        
+        Platform::Log("[POWER ARMOR BREAK]: Часть брони РАЗРУШЕНА! Участок: " + std::to_string(static_cast<int>(targetSlot)));
+        
+        // Звук ломающегося металла и визуальный эффект искр
+        // AudioSystem::PlaySound3D("sounds/pa_armor_break.wav", m_pImpl->playerRef->GetPosition());
+        // ParticleSystem::Emit("ArmorSparks", m_pImpl->playerRef->GetPosition());
+        
+        // Отстрел куска брони как физического объекта (Havok/PhysX)
+        // PhysicsWorld::SpawnDebris(piece.itemId, m_pImpl->playerRef->GetPosition());
+    } else {
+        // Осколочный урон по игроку (сквозь броню)
+        // m_pImpl->playerRef->ApplyDamage(mitigatedDamage);
+    }
+}
+
+// ============================================================================
+// SECTION 9: GLOBAL UPDATE TICK & AUDIO MANAGEMENT
+// ============================================================================
+
+void PowerArmorSystem::UpdateTick(float deltaTime) {
+    // 1. Анимации посадки/высадки
+    ProcessAnimationState(deltaTime);
+
+    if (m_pImpl->isPlayerInArmor && m_pImpl->currentAnimState == PAAnimationState::None) {
+        // 2. Расход энергии
+        UpdateFusionCoreDrain(deltaTime);
+
+        // 3. Расчет приземлений (Superhero Landing)
+        CheckHeavyLanding();
+
+        // 4. Логика Фонарика (Headlamp)
+        // Если фонарь включен - рисуем Volumetric Cone перед игроком
+        if (m_pImpl->isHeadlampOn) {
+            // Renderer3D::DrawSpotLight(m_pImpl->playerRef->GetPosition() + Vector3D(0, 1.8f, 0), m_pImpl->playerRef->GetForward(), Vector3D(1.0f, 1.0f, 0.9f));
+        }
+
+        // 5. Воспроизведение гидравлических шагов
+        // В реальном движке это привязано к Animation Events в `ProceduralMotion.cpp`
+        // if (m_pImpl->playerRef->IsFootstepFrame()) {
+        //     AudioSystem::PlaySound3D("sounds/pa_footstep_heavy.wav", m_pImpl->playerRef->GetPosition());
+        //     CameraSystem::TriggerScreenShake(0.05f, 0.1f); // Легкая тряска при ходьбе
+        // }
+    }
+}
+
+void PowerArmorSystem::ToggleHeadlamp() {
+    if (!m_pImpl->isPlayerInArmor) return;
+    
+    m_pImpl->isHeadlampOn = !m_pImpl->isHeadlampOn;
+    // AudioSystem::PlaySound2D("sounds/pa_flashlight_click.wav");
+    Platform::Log(std::string("[POWER ARMOR]: Прожектор шлема ") + (m_pImpl->isHeadlampOn ? "ВКЛЮЧЕН" : "ВЫКЛЮЧЕН"));
+}
+
+bool PowerArmorSystem::IsPlayerInArmor() const noexcept {
+    return m_pImpl->isPlayerInArmor;
+}
+
+float PowerArmorSystem::GetFusionCoreCharge() const noexcept {
+    if (!m_pImpl->isPlayerInArmor) return 0.0f;
+    return m_pImpl->spawnedFrames.at(m_pImpl->currentPlayerFrameId).activeCore.remainingCharge;
+}
+
+// ============================================================================
+// SECTION 10: BINARY SERIALIZATION (WORLD SAVING)
+// ============================================================================
+
+uint32_t PowerArmorSystem::CalculateChecksum(const std::vector<uint8_t>& buffer) const noexcept {
+    uint32_t crc = 0xFFFFFFFF;
+    for (uint8_t byte : buffer) {
+        crc ^= byte;
+        for (int i = 0; i < 8; ++i) {
+            crc = (crc >> 1) ^ (0xEDB88320 & (-(crc & 1)));
+        }
+    }
+    return ~crc;
+}
+
+std::vector<uint8_t> PowerArmorSystem::SerializeToBinary() const {
+    std::vector<uint8_t> buffer;
+    buffer.reserve(1024 * 10);
+
+    const uint8_t* magicPtr = reinterpret_cast<const uint8_t*>(&PAConfig::PA_SAVE_MAGIC);
+    buffer.insert(buffer.end(), magicPtr, magicPtr + sizeof(uint32_t));
+
+    const uint8_t* verPtr = reinterpret_cast<const uint8_t*>(&PAConfig::PA_SAVE_VERSION);
+    buffer.insert(buffer.end(), verPtr, verPtr + sizeof(uint32_t));
+
+    // ID каунтер
+    buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&m_pImpl->nextFrameId), reinterpret_cast<const uint8_t*>(&m_pImpl->nextFrameId) + sizeof(uint32_t));
+
+    // Сохранение разбросанных по миру эндоскелетов
+    uint32_t frameCount = static_cast<uint32_t>(m_pImpl->spawnedFrames.size());
+    buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&frameCount), reinterpret_cast<const uint8_t*>(&frameCount) + sizeof(uint32_t));
+
+    for (const auto& [id, frame] : m_pImpl->spawnedFrames) {
+        buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&frame.frameInstanceId), reinterpret_cast<const uint8_t*>(&frame.frameInstanceId) + sizeof(uint32_t));
+        buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&frame.worldPosition), reinterpret_cast<const uint8_t*>(&frame.worldPosition) + sizeof(Vector3D));
+        buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&frame.yawRotation), reinterpret_cast<const uint8_t*>(&frame.yawRotation) + sizeof(float));
+        
+        buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&frame.isOccupied), reinterpret_cast<const uint8_t*>(&frame.isOccupied) + sizeof(bool));
+        buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&frame.occupantEntityId), reinterpret_cast<const uint8_t*>(&frame.occupantEntityId) + sizeof(uint32_t));
+
+        // Core
+        buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&frame.activeCore), reinterpret_cast<const uint8_t*>(&frame.activeCore) + sizeof(FusionCoreData));
+        
+        // Flags
+        buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&frame.hasJetpack), reinterpret_cast<const uint8_t*>(&frame.hasJetpack) + sizeof(bool));
+        buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&frame.hasTargetingHUD), reinterpret_cast<const uint8_t*>(&frame.hasTargetingHUD) + sizeof(bool));
+        buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&frame.hasMedicPump), reinterpret_cast<const uint8_t*>(&frame.hasMedicPump) + sizeof(bool));
+        buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&frame.hasTeslaCoils), reinterpret_cast<const uint8_t*>(&frame.hasTeslaCoils) + sizeof(bool));
+
+        // Armor Pieces
+        for (int i = 0; i < static_cast<int>(PAPieceSlot::Count); ++i) {
+            const ArmorPieceData& p = frame.pieces[i];
+            buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&p), reinterpret_cast<const uint8_t*>(&p) + sizeof(ArmorPieceData));
+        }
+    }
+
+    // State игрока
+    buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&m_pImpl->isPlayerInArmor), reinterpret_cast<const uint8_t*>(&m_pImpl->isPlayerInArmor) + sizeof(bool));
+    buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&m_pImpl->currentPlayerFrameId), reinterpret_cast<const uint8_t*>(&m_pImpl->currentPlayerFrameId) + sizeof(uint32_t));
+
+    // CRC32
+    uint32_t checksum = CalculateChecksum(buffer);
+    buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&checksum), reinterpret_cast<const uint8_t*>(&checksum) + sizeof(uint32_t));
+
+    Platform::Log("[POWER ARMOR SERIALIZE]: Все брошенные и активные эндоскелеты сохранены в дамп.");
+    return buffer;
+}
+
+bool PowerArmorSystem::DeserializeFromBinary(const std::vector<uint8_t>& buffer) {
+    if (buffer.size() < sizeof(uint32_t) * 4) return false;
+
+    size_t payloadSize = buffer.size() - sizeof(uint32_t);
+    std::vector<uint8_t> payloadData(buffer.begin(), buffer.begin() + payloadSize);
+    uint32_t expectedChecksum = CalculateChecksum(payloadData);
+
+    uint32_t storedChecksum = 0;
+    std::memcpy(&storedChecksum, buffer.data() + payloadSize, sizeof(uint32_t));
+
+    if (expectedChecksum != storedChecksum) {
+        Platform::Log("[POWER ARMOR DESERIALIZE ERROR]: Искажение файла (CRC32 Mismatch).");
+        return false;
+    }
+
+    size_t cursor = 0;
+    uint32_t magic;
+    std::memcpy(&magic, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+    if (magic != PAConfig::PA_SAVE_MAGIC) return false;
+
+    uint32_t version;
+    std::memcpy(&version, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+
+    std::memcpy(&m_pImpl->nextFrameId, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+
+    uint32_t frameCount;
+    std::memcpy(&frameCount, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+
+    m_pImpl->spawnedFrames.clear();
+    for (uint32_t i = 0; i < frameCount; ++i) {
+        PowerArmorFrame frame;
+        
+        std::memcpy(&frame.frameInstanceId, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+        std::memcpy(&frame.worldPosition, buffer.data() + cursor, sizeof(Vector3D)); cursor += sizeof(Vector3D);
+        std::memcpy(&frame.yawRotation, buffer.data() + cursor, sizeof(float)); cursor += sizeof(float);
+        
+        std::memcpy(&frame.isOccupied, buffer.data() + cursor, sizeof(bool)); cursor += sizeof(bool);
+        std::memcpy(&frame.occupantEntityId, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+
+        std::memcpy(&frame.activeCore, buffer.data() + cursor, sizeof(FusionCoreData)); cursor += sizeof(FusionCoreData);
+        
+        std::memcpy(&frame.hasJetpack, buffer.data() + cursor, sizeof(bool)); cursor += sizeof(bool);
+        std::memcpy(&frame.hasTargetingHUD, buffer.data() + cursor, sizeof(bool)); cursor += sizeof(bool);
+        std::memcpy(&frame.hasMedicPump, buffer.data() + cursor, sizeof(bool)); cursor += sizeof(bool);
+        std::memcpy(&frame.hasTeslaCoils, buffer.data() + cursor, sizeof(bool)); cursor += sizeof(bool);
+
+        for (int j = 0; j < static_cast<int>(PAPieceSlot::Count); ++j) {
+            std::memcpy(&frame.pieces[j], buffer.data() + cursor, sizeof(ArmorPieceData));
+            cursor += sizeof(ArmorPieceData);
+        }
+
+        m_pImpl->spawnedFrames[frame.frameInstanceId] = frame;
+    }
+
+    std::memcpy(&m_pImpl->isPlayerInArmor, buffer.data() + cursor, sizeof(bool)); cursor += sizeof(bool);
+    std::memcpy(&m_pImpl->currentPlayerFrameId, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+
+    Platform::Log("[POWER ARMOR DESERIALIZE]: Успешное восстановление состояния силовых бронекостюмов.");
+    return true;
+}
+
+} // namespace Centralia

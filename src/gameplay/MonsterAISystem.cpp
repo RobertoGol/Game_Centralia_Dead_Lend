@@ -1,384 +1,565 @@
 #include "gameplay/MonsterAISystem.hpp"
+#include "gameplay/CreatureAI.hpp"
 #include "gameplay/Player.hpp"
+#include "gameplay/MapSystem.hpp"
+#include "core/MemoryManager.hpp"
 #include "platform/Platform.hpp"
-#include <algorithm>
-#include <cmath>
+
 #include <iostream>
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
+#include <cmath>
+#include <algorithm>
 #include <random>
+#include <cstring>
+#include <memory>
+#include <chrono>
 
 namespace Centralia {
 
 // ============================================================================
-// SECTION 1: CONSTRUCTORS, DESTRUCTORS & MULTI-FACTION INITIALIZATION
+// SECTION 1: CONSTANTS, AI DIRECTOR CONFIG & SPATIAL HASHING
 // ============================================================================
 
-MonsterAISystem::MonsterAISystem() 
-    : m_globalAlertLevel(0.0f),
-      m_swarmLeaderId(0),
-      m_lastKnownPlayerPosition(0.0f, 0.0f, 0.0f),
-      m_playerHasBeenSpotted(false),
-      m_tacticalFlankingActive(false),
-      m_simulationClock(0.0)
-{
-    m_entities.clear();
-    m_activeDistractions.clear();
-    Platform::Log("[AI SYSTEM CONSTRUCTOR]: Universal Multi-Faction AI Controller initialized in memory.");
+namespace DirectorConfig {
+    constexpr uint32_t SYSTEM_SAVE_MAGIC = 0x44495243; // "DIRC"
+    constexpr uint32_t SYSTEM_SAVE_VERSION = 2;
+
+    constexpr float CELL_SIZE = 20.0f; // Размер ячейки пространственной сетки (метры)
+    
+    // AI Director (Pacing)
+    constexpr float TENSION_MAX = 100.0f;
+    constexpr float TENSION_COOLDOWN_RATE = 1.5f; // Падение напряженности вне боя
+    constexpr float PEAK_DURATION = 30.0f;        // Длительность волны/атаки
+    constexpr float RELAXATION_DURATION = 60.0f;  // Гарантированная передышка
+    
+    // LOD (Level of Detail) Distances
+    constexpr float LOD0_DISTANCE_SQ = 50.0f * 50.0f;   // Полный ИИ (BT, Физика, Raycast)
+    constexpr float LOD1_DISTANCE_SQ = 150.0f * 150.0f; // Упрощенный ИИ (Steering, Навигация)
+    constexpr float CULL_DISTANCE_SQ = 300.0f * 300.0f; // Выгрузка в спящий режим
+
+    // Boids Constants (Роевой интеллект)
+    constexpr float SWARM_SEPARATION_RADIUS = 3.0f;
+    constexpr float SWARM_COHESION_RADIUS = 15.0f;
+    constexpr float SWARM_ALIGNMENT_RADIUS = 10.0f;
+}
+
+enum class DirectorState {
+    BuildUp,    // Наращивание напряжения (Случайные редкие спавны)
+    Peak,       // Пик (Спавн орды, активный бой)
+    Relaxation  // Затишье (Спавн заблокирован, игроку дается отдых)
+};
+
+// Функция пространственного хеширования 2D координат в 1D ключ
+inline uint64_t GetSpatialHash(int cellX, int cellZ) {
+    int64_t a = cellX >= 0 ? 2 * static_cast<int64_t>(cellX) : -2 * static_cast<int64_t>(cellX) - 1;
+    int64_t b = cellZ >= 0 ? 2 * static_cast<int64_t>(cellZ) : -2 * static_cast<int64_t>(cellZ) - 1;
+    return static_cast<uint64_t>((a >= b ? a * a + a + b : a + b * b) / 2);
+}
+
+inline void GetCellCoords(const Vector3D& pos, int& cellX, int& cellZ) {
+    cellX = static_cast<int>(std::floor(pos.x / DirectorConfig::CELL_SIZE));
+    cellZ = static_cast<int>(std::floor(pos.z / DirectorConfig::CELL_SIZE));
+}
+
+// ============================================================================
+// SECTION 2: SPATIAL GRID (O(1) PROXIMITY SEARCH FOR SWARMS)
+// ============================================================================
+
+struct SpatialCell {
+    std::vector<CreatureAI*> occupants;
+};
+
+class SpatialGrid {
+private:
+    std::unordered_map<uint64_t, SpatialCell> m_cells;
+
+public:
+    void Clear() {
+        m_cells.clear();
+    }
+
+    void Insert(CreatureAI* creature) {
+        if (!creature) return;
+        Vector3D pos = creature->GetPosition();
+        int cx, cz;
+        GetCellCoords(pos, cx, cz);
+        m_cells[GetSpatialHash(cx, cz)].occupants.push_back(creature);
+    }
+
+    std::vector<CreatureAI*> QueryRadius(const Vector3D& center, float radius) {
+        std::vector<CreatureAI*> result;
+        int minCx, minCz, maxCx, maxCz;
+        
+        GetCellCoords(center - Vector3D(radius, 0, radius), minCx, minCz);
+        GetCellCoords(center + Vector3D(radius, 0, radius), maxCx, maxCz);
+
+        float radiusSq = radius * radius;
+
+        for (int x = minCx; x <= maxCx; ++x) {
+            for (int z = minCz; z <= maxCz; ++z) {
+                auto it = m_cells.find(GetSpatialHash(x, z));
+                if (it != m_cells.end()) {
+                    for (CreatureAI* creature : it->second.occupants) {
+                        if ((creature->GetPosition() - center).LengthSquared() <= radiusSq) {
+                            result.push_back(creature);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+};
+
+// ============================================================================
+// SECTION 3: SYSTEM STATE & PIMPL ARCHITECTURE
+// ============================================================================
+
+struct MonsterAISystemImpl {
+    std::vector<std::unique_ptr<CreatureAI>> activeMonsters;
+    std::vector<std::unique_ptr<CreatureAI>> suspendedMonsters; // Ушли в гибернацию (LOD Culling)
+    
+    SpatialGrid spatialGrid;
+    std::mt19937 rngEngine;
+
+    // AI Director Pacing Variables
+    DirectorState directorState = DirectorState::BuildUp;
+    float currentTension = 0.0f;
+    float stateTimer = 0.0f;
+    
+    uint32_t nextEntityId = 20000; // Резерв ID для монстров
+    
+    Player* playerRef = nullptr;
+
+    MonsterAISystemImpl() {
+        std::random_device rd;
+        rngEngine.seed(rd());
+    }
+
+    uint32_t GenerateId() { return nextEntityId++; }
+};
+
+MonsterAISystem* MonsterAISystem::s_instance = nullptr;
+
+MonsterAISystem::MonsterAISystem() : m_pImpl(new MonsterAISystemImpl()) {
+    if (s_instance) {
+        Platform::Log("[AI SYSTEM FATAL]: Двойная инициализация MonsterAISystem!");
+        std::terminate();
+    }
+    s_instance = this;
+    Platform::Log("[AI SYSTEM]: Глобальный AI Director и Swarm Manager запущены.");
 }
 
 MonsterAISystem::~MonsterAISystem() {
-    m_entities.clear();
-    m_activeDistractions.clear();
-    Platform::Log("[AI SYSTEM DESTRUCTOR]: Multi-Faction AI Controller buffers safely unmapped.");
+    m_pImpl->activeMonsters.clear();
+    m_pImpl->suspendedMonsters.clear();
+    delete m_pImpl;
+    s_instance = nullptr;
+    Platform::Log("[AI SYSTEM]: Менеджер монстров и AI Director выгружены.");
 }
 
-void MonsterAISystem::RegisterEntity(const AIEntity& entity) {
-    AIEntity enriched = entity;
-    enriched.currentBrainTick = 0.0f;
-    enriched.morale = 100.0f;
-    enriched.hasCover = false;
+MonsterAISystem& MonsterAISystem::GetInstance() {
+    if (!s_instance) std::terminate();
+    return *s_instance;
+}
+
+void MonsterAISystem::BindPlayer(Player* player) {
+    m_pImpl->playerRef = player;
+}
+
+// ============================================================================
+// SECTION 4: SPAWNING, DESPAWNING & LIFECYCLE MANAGEMENT
+// ============================================================================
+
+CreatureAI* MonsterAISystem::SpawnMonster(Faction faction, const Vector3D& position) {
+    uint32_t id = m_pImpl->GenerateId();
+    auto newMonster = std::make_unique<CreatureAI>(id, faction);
+    newMonster->SetPosition(position);
     
-    // Назначаем базовые параметры в зависимости от фракции
-    switch (enriched.faction) {
-        case AIFaction::SwarmMonster:
-            enriched.personalAggression = 0.9f;
-            enriched.morale = 999.0f; // Монстры не ведают страха
-            break;
-        case AIFaction::SemiSwarmRaider:
-            enriched.personalAggression = 0.7f;
-            enriched.morale = 80.0f; // Бандиты могут дрогнуть под огнем
-            break;
-        case AIFaction::LoneOutlaw:
-            enriched.personalAggression = 0.5f;
-            enriched.morale = 50.0f; // Одиночки предпочитают засады и быстрый отход
-            break;
-        case AIFaction::AllyNPC:
-        case AIFaction::NeutralTrader:
-            enriched.personalAggression = 0.1f;
-            enriched.morale = 100.0f;
-            break;
-    }
+    // Привязываем физику к ландшафту
+    float terrainHeight = MapSystem::GetInstance().GetHeightAt(position.x, position.z);
+    newMonster->SetPosition(Vector3D(position.x, terrainHeight, position.z));
 
-    m_entities.push_back(enriched);
-    Platform::Log("[AI REGISTRATION]: Entity ID " + std::to_string(entity.entityId) + 
-                  " registered under faction type: " + std::to_string(static_cast<int>(entity.faction)));
-}
-
-void MonsterAISystem::UnregisterEntity(uint32_t entityId) {
-    auto it = std::remove_if(m_entities.begin(), m_entities.end(), [entityId](const AIEntity& e) {
-        return e.entityId == entityId;
-    });
+    CreatureAI* ptr = newMonster.get();
+    m_pImpl->activeMonsters.push_back(std::move(newMonster));
     
-    if (it != m_entities.end()) {
-        m_entities.erase(it, m_entities.end());
-        Platform::Log("[AI UNREGISTRATION]: Entity ID " + std::to_string(entityId) + " purged from AI simulation.");
+    Platform::Log("[AI DIRECTOR]: Заспавнен новый NPC (ID: " + std::to_string(id) + ") Фракция: " + std::to_string(static_cast<int>(faction)));
+    return ptr;
+}
+
+void MonsterAISystem::RemoveDeadMonsters() {
+    auto it = std::remove_if(m_pImpl->activeMonsters.begin(), m_pImpl->activeMonsters.end(),
+        [](const std::unique_ptr<CreatureAI>& m) { return m->IsDead(); });
+
+    if (it != m_pImpl->activeMonsters.end()) {
+        size_t count = std::distance(it, m_pImpl->activeMonsters.end());
+        m_pImpl->activeMonsters.erase(it, m_pImpl->activeMonsters.end());
+        Platform::Log("[AI SWARM]: Очищено трупов монстров: " + std::to_string(count));
+        
+        // Повышаем напряженность при убийстве монстров (Игрок шумит, тратит ресурсы)
+        m_pImpl->currentTension = std::min(m_pImpl->currentTension + (count * 5.0f), DirectorConfig::TENSION_MAX);
     }
 }
 
 // ============================================================================
-// SECTION 2: SOPHISTICATED PERCEPTION & FACTION-SPECIFIC SENSORY REACTIONS
+// SECTION 5: AI DIRECTOR (PACING, TENSION & PROCEDURAL ENCOUNTERS)
 // ============================================================================
 
-void MonsterAISystem::RegisterSoundStimulus(const Vector3D& soundOrigin, float loudnessRadius, float intensity) {
-    Platform::Log("[AI SENSORY ACOUSTIC]: Sound wave propagated from X: " + std::to_string(soundOrigin.x) + 
-                  " Radius: " + std::to_string(loudnessRadius) + " Intensity: " + std::to_string(intensity));
+void MonsterAISystem::UpdateDirector(float dt) {
+    if (!m_pImpl->playerRef) return;
 
-    for (auto& entity : m_entities) {
-        if (entity.isDead) continue;
+    m_pImpl->stateTimer += dt;
+    Vector3D playerPos = m_pImpl->playerRef->GetPosition();
 
-        float distSquared = (entity.position - soundOrigin).LengthSquared();
-        float effectiveRadius = loudnessRadius * entity.hearingSensitivity;
+    switch (m_pImpl->directorState) {
+        
+        // ФАЗА 1: Наращивание напряжения (Build-Up)
+        case DirectorState::BuildUp: {
+            // Анализ состояния игрока (Генерация Tension)
+            float playerHealthPct = m_pImpl->playerRef->GetCurrentHealth() / m_pImpl->playerRef->GetMaxHealth();
+            
+            // Если игрок ранен, напряженность растет быстрее (паника)
+            float tensionGrowth = (1.0f - playerHealthPct) * 2.0f * dt;
+            
+            // Если игрок бежит или стреляет - напряжение растет
+            if (m_pImpl->playerRef->IsSprinting()) tensionGrowth += 1.0f * dt;
+            
+            m_pImpl->currentTension += tensionGrowth;
 
-        if (distSquared <= (effectiveRadius * effectiveRadius)) {
-            // Реакция зависит от фракции
-            if (entity.faction == AIFaction::SwarmMonster) {
-                if (entity.currentState == AIState::Idle || entity.currentState == AIState::Patrol) {
-                    entity.currentState = AIState::InvestigateSound;
-                    entity.investigationTarget = soundOrigin;
-                    Platform::Log("[SWARM ACOUSTIC REACT]: Monster #" + std::to_string(entity.entityId) + " rushing to sound source.");
-                }
-            } else if (entity.faction == AIFaction::SemiSwarmRaider) {
-                if (entity.currentState == AIState::Idle || entity.currentState == AIState::Patrol) {
-                    entity.currentState = AIState::TakeCover; // Бандиты ищут укрытие при шуме
-                    entity.investigationTarget = soundOrigin;
-                    Platform::Log("[RAIDER ACOUSTIC REACT]: Raider #" + std::to_string(entity.entityId) + " taking defensive cover position.");
-                }
-            } else if (entity.faction == AIFaction::LoneOutlaw) {
-                // Изгои занимают позицию для засады
-                entity.currentState = AIState::TakeCover;
-                entity.investigationTarget = soundOrigin;
-                Platform::Log("[OUTLAW ACOUSTIC REACT]: Outlaw #" + std::to_string(entity.entityId) + " going stealth / ambush mode.");
+            // Случайные одиночные спавны (Атмосфера)
+            std::uniform_real_distribution<float> randSpawn(0.0f, 100.0f);
+            if (randSpawn(m_pImpl->rngEngine) < (0.5f * dt)) { // 0.5% шанс в секунду
+                SpawnAmbientEncounter(playerPos);
             }
+
+            // Переход в фазу атаки, если напряжение достигло пика
+            if (m_pImpl->currentTension >= DirectorConfig::TENSION_MAX) {
+                m_pImpl->directorState = DirectorState::Peak;
+                m_pImpl->stateTimer = 0.0f;
+                TriggerHordeEvent(playerPos);
+            }
+            break;
+        }
+
+        // ФАЗА 2: Пик (Peak - Орда, активный бой)
+        case DirectorState::Peak: {
+            // Во время пика спавны агрессивны, напряжение зафиксировано на 100
+            m_pImpl->currentTension = DirectorConfig::TENSION_MAX;
+
+            if (m_pImpl->stateTimer >= DirectorConfig::PEAK_DURATION) {
+                // Волна закончилась, переходим к передышке
+                m_pImpl->directorState = DirectorState::Relaxation;
+                m_pImpl->stateTimer = 0.0f;
+                Platform::Log("[AI DIRECTOR]: Пик завершен. Фаза релаксации (Передышка).");
+                
+                // AudioSystem::PlayMusic("music/ambient_calm.ogg"); // Смена музыки на спокойную
+            }
+            break;
+        }
+
+        // ФАЗА 3: Затишье (Relaxation - Сбор лута)
+        case DirectorState::Relaxation: {
+            m_pImpl->currentTension -= DirectorConfig::TENSION_COOLDOWN_RATE * dt;
+            if (m_pImpl->currentTension < 0.0f) m_pImpl->currentTension = 0.0f;
+
+            // Спавны полностью заблокированы
+            
+            if (m_pImpl->stateTimer >= DirectorConfig::RELAXATION_DURATION) {
+                m_pImpl->directorState = DirectorState::BuildUp;
+                m_pImpl->stateTimer = 0.0f;
+                Platform::Log("[AI DIRECTOR]: Передышка окончена. Начало фазы нагнетания обстановки.");
+            }
+            break;
         }
     }
 }
 
-void MonsterAISystem::RegisterDistractionObject(const Vector3D& dropPosition, uint32_t distractionType) {
-    DistractionEvent distraction;
-    distraction.position = dropPosition;
-    distraction.type = distractionType;
-    distraction.lifetimeTimer = 25.0f;
+void MonsterAISystem::SpawnAmbientEncounter(const Vector3D& playerPos) {
+    // Выбор случайной точки вне поля зрения игрока (Radius 40-60 метров)
+    std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * 3.14159f);
+    std::uniform_real_distribution<float> radiusDist(40.0f, 60.0f);
+    
+    float angle = angleDist(m_pImpl->rngEngine);
+    float radius = radiusDist(m_pImpl->rngEngine);
+    
+    Vector3D spawnPos = playerPos + Vector3D(std::cos(angle) * radius, 0.0f, std::sin(angle) * radius);
+    
+    // Спавним 1-3 мобов
+    std::uniform_int_distribution<int> countDist(1, 3);
+    int count = countDist(m_pImpl->rngEngine);
+    
+    for (int i = 0; i < count; ++i) {
+        SpawnMonster(Faction::Mutants, spawnPos + Vector3D(i * 2.0f, 0, i * 2.0f));
+    }
+    Platform::Log("[AI DIRECTOR]: Инициирован фоновый спавн (Ambient Encounter) из " + std::to_string(count) + " мутантов.");
+}
 
-    m_activeDistractions.push_back(distraction);
-    Platform::Log("[AI DISTRACTION]: Environmental decoy / shell casing dropped at X: " + std::to_string(dropPosition.x));
+void MonsterAISystem::TriggerHordeEvent(const Vector3D& playerPos) {
+    Platform::Log("[AI DIRECTOR TRIGGER]: ПИК НАПРЯЖЕННОСТИ! ГЕНЕРАЦИЯ ОРДЫ!");
+    // AudioSystem::PlayMusic("music/combat_horde.ogg");
 
-    for (auto& entity : m_entities) {
-        if (entity.isDead || entity.currentState == AIState::Combat) continue;
+    // Спавним 10-15 врагов полукругом перед игроком
+    std::uniform_real_distribution<float> angleDist(-1.5f, 1.5f); // ~90 градусов конус
+    std::uniform_real_distribution<float> radiusDist(30.0f, 50.0f);
+    
+    Vector3D playerForward = m_pImpl->playerRef->GetForward();
+    float baseAngle = std::atan2(playerForward.z, playerForward.x);
 
-        float distSq = (entity.position - dropPosition).LengthSquared();
-        if (distSq <= 18.0f * 18.0f) {
-            if (entity.faction == AIFaction::SwarmMonster || entity.faction == AIFaction::SemiSwarmRaider) {
-                entity.currentState = AIState::InvestigateDistraction;
-                entity.investigationTarget = dropPosition;
-                Platform::Log("[AI DISTRACTION REACT]: Unit #" + std::to_string(entity.entityId) + " diverted to inspect decoy.");
+    for (int i = 0; i < 12; ++i) {
+        float angle = baseAngle + angleDist(m_pImpl->rngEngine);
+        float radius = radiusDist(m_pImpl->rngEngine);
+        
+        Vector3D spawnPos = playerPos + Vector3D(std::cos(angle) * radius, 0.0f, std::sin(angle) * radius);
+        CreatureAI* mutant = SpawnMonster(Faction::Mutants, spawnPos);
+        
+        // Передаем существам знания о позиции игрока, чтобы они сразу агрессировали
+        mutant->ForceTarget(m_pImpl->playerRef->GetEntityId(), playerPos);
+    }
+}
+
+// ============================================================================
+// SECTION 6: SWARM INTELLIGENCE (BOIDS - SEPARATION, ALIGNMENT, COHESION)
+// ============================================================================
+
+Vector3D MonsterAISystem::CalculateSwarmSteering(CreatureAI* currentMonster) {
+    Vector3D separation(0, 0, 0);
+    Vector3D alignment(0, 0, 0);
+    Vector3D cohesion(0, 0, 0);
+    int neighborsCount = 0;
+
+    Vector3D myPos = currentMonster->GetPosition();
+    Faction myFaction = currentMonster->GetFaction();
+
+    // Быстрый запрос соседей через пространственную сетку
+    std::vector<CreatureAI*> neighbors = m_pImpl->spatialGrid.QueryRadius(myPos, DirectorConfig::SWARM_COHESION_RADIUS);
+
+    for (CreatureAI* neighbor : neighbors) {
+        if (neighbor == currentMonster) continue;
+        if (neighbor->GetFaction() != myFaction) continue; // Стая только из своих
+
+        Vector3D neighborPos = neighbor->GetPosition();
+        float distSq = (myPos - neighborPos).LengthSquared();
+
+        if (distSq > 0.001f) {
+            // 1. Separation (Избегание давки)
+            if (distSq < DirectorConfig::SWARM_SEPARATION_RADIUS * DirectorConfig::SWARM_SEPARATION_RADIUS) {
+                Vector3D repel = (myPos - neighborPos).Normalized() / std::sqrt(distSq); // Чем ближе, тем сильнее отталкивание
+                separation = separation + repel;
             }
+
+            // 2. Alignment (Движение в одном направлении с толпой)
+            if (distSq < DirectorConfig::SWARM_ALIGNMENT_RADIUS * DirectorConfig::SWARM_ALIGNMENT_RADIUS) {
+                alignment = alignment + neighbor->GetForward();
+            }
+
+            // 3. Cohesion (Стремление в центр стаи)
+            cohesion = cohesion + neighborPos;
+            neighborsCount++;
         }
     }
-}
 
-// ============================================================================
-// SECTION 3: HIERARCHY, RAIDER MORALE & SWARM COORDINATION
-// ============================================================================
-
-void MonsterAISystem::UpdateFactionHierarchies() {
-    if (m_entities.empty()) return;
-
-    uint32_t topSwarmLeader = 0;
-    float maxSwarmPower = -1.0f;
-
-    for (const auto& entity : m_entities) {
-        if (entity.isDead) continue;
-
-        if (entity.faction == AIFaction::SwarmMonster) {
-            float power = entity.health + (entity.personalAggression * 100.0f);
-            if (power > maxSwarmPower) {
-                maxSwarmPower = power;
-                topSwarmLeader = entity.entityId;
-            }
-        }
+    if (neighborsCount > 0) {
+        alignment = (alignment / static_cast<float>(neighborsCount)).Normalized();
+        
+        cohesion = cohesion / static_cast<float>(neighborsCount); // Центр масс стаи
+        cohesion = (cohesion - myPos).Normalized(); // Вектор к центру
     }
-    m_swarmLeaderId = topSwarmLeader;
-}
 
-void MonsterAISystem::BroadcastGlobalAlert(const Vector3D& threatPos) {
-    m_playerHasBeenSpotted = true;
-    m_lastKnownPlayerPosition = threatPos;
-    m_globalAlertLevel = 100.0f;
-    m_tacticalFlankingActive = true;
-
-    for (auto& entity : m_entities) {
-        if (entity.isDead || entity.faction == AIFaction::AllyNPC || entity.faction == AIFaction::NeutralTrader) continue;
-
-        entity.currentState = AIState::Combat;
-        entity.lastKnownTargetPos = threatPos;
-        entity.stateTimer = 0.0f;
-    }
-    Platform::Log("[GLOBAL ALERT]: Threat broadcasted across wasteland. Hostile factions entering combat state.");
+    // Взвешиваем силы
+    Vector3D swarmForce = (separation * 1.5f) + (alignment * 1.0f) + (cohesion * 0.8f);
+    return swarmForce;
 }
 
 // ============================================================================
-// SECTION 4: FACTION-SPECIFIC FINITE STATE MACHINE (FSM)
+// SECTION 7: LOD (LEVEL OF DETAIL) CULLING & BACKGROUND SIMULATION
 // ============================================================================
 
-void MonsterAISystem::UpdateAI(float deltaTime, const Player& player) {
-    m_simulationClock += static_cast<double>(deltaTime);
-    UpdateFactionHierarchies();
+void MonsterAISystem::ProcessLODs(float dt) {
+    if (!m_pImpl->playerRef) return;
 
-    // Очистка старых отвлекающих факторов
-    for (auto it = m_activeDistractions.begin(); it != m_activeDistractions.end();) {
-        it->lifetimeTimer -= deltaTime;
-        if (it->lifetimeTimer <= 0.0f) {
-            it = m_activeDistractions.erase(it);
+    Vector3D playerPos = m_pImpl->playerRef->GetPosition();
+
+    // 1. Проверка активных на уход в гибернацию
+    for (auto it = m_pImpl->activeMonsters.begin(); it != m_pImpl->activeMonsters.end();) {
+        float distSq = ((*it)->GetPosition() - playerPos).LengthSquared();
+        
+        if (distSq > DirectorConfig::CULL_DISTANCE_SQ) {
+            // Выгрузка в suspended (Спящий режим - снимает нагрузку с CPU)
+            m_pImpl->suspendedMonsters.push_back(std::move(*it));
+            it = m_pImpl->activeMonsters.erase(it);
         } else {
             ++it;
         }
     }
 
-    const Vector3D& playerPos = player.GetPosition();
-
-    for (auto& entity : m_entities) {
-        if (entity.isDead) continue;
-
-        entity.currentBrainTick += deltaTime;
-        if (entity.currentBrainTick < 0.12f) continue; // Оптимизация тиков ИИ
-        entity.currentBrainTick = 0.0f;
-
-        // Проверка дистанции видимости
-        float distToPlayerSq = (entity.position - playerPos).LengthSquared();
-        bool hasVision = (distToPlayerSq <= (entity.visionRange * entity.visionRange));
-
-        if (hasVision && (entity.faction == AIFaction::SwarmMonster || entity.faction == AIFaction::SemiSwarmRaider || entity.faction == AIFaction::LoneOutlaw)) {
-            if (entity.currentState != AIState::Combat) {
-                Platform::Log("[AI SIGHT]: Entity #" + std::to_string(entity.entityId) + " spotted target!");
-                BroadcastGlobalAlert(playerPos);
-            }
-        }
-
-        // ====================================================================
-        // РАЗДЕЛЕНИЕ ЛОГИКИ ПО ФРАКЦИЯМ
-        // ====================================================================
-
-        switch (entity.faction) {
-            case AIFaction::SwarmMonster: {
-                // Логика слепого роя (прежняя сложная итерация преследования и штурма)
-                switch (entity.currentState) {
-                    case AIState::Idle:
-                        entity.stateTimer += 0.12f;
-                        if (entity.stateTimer >= 5.0f) { entity.currentState = AIState::Patrol; entity.stateTimer = 0.0f; }
-                        break;
-                    case AIState::Patrol: {
-                        Vector3D pStep = Vector3D(std::sin(m_simulationClock + entity.entityId) * 1.2f, 0.0f, std::cos(m_simulationClock + entity.entityId) * 1.2f);
-                        entity.position = entity.position + (pStep * (entity.moveSpeed * 0.3f * 0.12f));
-                        break;
-                    }
-                    case AIState::InvestigateSound:
-                    case AIState::InvestigateDistraction: {
-                        Vector3D dir = entity.investigationTarget - entity.position;
-                        if (dir.LengthSquared() < 2.0f) {
-                            entity.stateTimer += 0.12f;
-                            if (entity.stateTimer >= 4.0f) { entity.currentState = AIState::Patrol; entity.stateTimer = 0.0f; }
-                        } else {
-                            entity.position = entity.position + (dir.Normalized() * (entity.moveSpeed * 0.7f * 0.12f));
-                        }
-                        break;
-                    }
-                    case AIState::Combat: {
-                        entity.lastKnownTargetPos = playerPos;
-                        Vector3D toPlayer = playerPos - entity.position;
-                        if (toPlayer.LengthSquared() > (entity.visionRange * entity.visionRange * 2.0f)) {
-                            entity.currentState = AIState::InvestigateSound;
-                            entity.investigationTarget = playerPos;
-                        } else if (toPlayer.LengthSquared() > 3.0f) {
-                            entity.position = entity.position + (toPlayer.Normalized() * (entity.moveSpeed * 1.15f * 0.12f));
-                        }
-                        break;
-                    }
-                    default: break;
-                }
-                break;
-            }
-
-            case AIFaction::SemiSwarmRaider: {
-                // Бандиты: используют укрытия, оценивают мораль, отступают при ранении
-                if (entity.morale < 25.0f && entity.currentState != AIState::Retreat) {
-                    entity.currentState = AIState::Retreat;
-                    Platform::Log("[RAIDER MORALE BREAK]: Raider #" + std::to_string(entity.entityId) + " panicking and retreating!");
-                }
-
-                switch (entity.currentState) {
-                    case AIState::Idle:
-                    case AIState::Patrol: {
-                        Vector3D rStep = Vector3D(std::cos(m_simulationClock * 0.5f) * 2.0f, 0.0f, std::sin(m_simulationClock * 0.5f) * 2.0f);
-                        entity.position = entity.position + (rStep * (entity.moveSpeed * 0.4f * 0.12f));
-                        break;
-                    }
-                    case AIState::TakeCover: {
-                        // Поиск укрытия и ожидание
-                        entity.stateTimer += 0.12f;
-                        if (entity.stateTimer >= 6.0f) {
-                            entity.currentState = AIState::Combat;
-                            entity.stateTimer = 0.0f;
-                        }
-                        break;
-                    }
-                    case AIState::Combat: {
-                        Vector3D toPl = playerPos - entity.position;
-                        if (toPl.LengthSquared() > 15.0f * 15.0f) {
-                            // Бандиты держат среднюю дистанцию для стрельбы из укрытия
-                            entity.position = entity.position + (toPl.Normalized() * (entity.moveSpeed * 0.8f * 0.12f));
-                        }
-                        break;
-                    }
-                    case AIState::Retreat: {
-                        // Бегство от игрока в безопасную зону
-                        Vector3D away = entity.position - playerPos;
-                        entity.position = entity.position + (away.Normalized() * (entity.moveSpeed * 1.4f * 0.12f));
-                        break;
-                    }
-                    default: break;
-                }
-                break;
-            }
-
-            case AIFaction::LoneOutlaw: {
-                // Изгои: одиночные засады, скрытность
-                switch (entity.currentState) {
-                    case AIState::Idle:
-                    case AIState::Patrol: {
-                        // Медленное скрытное перемещение
-                        break;
-                    }
-                    case AIState::TakeCover: {
-                        // Засада в заброшенном здании
-                        break;
-                    }
-                    case AIState::Combat: {
-                        // Одиночка атакует из тени и меняет позицию
-                        Vector3D flankDir = playerPos - entity.position;
-                        entity.position = entity.position + (flankDir.Normalized() * (entity.moveSpeed * 1.3f * 0.12f));
-                        break;
-                    }
-                    default: break;
-                }
-                break;
-            }
-
-            case AIFaction::AllyNPC:
-            case AIFaction::NeutralTrader: {
-                // Мирные NPC: стоят на месте, торгуют или следуют за игроком
-                break;
-            }
+    // 2. Проверка спящих на пробуждение (Игрок подошел близко)
+    for (auto it = m_pImpl->suspendedMonsters.begin(); it != m_pImpl->suspendedMonsters.end();) {
+        float distSq = ((*it)->GetPosition() - playerPos).LengthSquared();
+        
+        if (distSq <= DirectorConfig::CULL_DISTANCE_SQ) {
+            m_pImpl->activeMonsters.push_back(std::move(*it));
+            it = m_pImpl->suspendedMonsters.erase(it);
+        } else {
+            ++it;
         }
     }
 }
 
 // ============================================================================
-// SECTION 5: CORPSE REGISTRATION AND FACTION SOCIAL REACTIONS
+// SECTION 8: MAIN UPDATE LOOP (GRID REBUILD, SWARM, LOD, DIRECTOR)
 // ============================================================================
 
-void MonsterAISystem::RegisterDeadEntityBody(const Vector3D& bodyPosition, uint32_t deadEntityId) {
-    Platform::Log("[AI CORPSE]: Fallen entity registered at X: " + std::to_string(bodyPosition.x));
+void MonsterAISystem::UpdateTick(float deltaTime) {
+    RemoveDeadMonsters();
+    UpdateDirector(deltaTime);
+    ProcessLODs(deltaTime);
 
-    AIEntity* nearestAvailable = nullptr;
-    float minDstSq = 999999.0f;
+    // 1. Перестроение пространственной сетки для текущего кадра (O(N))
+    m_pImpl->spatialGrid.Clear();
+    for (auto& monster : m_pImpl->activeMonsters) {
+        m_pImpl->spatialGrid.Insert(monster.get());
+    }
 
-    for (auto& entity : m_entities) {
-        if (entity.isDead || entity.entityId == deadEntityId) continue;
-        if (entity.faction == AIFaction::AllyNPC || entity.faction == AIFaction::NeutralTrader) continue;
+    Vector3D playerPos = m_pImpl->playerRef ? m_pImpl->playerRef->GetPosition() : Vector3D();
 
-        float dSq = (entity.position - bodyPosition).LengthSquared();
-        if (dSq < minDstSq) {
-            minDstSq = dSq;
-            nearestAvailable = &entity;
+    // 2. Обновление активных монстров с учетом LOD
+    for (auto& monster : m_pImpl->activeMonsters) {
+        float distSq = (monster->GetPosition() - playerPos).LengthSquared();
+
+        if (distSq < DirectorConfig::LOD0_DISTANCE_SQ) {
+            // Полная симуляция (Опрос деревьев поведений, A*, Physics, Raycasts)
+            monster->UpdateTick(deltaTime);
+
+            // Инъекция роевого интеллекта в физику монстра
+            Vector3D swarmCorrection = CalculateSwarmSteering(monster.get());
+            monster->ApplyExternalForce(swarmCorrection * 5.0f); // Применение Steering Force
+        } 
+        else if (distSq < DirectorConfig::LOD1_DISTANCE_SQ) {
+            // LOD 1: Упрощенная симуляция (Только навигация, без тяжелых Raycast и анимаций)
+            monster->UpdateSimplifiedTick(deltaTime);
+        }
+        else {
+            // LOD 2: Background Simulation (Просто стоят или идут по прямой)
+            // Никаких тяжелых расчетов, ждем ухода в Suspended
         }
     }
 
-    if (nearestAvailable && nearestAvailable->currentState != AIState::Combat) {
-        nearestAvailable->currentState = AIState::SearchDeadBody;
-        nearestAvailable->investigationTarget = bodyPosition;
-        nearestAvailable->stateTimer = 0.0f;
-        Platform::Log("[FACTION REACTION]: Unit #" + std::to_string(nearestAvailable->entityId) + " dispatched to investigate dead comrade.");
-    }
+    // 3. Обновление фоновых спящих монстров (Раз в 5 секунд симулируем перемещение стай по карте мира)
+    // static float backgroundTimer = 0.0f;
+    // backgroundTimer += deltaTime;
+    // if (backgroundTimer > 5.0f) {
+    //     for (auto& sm : m_pImpl->suspendedMonsters) {
+    //         // sm->SimulateBackgroundTravel(5.0f);
+    //     }
+    //     backgroundTimer = 0.0f;
+    // }
 }
 
 // ============================================================================
-// SECTION 6: TELEMETRY AND STATUS API
+// SECTION 9: BINARY SERIALIZATION (SAVING WORLD STATE & SWARMS)
 // ============================================================================
 
-float MonsterAISystem::GetGlobalAlertLevel() const noexcept {
-    return m_globalAlertLevel;
-}
-
-uint32_t MonsterAISystem::GetActiveEntityCount() const noexcept {
-    uint32_t count = 0;
-    for (const auto& e : m_entities) {
-        if (!e.isDead) count++;
+uint32_t MonsterAISystem::CalculateChecksum(const std::vector<uint8_t>& buffer) const noexcept {
+    uint32_t crc = 0xFFFFFFFF;
+    for (uint8_t byte : buffer) {
+        crc ^= byte;
+        for (int i = 0; i < 8; ++i) {
+            crc = (crc >> 1) ^ (0xEDB88320 & (-(crc & 1)));
+        }
     }
-    return count;
+    return ~crc;
 }
 
-bool MonsterAISystem::IsPlayerSpotted() const noexcept {
-    return m_playerHasBeenSpotted;
+std::vector<uint8_t> MonsterAISystem::SerializeToBinary() const {
+    std::vector<uint8_t> buffer;
+    buffer.reserve(1024 * 1024); // 1 MB буфер (монстров может быть тысячи)
+
+    const uint8_t* magicPtr = reinterpret_cast<const uint8_t*>(&DirectorConfig::SYSTEM_SAVE_MAGIC);
+    buffer.insert(buffer.end(), magicPtr, magicPtr + sizeof(uint32_t));
+
+    const uint8_t* verPtr = reinterpret_cast<const uint8_t*>(&DirectorConfig::SYSTEM_SAVE_VERSION);
+    buffer.insert(buffer.end(), verPtr, verPtr + sizeof(uint32_t));
+
+    // 1. Сохранение состояния Режиссера (Director)
+    buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&m_pImpl->nextEntityId), reinterpret_cast<const uint8_t*>(&m_pImpl->nextEntityId) + sizeof(uint32_t));
+    buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&m_pImpl->directorState), reinterpret_cast<const uint8_t*>(&m_pImpl->directorState) + sizeof(DirectorState));
+    buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&m_pImpl->currentTension), reinterpret_cast<const uint8_t*>(&m_pImpl->currentTension) + sizeof(float));
+    buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&m_pImpl->stateTimer), reinterpret_cast<const uint8_t*>(&m_pImpl->stateTimer) + sizeof(float));
+
+    // Объединяем активных и спящих монстров для сохранения
+    uint32_t totalMonsters = static_cast<uint32_t>(m_pImpl->activeMonsters.size() + m_pImpl->suspendedMonsters.size());
+    buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&totalMonsters), reinterpret_cast<const uint8_t*>(&totalMonsters) + sizeof(uint32_t));
+
+    auto serializeCreature = [&buffer](const std::unique_ptr<CreatureAI>& creature) {
+        std::vector<uint8_t> cData = creature->SerializeToBinary();
+        uint32_t cSize = static_cast<uint32_t>(cData.size());
+        buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&cSize), reinterpret_cast<const uint8_t*>(&cSize) + sizeof(uint32_t));
+        buffer.insert(buffer.end(), cData.begin(), cData.end());
+    };
+
+    for (const auto& monster : m_pImpl->activeMonsters) serializeCreature(monster);
+    for (const auto& monster : m_pImpl->suspendedMonsters) serializeCreature(monster);
+
+    uint32_t checksum = CalculateChecksum(buffer);
+    buffer.insert(buffer.end(), reinterpret_cast<const uint8_t*>(&checksum), reinterpret_cast<const uint8_t*>(&checksum) + sizeof(uint32_t));
+
+    Platform::Log("[AI SYSTEM SERIALIZE]: Состояние директора и позиций всех (" + std::to_string(totalMonsters) + ") монстров сохранено в бинарный дамп.");
+    return buffer;
+}
+
+bool MonsterAISystem::DeserializeFromBinary(const std::vector<uint8_t>& buffer) {
+    if (buffer.size() < sizeof(uint32_t) * 6) return false;
+
+    size_t payloadSize = buffer.size() - sizeof(uint32_t);
+    std::vector<uint8_t> payloadData(buffer.begin(), buffer.begin() + payloadSize);
+    uint32_t expectedChecksum = CalculateChecksum(payloadData);
+
+    uint32_t storedChecksum = 0;
+    std::memcpy(&storedChecksum, buffer.data() + payloadSize, sizeof(uint32_t));
+
+    if (expectedChecksum != storedChecksum) {
+        Platform::Log("[AI SYSTEM DESERIALIZE ERROR]: Искажение файла (CRC32 Mismatch).");
+        return false;
+    }
+
+    size_t cursor = 0;
+    uint32_t magic;
+    std::memcpy(&magic, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+    if (magic != DirectorConfig::SYSTEM_SAVE_MAGIC) return false;
+
+    uint32_t version;
+    std::memcpy(&version, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+
+    std::memcpy(&m_pImpl->nextEntityId, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+    std::memcpy(&m_pImpl->directorState, buffer.data() + cursor, sizeof(DirectorState)); cursor += sizeof(DirectorState);
+    std::memcpy(&m_pImpl->currentTension, buffer.data() + cursor, sizeof(float)); cursor += sizeof(float);
+    std::memcpy(&m_pImpl->stateTimer, buffer.data() + cursor, sizeof(float)); cursor += sizeof(float);
+
+    uint32_t totalMonsters;
+    std::memcpy(&totalMonsters, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+
+    m_pImpl->activeMonsters.clear();
+    m_pImpl->suspendedMonsters.clear();
+
+    for (uint32_t i = 0; i < totalMonsters; ++i) {
+        uint32_t cSize;
+        std::memcpy(&cSize, buffer.data() + cursor, sizeof(uint32_t)); cursor += sizeof(uint32_t);
+        
+        std::vector<uint8_t> cData(buffer.begin() + cursor, buffer.begin() + cursor + cSize);
+        cursor += cSize;
+
+        // Создаем пустышку и восстанавливаем через её внутренний десериализатор
+        auto monster = std::make_unique<CreatureAI>(0, Faction::Mutants); 
+        if (monster->DeserializeFromBinary(cData)) {
+            // Сразу кидаем всех в Suspended, а ProcessLODs() сам раскидает их при первом кадре
+            m_pImpl->suspendedMonsters.push_back(std::move(monster));
+        }
+    }
+
+    Platform::Log("[AI SYSTEM DESERIALIZE]: Успешное восстановление состояния Director'а и популяции мира.");
+    return true;
 }
 
 } // namespace Centralia
